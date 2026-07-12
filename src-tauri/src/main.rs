@@ -302,6 +302,8 @@ fn main() {
             write_text_file,
             write_binary_file,
             remove_file,
+            read_config_file,
+            write_config_file,
             get_command_line_file,
         ])
         .setup(move |app| {
@@ -313,6 +315,40 @@ fn main() {
         })
         .run(tauri::generate_context!())
         .expect("error while running PME");
+}
+
+fn get_user_config_dir() -> Result<PathBuf, String> {
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(userprofile) = env::var("USERPROFILE") {
+            return Ok(PathBuf::from(userprofile));
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        if let Ok(home) = env::var("HOME") {
+            return Ok(PathBuf::from(home));
+        }
+    }
+    Err("Failed to get user home directory.".to_string())
+}
+
+#[tauri::command]
+fn read_config_file() -> Result<Option<String>, String> {
+    let config_path = get_user_config_dir()?.join(".pme").join("config.json");
+    if !config_path.exists() {
+        return Ok(None);
+    }
+    fs::read_to_string(&config_path).map(Some).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn write_config_file(content: String) -> Result<(), String> {
+    let config_path = get_user_config_dir()?.join(".pme").join("config.json");
+    if let Some(parent) = config_path.parent() {
+        fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    }
+    fs::write(&config_path, content).map_err(|error| error.to_string())
 }
 
 #[tauri::command]

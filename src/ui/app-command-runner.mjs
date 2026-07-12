@@ -52,6 +52,10 @@ export function runAppCommand(command, context) {
       title: "关于 PME",
       message: "PME - Portable Markdown Editor",
     });
+  } else if (command === "settings") {
+    context.openSettingsModal();
+  } else if (command === "print-document") {
+    context.printDocument();
   } else {
     context.runEditorCommand(command);
   }

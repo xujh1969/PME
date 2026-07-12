@@ -1708,6 +1708,88 @@ textarea:focus-visible {
   line-height: 1.55;
 }
 
+.settings-modal {
+  width: min(520px, 100%);
+}
+
+.settings-modal__body {
+  display: grid;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+.settings-section {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.settings-section h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-steel);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-section label {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-section label span {
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+.settings-section input[type="text"] {
+  width: 100%;
+  min-height: 40px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: 14px;
+  outline: none;
+}
+
+.settings-section input[type="text"]:focus {
+  border-color: var(--color-primary);
+}
+
+.settings-preview {
+  padding: var(--space-md);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+}
+
+.settings-preview h3 {
+  margin: 0 0 var(--space-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-steel);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-preview p {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.settings-preview pre {
+  margin: 0;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: 13px;
+  overflow-x: auto;
+}
+
 @media (max-width: 720px) {
   .welcome {
     padding: 22px;

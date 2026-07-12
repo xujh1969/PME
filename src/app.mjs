@@ -161,6 +161,8 @@ import {
   openTextEditorModal,
   openTextInputModal,
 } from "./ui/modals.mjs";
+import { initConfig } from "./core/config.mjs";
+import { openSettingsModal as openSettingsModalDialog } from "./ui/settings-modal.mjs";
 
 const initialFiles = [
   "README.md",
@@ -278,6 +280,7 @@ let tableBubbleCloseBound = false;
 let lastSelectionBlockPos = null;
 let documentLinkPressTabState = null;
 
+initConfig();
 render();
 
 function render() {
@@ -453,6 +456,9 @@ function renderAppMenu() {
       menuSeparator(),
       menuItem("package-document", "打包当前文档"),
       menuItem("export-pdf", "导出 PDF"),
+      menuItem("print-document", "打印", "Ctrl+P"),
+      menuSeparator(),
+      menuItem("settings", "配置"),
     ]],
     ["编辑", [
       menuItem("undo", "撤销", "Ctrl+Z"),
@@ -924,6 +930,8 @@ async function runMenuCommand(command) {
       setEditorZoom,
       openMessageModal,
       runEditorCommand,
+      openSettingsModal,
+      printDocument,
     });
   } catch (error) {
     console.error(error);
@@ -2798,6 +2806,46 @@ function openPdfExportModal() {
         });
       });
     }
+  });
+}
+
+function openSettingsModal() {
+  openSettingsModalDialog().then((saved) => {
+    if (saved) {
+      render();
+    }
+  });
+}
+
+async function printDocument() {
+  if (!state.selectedPath) {
+    openMessageModal({ title: "无法打印", message: "请先打开一个 Markdown 文档。" });
+    return;
+  }
+
+  syncSelectedDocumentToState();
+  if (state.editorMode === "source") {
+    state.editorMode = "visual";
+    render();
+    await waitForNextFrame();
+    await waitForMilliseconds(250);
+  }
+
+  const documentHtml = await getPrintableDocumentHtml();
+  if (!documentHtml) {
+    openMessageModal({ title: "无法打印", message: "请先打开一个 Markdown 文档。" });
+    return;
+  }
+
+  const title = fileName(state.selectedPath).replace(/\.md$/i, "");
+  const html = buildPdfExportHtml({
+    title,
+    documentHtml,
+    options: { includeTitle: true, paper: "A4", orientation: "portrait" },
+  });
+
+  printPdfHtml(html, () => {
+    openMessageModal({ title: "打印失败", message: "无法打印文档。" });
   });
 }
 
