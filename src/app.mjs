@@ -282,7 +282,45 @@ let documentLinkPressTabState = null;
 
 initConfig();
 document.addEventListener("contextmenu", (event) => event.preventDefault());
-render();
+startApp();
+
+async function startApp() {
+  await setupCommandLineFileHandler();
+  render();
+}
+
+async function setupCommandLineFileHandler() {
+  if (!isTauriRuntime()) return;
+  
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const file_path = await invoke("get_command_line_file");
+    if (file_path) {
+      const adapter = createWorkspaceAdapter();
+      const workspace = await adapter.openRecentMarkdownFile({ filePath: file_path });
+      if (workspace) {
+        Object.assign(state, createOpenedWorkspaceSession({
+          projectName: workspace.projectName,
+          paths: workspace.paths,
+          files: workspace.files,
+          workspaceAdapter: adapter,
+          assetIndex: workspace.assetIndex,
+          selectedPath: workspace.selectedPath,
+          parseMarkdown,
+          hydrateImagePreviews,
+          buildWorkspaceTree,
+          fileName,
+        }));
+        if (isTauriRuntime()) {
+          state.documents = await hydrateDocumentMapLocalImages(state.documents, loadLocalImageResource);
+        }
+        rememberWorkspace(adapter?.getWorkspaceInfo?.());
+      }
+    }
+  } catch (error) {
+    console.error("Failed to open file from command line:", error);
+  }
+}
 
 function render() {
   destroyEditor();
