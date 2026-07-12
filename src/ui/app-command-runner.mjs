@@ -50,7 +50,7 @@ export function runAppCommand(command, context) {
   } else if (command === "about") {
     context.openMessageModal({
       title: "关于 PME",
-      message: "PME - Portable Markdown Editor",
+      message: "PME - Portable Markdown Editor\n作者: Xu JianHang",
     });
   } else if (command === "settings") {
     context.openSettingsModal();

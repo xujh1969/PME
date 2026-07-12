@@ -1,5 +1,10 @@
 import { escapeHtml } from "../core/html-utils.mjs";
-import { getCurrentFonts, setFonts, saveConfig, DEFAULT_CONFIG } from "../core/config.mjs";
+import { getCurrentFonts, setFonts, saveConfig, DEFAULT_CONFIG, getCurrentTheme, setTheme } from "../core/config.mjs";
+
+const THEMES = [
+  { value: "light", label: "浅色主题" },
+  { value: "dark", label: "深色主题" },
+];
 
 const CHINESE_FONTS = [
   { value: "Noto Sans SC, \"Microsoft YaHei\", \"PingFang SC\", sans-serif", label: "Noto Sans SC" },
@@ -38,15 +43,30 @@ function createFontSelect(options, currentValue, dataAttr) {
   return `<select data-font-${dataAttr}>${html}</select>`;
 }
 
+function createThemeSelect(options, currentValue) {
+  const html = options.map(opt => 
+    `<option value="${escapeHtml(opt.value)}" ${opt.value === currentValue ? "selected" : ""}>${escapeHtml(opt.label)}</option>`
+  ).join("");
+  return `<select data-theme-select>${html}</select>`;
+}
+
 export function openSettingsModal() {
   return new Promise((resolve) => {
     const fonts = getCurrentFonts();
+    const theme = getCurrentTheme();
     const overlay = document.createElement("div");
     overlay.className = "text-modal";
     overlay.innerHTML = `
       <div class="text-modal__dialog settings-modal" role="dialog" aria-modal="true" aria-label="设置">
-        <header class="text-modal__header"><strong>字体设置</strong><button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button></header>
+        <header class="text-modal__header"><strong>设置</strong><button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button></header>
         <section class="settings-modal__body">
+          <div class="settings-section">
+            <h3>主题配置</h3>
+            <label>
+              <span>主题色调</span>
+              ${createThemeSelect(THEMES, theme)}
+            </label>
+          </div>
           <div class="settings-section">
             <h3>字体配置</h3>
             <label>
@@ -76,6 +96,7 @@ export function openSettingsModal() {
         </footer>
       </div>`;
 
+    const themeSelect = overlay.querySelector("[data-theme-select]");
     const chineseSelect = overlay.querySelector("[data-font-chinese]");
     const englishSelect = overlay.querySelector("[data-font-english]");
     const codeSelect = overlay.querySelector("[data-font-code]");
@@ -84,6 +105,10 @@ export function openSettingsModal() {
     const close = (result) => {
       overlay.remove();
       resolve(result);
+    };
+
+    const applyThemeChange = () => {
+      setTheme(themeSelect.value);
     };
 
     const applyFonts = () => {
@@ -99,18 +124,22 @@ export function openSettingsModal() {
     };
 
     const apply = async () => {
+      applyThemeChange();
       applyFonts();
       await saveConfig();
       close(true);
     };
 
     const reset = () => {
+      themeSelect.value = DEFAULT_CONFIG.theme;
       chineseSelect.value = DEFAULT_CONFIG.fonts.chinese;
       englishSelect.value = DEFAULT_CONFIG.fonts.english;
       codeSelect.value = DEFAULT_CONFIG.fonts.code;
+      applyThemeChange();
       applyFonts();
     };
 
+    themeSelect.addEventListener("change", applyThemeChange);
     chineseSelect.addEventListener("change", applyFonts);
     englishSelect.addEventListener("change", applyFonts);
     codeSelect.addEventListener("change", applyFonts);

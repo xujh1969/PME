@@ -4,6 +4,7 @@ export const DEFAULT_CONFIG = {
     english: "\"Inter\", \"SF Pro Display\", \"Segoe UI\", sans-serif",
     code: "\"JetBrains Mono\", \"Fira Code\", \"Consolas\", monospace",
   },
+  theme: "light",
 };
 
 let config = { ...DEFAULT_CONFIG };
@@ -19,6 +20,7 @@ export async function initConfig() {
     config = { ...DEFAULT_CONFIG };
   }
   applyFontsToEditor();
+  applyTheme();
 }
 
 export async function saveConfig() {
@@ -134,4 +136,18 @@ function applyFontsToEditor() {
 
 export function getCurrentFonts() {
   return { ...config.fonts };
+}
+
+export function setTheme(theme) {
+  config.theme = theme;
+  applyTheme();
+}
+
+export function getCurrentTheme() {
+  return config.theme;
+}
+
+function applyTheme() {
+  const theme = config.theme;
+  document.documentElement.setAttribute("data-theme", theme);
 }

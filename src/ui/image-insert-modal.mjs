@@ -19,9 +19,10 @@ export function openImageInsertModal() {
               <div><h3>本地图片</h3><p>插入本地图片引用，打包时再收集资源。</p></div>
               <label class="image-file-picker"><input type="file" accept="image/*" multiple data-image-files /><span>选择本地图片</span></label>
             </div>
-            <div class="image-modal__section image-modal__section--compact image-modal__section--url">
-              <div><h3>网络图片</h3><p>保留原始网络地址。</p></div>
-              <div class="image-modal__url-row"><input data-image-url placeholder="https://example.com/image.png" /><button data-image-url-select>选择链接</button></div>
+            <div class="image-modal__section image-modal__section--url">
+              <h3>网络图片</h3>
+              <input data-image-url placeholder="https://example.com/image.png" />
+              <button data-image-url-select>选择链接</button>
             </div>
           </div>
           <aside class="image-modal__preview" aria-live="polite">

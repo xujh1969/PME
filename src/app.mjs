@@ -281,6 +281,7 @@ let lastSelectionBlockPos = null;
 let documentLinkPressTabState = null;
 
 initConfig();
+document.addEventListener("contextmenu", (event) => event.preventDefault());
 render();
 
 function render() {
