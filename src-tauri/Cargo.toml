@@ -1,0 +1,14 @@
+[package]
+name = "pme"
+version = "0.1.1"
+description = "Portable Markdown Editor"
+authors = ["PME"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+base64 = "0.22"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = [] }
