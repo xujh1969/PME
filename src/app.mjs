@@ -2647,7 +2647,7 @@ function findMermaidNodePosition(diagramElement) {
 
 async function editMermaidNode(node, pos) {
   const code = await openTextEditorModal({
-    title: "缂栬緫 Mermaid 鍥捐〃",
+    title: "编辑 Mermaid 图表",
     value: node.attrs.code || "",
     rows: 18,
     monospace: true,
