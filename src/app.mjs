@@ -337,6 +337,9 @@ function renderWelcome() {
   const recentFiles = getRecentWorkspaces();
   return `
     <main class="welcome">
+      <video class="welcome__video" autoPlay loop muted playsInline preload="auto">
+        <source src="/assets/hero.mp4" type="video/mp4" />
+      </video>
       <section class="welcome-hero">
         <div class="welcome-hero__content">
           <p class="welcome-hero__kicker">Portable Markdown Editor</p>
@@ -347,11 +350,11 @@ function renderWelcome() {
               <span>新建文件</span>
             </button>
             <div class="hero-split-action">
-              <button class="hero-button hero-button--secondary" data-action="open-markdown-file">
+              <button class="hero-button hero-button--secondary liquid-glass" data-action="open-markdown-file">
                 <span>打开 Markdown</span>
               </button>
               <details class="recent-menu">
-                <summary class="hero-arrow-button" aria-label="最近文件">${icon("ChevronDown")}</summary>
+                <summary class="hero-arrow-button liquid-glass" aria-label="最近文件">${icon("ChevronDown")}</summary>
                 <div class="recent-menu__panel">
                   <strong>最近文件</strong>
                   ${recentFiles.length ? recentFiles.map((workspace, index) => `
