@@ -657,6 +657,9 @@ function renderAppMenu() {
       menuItem("insert-paragraph-below", "在下方插入段落"),
       menuItem("footnote", "脚注"),
       menuItem("table-of-contents", "内容目录"),
+      menuSeparator(),
+      menuItem("heading-collapse", "折叠标题", null, false, !editor?.isActive("heading")),
+      menuItem("heading-expand-all", "展开所有折叠标题"),
     ]],
     ["格式", [
       menuItem("bold", "加粗", "Ctrl+B"),
@@ -673,10 +676,6 @@ function renderAppMenu() {
       menuItem("link", "超链接", "Ctrl+K", editor?.isActive("link") || false),
       menuSeparator(),
       menuItem("clear-format", "清除格式", "Ctrl+\\"),
-      menuSeparator(),
-      menuSeparator(),
-      menuItem("heading-collapse", "折叠标题", null, false, !editor?.isActive("heading")),
-      menuItem("heading-expand-all", "展开所有折叠标题"),
     ]],
     ["插入", [
       menuItem("link", "链接"),
