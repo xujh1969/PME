@@ -63,7 +63,7 @@ export function waitForMilliseconds(milliseconds) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
 
-export async function getPrintableDocumentHtml() {
+export async function getPrintableDocumentHtml(doc) {
   const documentElement = document.querySelector("#tiptapEditor .ProseMirror");
   if (!documentElement) {
     return "";
@@ -75,7 +75,73 @@ export async function getPrintableDocumentHtml() {
     element.classList.remove("ProseMirror-selectednode");
   });
   await inlinePrintableImages(clone);
+  if (doc) {
+    renderTableOfContentsForPrint(clone, doc);
+  }
   return clone.innerHTML;
+}
+
+function renderTableOfContentsForPrint(root, doc) {
+  const tocElements = root.querySelectorAll(".table-of-contents");
+  if (tocElements.length === 0) return;
+
+  const items = getTableOfContentsItems(doc);
+  if (items.length === 0) return;
+
+  const itemsHtml = items.map((item) => {
+    const indent = (item.level - 1) * 18;
+    return `<div class="table-of-contents__item" style="padding-left: ${indent + 6}px;">${escapeHtml(item.text)}</div>`;
+  }).join("");
+
+  const tocHtml = `<div class="table-of-contents__title">目录</div><div class="table-of-contents__list">${itemsHtml}</div>`;
+
+  tocElements.forEach((toc) => {
+    toc.innerHTML = tocHtml;
+  });
+}
+
+function getTableOfContentsItems(doc) {
+  const items = [];
+
+  doc?.content?.forEach?.((node) => {
+    if (node.type?.name !== "heading" && node.type !== "heading") {
+      return;
+    }
+
+    const text = getNodeText(node).trim();
+    if (!text) {
+      return;
+    }
+
+    items.push({
+      index: items.length,
+      level: node.attrs?.level || 1,
+      text,
+    });
+  });
+
+  return items;
+}
+
+function getNodeText(node) {
+  if (node.text) {
+    return node.text;
+  }
+
+  if (typeof node.childCount === "number" && typeof node.child === "function") {
+    let text = "";
+    for (let index = 0; index < node.childCount; index += 1) {
+      text += getNodeText(node.child(index));
+    }
+    return text;
+  }
+
+  return (node.content || []).map(getNodeText).join("");
+}
+
+function escapeHtml(text) {
+  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" };
+  return String(text).replace(/[&<>"']/g, (m) => map[m]);
 }
 
 async function inlinePrintableImages(root) {

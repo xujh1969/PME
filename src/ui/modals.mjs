@@ -128,6 +128,19 @@ export function openMessageModal({ title, message, confirmLabel = "确定" }) {
   return openDecisionModal({ title, message, buttons: [{ action: "apply", label: confirmLabel, primary: true }], resolveAction: () => undefined });
 }
 
+export function openWaitModal({ title, message }) {
+  const overlay = document.createElement("div");
+  overlay.className = "text-modal";
+  overlay.innerHTML = `
+    <div class="text-modal__dialog wait-modal" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+      <div class="wait-modal__spinner"></div>
+      <header class="text-modal__header"><strong>${escapeHtml(title)}</strong></header>
+      <section class="message-modal__body">${escapeHtml(message)}</section>
+    </div>`;
+  document.body.appendChild(overlay);
+  return () => { overlay.remove(); };
+}
+
 export function openConfirmModal({ title, message, confirmLabel = "确定", cancelLabel = "取消" }) {
   return openDecisionModal({
     title, message,

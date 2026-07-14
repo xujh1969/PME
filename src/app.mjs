@@ -105,6 +105,7 @@ import {
 import { buildPdfExportHtml, sanitizePdfFileName } from "./core/pdf-export.mjs";
 import { fileName, getSavedMarkdownWorkspacePath } from "./core/path-utils.mjs";
 import { buildMarkdownPackage, getMarkdownPackageFileName } from "./core/markdown-package.mjs";
+import { buildHtmlPackage, getHtmlPackageFileName } from "./core/html-package.mjs";
 import { collectLocalMarkdownLinkTargets } from "./core/linked-markdown-package.mjs";
 import { loadImageResource } from "./core/image-resource-loader.mjs";
 import { hydrateDocumentMapLocalImages, hydrateLocalImagePreviews } from "./core/local-image-preview.mjs";
@@ -163,6 +164,7 @@ import {
   openTableInsertModal,
   openTextEditorModal,
   openTextInputModal,
+  openWaitModal,
 } from "./ui/modals.mjs";
 import { initConfig } from "./core/config.mjs";
 import { openSettingsModal as openSettingsModalDialog } from "./ui/settings-modal.mjs";
@@ -589,6 +591,7 @@ function renderAppMenu() {
       menuItem("save-as-document", "另存为", "Ctrl+Shift+S"),
       menuSeparator(),
       menuItem("package-document", "打包当前文档"),
+      menuItem("package-html-document", "以HTML格式打包"),
       menuItem("export-pdf", "导出 PDF"),
       menuItem("print-document", "打印", "Ctrl+P"),
       menuSeparator(),
@@ -1141,6 +1144,7 @@ async function runMenuCommand(command) {
       saveDocument,
       saveAsDocument,
       packageCurrentDocument,
+      packageCurrentDocumentAsHtml,
       openPdfExportModal,
       closeDocumentTab,
       runClipboardMenuCommand,
@@ -3475,7 +3479,8 @@ async function printDocument() {
     await waitForMilliseconds(250);
   }
 
-  const documentHtml = await getPrintableDocumentHtml();
+  const doc = structuredClone(getCurrentDocument());
+  const documentHtml = await getPrintableDocumentHtml(doc);
   if (!documentHtml) {
     openMessageModal({ title: "无法打印", message: "请先打开一个 Markdown 文档。" });
     return;
@@ -3503,7 +3508,8 @@ async function exportCurrentDocumentToPdf(options) {
   }
   await waitForNextFrame();
 
-  const documentHtml = await getPrintableDocumentHtml();
+  const doc = structuredClone(getCurrentDocument());
+  const documentHtml = await getPrintableDocumentHtml(doc);
   if (!documentHtml) {
     openMessageModal({ title: "无法导出", message: "请先打开一个 Markdown 文档。" });
     return;
@@ -3558,7 +3564,9 @@ async function packageCurrentDocument() {
     return;
   }
 
-  const packageResult = await buildMarkdownPackage({
+  const closeWait = openWaitModal({ title: "打包中", message: "正在收集资源并打包，请稍候..." });
+  try {
+    const packageResult = await buildMarkdownPackage({
     doc,
     imageNodes,
     videoNodes,
@@ -3589,12 +3597,108 @@ async function packageCurrentDocument() {
     }
   }
 
-  const savedPath = await saveBlobExport(
-    getMarkdownPackageFileName(markdownName),
-    packageResult.blob,
-  );
-  if (savedPath) {
-    await openMessageModal({ title: "打包完成", message: "ZIP 已保存到：\n" + savedPath });
+    const savedPath = await saveBlobExport(
+      getMarkdownPackageFileName(markdownName),
+      packageResult.blob,
+    );
+    if (savedPath) {
+      await openMessageModal({ title: "打包完成", message: "ZIP 已保存到：\n" + savedPath });
+    }
+  } finally {
+    closeWait();
+  }
+}
+
+async function packageCurrentDocumentAsHtml() {
+  if (!state.selectedPath) {
+    openMessageModal({ title: "无法打包", message: "请先打开一个 Markdown 文档。" });
+    return;
+  }
+
+  syncSelectedDocumentToState();
+  const doc = structuredClone(getCurrentDocument());
+  const imageNodes = collectImageNodes(doc);
+  const videoNodes = collectVideoNodes(doc);
+  const markdownName = fileName(state.selectedPath);
+  const htmlName = markdownName.replace(/\.(md|markdown)$/i, ".html") || "index.html";
+
+  const confirmed = await openConfirmModal({
+    title: "以HTML格式打包",
+    message: "当前文档包含 " + imageNodes.length + " 个图片引用和 " + videoNodes.length + " 个视频引用。PME 将把文档转换为 HTML 格式，并将所有资源打包到 assets 目录中。解压后可直接用浏览器打开 HTML 文件查看。",
+    confirmLabel: "开始打包",
+    cancelLabel: "取消",
+  });
+  if (!confirmed) {
+    return;
+  }
+
+  const collapsedHeadings = [];
+  if (editor) {
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name === "heading" && node.attrs.collapsed) {
+        collapsedHeadings.push(pos);
+      }
+    });
+    for (const pos of collapsedHeadings) {
+      const node = editor.state.doc.nodeAt(pos);
+      if (node && node.type.name === "heading") {
+        const tr = editor.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, collapsed: false });
+        editor.view.dispatch(tr);
+      }
+    }
+  }
+
+  const documentHtml = editor?.view?.dom?.innerHTML || "";
+
+  if (editor) {
+    for (const pos of collapsedHeadings) {
+      const node = editor.state.doc.nodeAt(pos);
+      if (node && node.type.name === "heading") {
+        const tr = editor.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, collapsed: true });
+        editor.view.dispatch(tr);
+      }
+    }
+  }
+
+  const closeWait = openWaitModal({ title: "打包中", message: "正在转换为 HTML 并打包资源，请稍候..." });
+  try {
+    const packageResult = await buildHtmlPackage({
+      doc,
+      documentHtml,
+      documentTitle: markdownName.replace(/\.(md|markdown)$/i, ""),
+      imageNodes,
+      videoNodes,
+      htmlName,
+      rootSourcePath: getSelectedDocumentAbsolutePath(),
+      loadImageResource: (source) => loadImageResource(source, {
+        files: state.files,
+        isTauri: isTauriRuntime(),
+        loadLocalImageResource,
+        selectedPath: state.selectedPath,
+      }),
+    });
+  if (packageResult.missing.length) {
+    const shouldContinue = await openConfirmModal({
+      title: "部分资源无法收集",
+      message: "有 " + packageResult.missing.length + " 个图片或视频资源无法读取。是否继续生成 ZIP？\n\n"
+        + packageResult.missing.slice(0, 5).join("\n"),
+      confirmLabel: "继续生成",
+      cancelLabel: "取消",
+    });
+    if (!shouldContinue) {
+      return;
+    }
+  }
+
+    const savedPath = await saveBlobExport(
+      getHtmlPackageFileName(markdownName),
+      packageResult.blob,
+    );
+    if (savedPath) {
+      await openMessageModal({ title: "打包完成", message: "HTML ZIP 已保存到：\n" + savedPath });
+    }
+  } finally {
+    closeWait();
   }
 }
 

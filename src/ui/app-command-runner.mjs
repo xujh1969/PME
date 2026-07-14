@@ -18,6 +18,8 @@ export function runAppCommand(command, context) {
     return context.saveAsDocument();
   } else if (command === "package-document") {
     return context.packageCurrentDocument();
+  } else if (command === "package-html-document") {
+    return context.packageCurrentDocumentAsHtml();
   } else if (command === "export-pdf") {
     return context.openPdfExportModal();
   } else if (command === "close-current-tab") {

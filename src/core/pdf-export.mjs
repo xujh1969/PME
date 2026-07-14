@@ -327,6 +327,38 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
     .katex-display { overflow: visible; }
     .katex { font-family: KaTeX_Main, ${fonts.english}; }
     
+    .table-of-contents {
+      display: grid;
+      gap: 8px;
+      margin: 1em 0;
+      padding: 12px;
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--radius-xl);
+      background: var(--color-canvas-soft);
+    }
+
+    .table-of-contents__title {
+      color: var(--color-ink);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .table-of-contents__list {
+      display: grid;
+      gap: 2px;
+    }
+
+    .table-of-contents__item {
+      min-height: 28px;
+      border: 0;
+      background: transparent;
+      color: var(--color-slate);
+      padding: 4px 6px;
+      text-align: left;
+      white-space: normal;
+      font-size: 0.875rem;
+    }
+    
     @media print {
       @page { margin: 0; }
       body {
