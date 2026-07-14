@@ -412,6 +412,7 @@ fn read_markdown_file_workspace(file_path: PathBuf) -> Result<Option<WorkspacePa
         .ok_or_else(|| "Invalid Markdown file name.".to_string())?
         .to_string();
     let markdown = fs::read_to_string(&file_path).map_err(|error| error.to_string())?;
+    let full_file_path = file_path.to_string_lossy().to_string();
     let mut payload = WorkspacePayload {
         kind: "tauri-file".to_string(),
         project_name: file_path
@@ -420,14 +421,14 @@ fn read_markdown_file_workspace(file_path: PathBuf) -> Result<Option<WorkspacePa
             .unwrap_or("Markdown")
             .to_string(),
         display_name: file_name.clone(),
-        file_path: file_path.to_string_lossy().to_string(),
+        file_path: full_file_path.clone(),
         root_path: root.to_string_lossy().to_string(),
-        selected_path: file_name.clone(),
+        selected_path: full_file_path.clone(),
         files: BTreeMap::new(),
-        paths: vec![file_name.clone()],
+        paths: vec![full_file_path.clone()],
         asset_index: BTreeMap::new(),
     };
-    payload.files.insert(file_name, markdown.clone());
+    payload.files.insert(full_file_path, markdown.clone());
     collect_markdown_image_files(&root, &markdown, &mut payload)?;
     Ok(Some(payload))
 }
@@ -794,18 +795,15 @@ fn collect_markdown_image_files(
         if !candidate.is_file() || image_mime(&candidate).is_none() {
             continue;
         }
-        let relative = candidate
-            .strip_prefix(root)
-            .map(|path| path.to_string_lossy().replace('\\', "/"))
-            .unwrap_or_else(|_| normalized.clone());
-        if payload.files.contains_key(&relative) {
+        let full_path = candidate.to_string_lossy().replace('\\', "/");
+        if payload.files.contains_key(&full_path) {
             continue;
         }
         if let Some(mime) = image_mime(&candidate) {
             let bytes = fs::read(&candidate).map_err(|error| error.to_string())?;
-            payload.paths.push(relative.clone());
+            payload.paths.push(full_path.clone());
             payload.files.insert(
-                relative,
+                full_path,
                 format!(
                     "data:{};base64,{}",
                     mime,

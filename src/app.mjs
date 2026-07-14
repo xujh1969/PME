@@ -465,6 +465,11 @@ function renderShell() {
           ${toolButton("heading-2", "Heading2", "二级标题")}
           ${toolButton("heading-3", "Heading3", "三级标题")}
           ${toolButton("paragraph", "Pilcrow", "正文")}
+          <button class="icon-button" data-command="heading-collapse" title="折叠标题" aria-label="折叠标题">
+            <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
+              <path d="M112.064 896a48 48 0 1 1 0-96h800a48 48 0 0 1 0 96z m678.08-199.616l-224-143.872a47.936 47.936 0 0 1 0-80.896l224-143.872a47.04 47.04 0 0 1 25.92-7.616 48.704 48.704 0 0 1 22.976 5.824 48.064 48.064 0 0 1 25.024 42.112v288a47.872 47.872 0 0 1-25.024 42.048 48.512 48.512 0 0 1-23.104 5.888 46.784 46.784 0 0 1-25.792-7.68z m-109.312-184.256l87.104 56V456z m-495.808 185.984a47.936 47.936 0 0 1-24.96-42.048v-288a47.872 47.872 0 0 1 73.856-40.32l224 143.872a48.064 48.064 0 0 1 0 80.896l-224 143.872a47.936 47.936 0 0 1-48.96 1.728z m70.912-129.984l87.36-56-87.36-56.128zM112.064 224a48 48 0 1 1 0-96h800a48 48 0 0 1 0 96z" fill="currentColor"/>
+            </svg>
+          </button>
         </div>
         <div class="tool-group">
           <span>对齐</span>
@@ -565,11 +570,20 @@ function renderFindCount() {
 }
 
 function renderAppMenu() {
+  const recentFiles = getRecentWorkspaces();
+  const recentMenuItems = recentFiles.slice(0, 6).map((workspace, index) => {
+    const displayName = workspace.displayName || workspace.projectName;
+    const displayPath = workspace.displayPath || "本地文件";
+    return menuItem(`open-recent-${index}`, `${displayName}\n${displayPath}`);
+  });
+
   const menus = [
     ["文件", [
       menuItem("new-markdown-file", "新建文件", "Ctrl+N"),
       menuSeparator(),
       menuItem("open-markdown-file", "打开文件", "Ctrl+O"),
+      menuSeparator(),
+      menuSubmenu("最近打开", recentMenuItems.length ? recentMenuItems : [menuItem(null, "暂无最近文件", null, false, true)]),
       menuSeparator(),
       menuItem("save-document", "保存", "Ctrl+S"),
       menuItem("save-as-document", "另存为", "Ctrl+Shift+S"),
@@ -659,6 +673,10 @@ function renderAppMenu() {
       menuItem("link", "超链接", "Ctrl+K", editor?.isActive("link") || false),
       menuSeparator(),
       menuItem("clear-format", "清除格式", "Ctrl+\\"),
+      menuSeparator(),
+      menuSeparator(),
+      menuItem("heading-collapse", "折叠标题", null, false, !editor?.isActive("heading")),
+      menuItem("heading-expand-all", "展开所有折叠标题"),
     ]],
     ["插入", [
       menuItem("link", "链接"),
@@ -706,8 +724,8 @@ function renderAppMenu() {
   `;
 }
 
-function menuItem(command, label, shortcut = "", checked = false) {
-  return { command, label, shortcut, checked };
+function menuItem(command, label, shortcut = "", checked = false, disabled = false) {
+  return { command, label, shortcut, checked, disabled };
 }
 
 function menuSubmenu(label, items) {
@@ -738,10 +756,15 @@ function renderMenuEntry(item) {
     `;
   }
 
+  const labelParts = item.label.split("\n");
+  const mainLabel = labelParts[0];
+  const subLabel = labelParts[1];
+
   return `
-    <button type="button" data-menu-command="${item.command}" class="${item.checked ? "is-checked" : ""}">
+    <button type="button" data-menu-command="${item.command}" class="${item.checked ? "is-checked" : ""}" ${item.disabled ? "disabled" : ""}>
       <span class="app-menu__check">${item.checked ? "✓" : ""}</span>
-      <span class="app-menu__label">${escapeHtml(item.label)}</span>
+      <span class="app-menu__label">${escapeHtml(mainLabel)}</span>
+      ${subLabel ? `<span class="app-menu__sublabel">${escapeHtml(subLabel)}</span>` : ""}
       ${item.shortcut ? `<span class="app-menu__shortcut">${escapeHtml(item.shortcut)}</span>` : ""}
     </button>
   `;
@@ -852,15 +875,49 @@ function renderOutline() {
     return "";
   }
 
+  function renderLevel(startIndex, parentLevel) {
+    let result = "";
+    let i = startIndex;
+    while (i < outline.length) {
+      const item = outline[i];
+      if (item.level <= parentLevel) {
+        break;
+      }
+      const level = Math.min(item.level, 6);
+      const nextIndex = i + 1;
+      const hasChildren = nextIndex < outline.length && outline[nextIndex].level > item.level;
+      const groupId = `outline-group-${i}`;
+
+      let children = "";
+      let childCount = 0;
+      if (hasChildren) {
+        const childResult = renderLevel(nextIndex, item.level);
+        children = `<ul id="${groupId}" class="outline-group">${childResult.html}</ul>`;
+        childCount = childResult.count;
+      }
+
+      result += `
+        <li>
+          <div class="outline-item-row">
+            ${hasChildren ? `<button class="outline-item-toggle" data-outline-group="${groupId}">▶</button>` : `<span style="width: 16px; flex-shrink: 0;"></span>`}
+            <button class="outline-item outline-item--level-${level}" data-outline-index="${item.index}" title="${escapeHtml(item.text)}">
+              ${escapeHtml(item.text)}
+            </button>
+          </div>
+          ${children}
+        </li>
+      `;
+
+      i += 1 + childCount;
+    }
+    return { html: result, count: i - startIndex };
+  }
+
+  const result = renderLevel(0, 0);
+
   return `
     <ol class="outline-list">
-      ${outline.map((item) => `
-        <li>
-          <button class="outline-item outline-item--level-${Math.min(item.level, 6)}" data-outline-index="${item.index}" title="${escapeHtml(item.text)}">
-            ${escapeHtml(item.text)}
-          </button>
-        </li>
-      `).join("")}
+      ${result.html}
     </ol>
   `;
 }
@@ -1081,6 +1138,7 @@ async function runMenuCommand(command) {
       document,
       createStandaloneMarkdownDocument,
       openMarkdownFile,
+      openRecentWorkspace,
       saveDocument,
       saveAsDocument,
       packageCurrentDocument,
@@ -1511,7 +1569,21 @@ function navigateFindResult(direction) {
     state.activeSearchIndex + direction + state.searchMatches.length
   ) % state.searchMatches.length;
   updateFindCount();
-  applyFindHighlights();
+
+  const match = state.searchMatches[state.activeSearchIndex];
+  if (match && editor) {
+    const tr = editor.state.tr.setSelection(
+      new TextSelection(editor.state.doc.resolve(match.from), editor.state.doc.resolve(match.to))
+    );
+    editor.view.dispatch(tr);
+    editor.view.focus();
+
+    setTimeout(() => {
+      applyFindHighlights();
+    }, 100);
+  } else {
+    applyFindHighlights();
+  }
 }
 
 window.navigateFindResult = navigateFindResult;
@@ -1667,7 +1739,31 @@ function createRangeFromTextOffsets(textNodes, from, to) {
 
 function scrollRangeIntoView(range) {
   const element = range.startContainer.parentElement;
-  element?.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+  if (!element) return;
+
+  const scrollContainer = document.querySelector("article.editor");
+  if (scrollContainer) {
+    const containerRect = scrollContainer.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+
+    const paddingTop = 60;
+    const paddingBottom = 60;
+    const containerInnerTop = containerRect.top + paddingTop;
+    const containerInnerBottom = containerRect.bottom - paddingBottom;
+
+    if (elementRect.top < containerInnerTop || elementRect.bottom > containerInnerBottom) {
+      const currentScrollTop = scrollContainer.scrollTop;
+      const scrollOffset = elementRect.top - containerRect.top - paddingTop;
+      const targetScrollTop = currentScrollTop + scrollOffset;
+
+      scrollContainer.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: "smooth",
+      });
+    }
+  } else {
+    element.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+  }
 }
 
 function selectSourceMatch(sourceEditor) {
@@ -1791,6 +1887,20 @@ async function openRecentWorkspace(index) {
       ? await adapter.openRecentMarkdownFile?.(recentWorkspace)
       : await adapter.openRecentWorkspace(recentWorkspace);
     if (workspace) {
+      if (state.screen === "shell" && state.openTabs.length > 0) {
+        const targetPath = workspace.selectedPath || Object.keys(workspace.files)[0];
+        if (targetPath && workspace.files[targetPath]) {
+          state.files[targetPath] = workspace.files[targetPath];
+          openMarkdownDocumentSession(state, targetPath, {
+            openTab,
+            parseMarkdown,
+            hydrateImagePreviews,
+            fileName,
+          });
+          render();
+          return;
+        }
+      }
       openWorkspace(
         workspace.projectName,
         getWorkspacePaths(workspace.files, workspace.paths),
@@ -2213,6 +2323,10 @@ function navigateToOutlineItem(index) {
     return;
   }
 
+  if (!editor) {
+    return;
+  }
+
   const headingEls = document.querySelectorAll("#tiptapEditor .ProseMirror h1, #tiptapEditor .ProseMirror h2, #tiptapEditor .ProseMirror h3, #tiptapEditor .ProseMirror h4, #tiptapEditor .ProseMirror h5, #tiptapEditor .ProseMirror h6");
   const targetHeading = headingEls[index];
   if (!targetHeading) {
@@ -2221,17 +2335,30 @@ function navigateToOutlineItem(index) {
 
   const targetLevel = parseInt(targetHeading.tagName.charAt(1));
   let needsExpand = false;
+  let tr = editor.state.tr;
 
   for (let i = 0; i < index; i++) {
     const h = headingEls[i];
     const level = parseInt(h.tagName.charAt(1));
     if (level < targetLevel) {
-      const toggle = h.querySelector(".heading-collapse-toggle");
-      if (toggle && toggle.classList.contains("collapsed")) {
-        toggle.click();
-        needsExpand = true;
+      const domPos = editor.view.posAtDOM(h, 0);
+      if (domPos !== null && domPos !== undefined) {
+        const $pos = editor.state.doc.resolve(domPos);
+        const headingNode = $pos.parent;
+        if (headingNode && headingNode.type.name === "heading" && headingNode.attrs.collapsed) {
+          const headingPos = $pos.before($pos.depth);
+          tr = tr.setNodeMarkup(headingPos, undefined, {
+            ...headingNode.attrs,
+            collapsed: false,
+          });
+          needsExpand = true;
+        }
       }
     }
+  }
+
+  if (needsExpand && tr.docChanged) {
+    editor.view.dispatch(tr);
   }
 
   const scrollToTarget = () => {
@@ -2241,7 +2368,10 @@ function navigateToOutlineItem(index) {
       const scrollContainer = document.querySelector("article.editor");
       if (scrollContainer) {
         const scrollTarget = updatedTarget.offsetTop - scrollContainer.offsetTop - scrollContainer.clientHeight / 2 + updatedTarget.clientHeight / 2;
-        scrollContainer.scrollTop = Math.max(0, scrollTarget);
+        scrollContainer.scrollTo({
+          top: Math.max(0, scrollTarget),
+          behavior: "smooth",
+        });
       }
     }
   };
@@ -2453,6 +2583,10 @@ function handleEditorSelectionUpdate(currentEditor) {
   lastSelectionBlockPos = getCurrentTextBlockPos(currentEditor);
   refreshToolbarState();
   updateTableBubbleToolbar(currentEditor);
+  const isHeading = currentEditor?.isActive("heading") || false;
+  document.querySelectorAll('[data-menu-command="heading-collapse"]').forEach((btn) => {
+    btn.disabled = !isHeading;
+  });
 }
 
 function updateTableBubbleToolbar(currentEditor = editor) {
@@ -3828,6 +3962,18 @@ function bindOutlineEvents() {
       navigateToOutlineItem(Number(button.dataset.outlineIndex));
     });
   });
+
+  document.querySelectorAll("[data-outline-group]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const groupId = button.dataset.outlineGroup;
+      const group = document.getElementById(groupId);
+      if (group) {
+        group.classList.toggle("outline-group--collapsed");
+        button.textContent = group.classList.contains("outline-group--collapsed") ? "▶" : "▼";
+      }
+    });
+  });
 }
 
 function refreshToolbarState() {
@@ -3892,6 +4038,9 @@ function refreshToolbarState() {
     button.classList.toggle("is-active", Boolean(activeCommands[button.dataset.command]));
     if (button.dataset.command === "unlink") {
       button.disabled = !editor.isActive("link");
+    }
+    if (button.dataset.command === "heading-collapse") {
+      button.disabled = !editor.isActive("heading");
     }
     if (tableCommands.has(button.dataset.command)) {
       button.disabled = !inTable;

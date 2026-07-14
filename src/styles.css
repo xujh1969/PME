@@ -562,6 +562,12 @@ textarea:focus-visible {
   background: transparent;
 }
 
+.app-menu__submenu-panel button {
+  width: fit-content;
+  grid-template-columns: 18px auto auto;
+  white-space: nowrap;
+}
+
 .app-menu__panel button:hover {
   background: var(--color-surface-strong);
 }
@@ -609,6 +615,8 @@ textarea:focus-visible {
   left: 100%;
   z-index: 50;
   min-width: 200px;
+  max-width: 500px;
+  width: fit-content;
   display: none;
   padding: 5px;
   border: 1px solid var(--color-hairline-strong);
@@ -638,7 +646,16 @@ textarea:focus-visible {
 
 .app-menu__label {
   overflow: visible;
+  display: block;
+  font-size: 0.85rem;
+}
+
+.app-menu__sublabel {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
   white-space: nowrap;
+  display: block;
+  padding-top: 2px;
 }
 
 .app-menu__shortcut {
@@ -886,7 +903,33 @@ textarea:focus-visible {
   margin: 2px 0;
 }
 
+.outline-item-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.outline-item-toggle {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-stone);
+  font-size: 10px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.outline-item-toggle:hover {
+  color: var(--color-ink);
+}
+
 .outline-item {
+  flex: 1;
   width: 100%;
   min-height: 28px;
   display: block;
@@ -913,6 +956,14 @@ textarea:focus-visible {
 .outline-item--level-5,
 .outline-item--level-6 {
   padding-left: 42px;
+}
+
+.outline-group {
+  display: block;
+}
+
+.outline-group--collapsed {
+  display: none;
 }
 
 .editor-area {
@@ -1060,10 +1111,10 @@ textarea:focus-visible {
 }
 
 .source-editor {
-  width: min(920px, 100%);
+  width: min(1200px, 100%);
   min-height: 100%;
   margin: 0 auto;
-  padding: 48px 72px 80px;
+  padding: 48px 24px 80px;
   border: 0;
   outline: none;
   resize: none;
@@ -1140,11 +1191,11 @@ textarea:focus-visible {
 }
 
 .ProseMirror {
-  width: min(920px, 100%);
+  width: min(1200px, 100%);
   min-height: 100%;
   margin: 0 auto;
   outline: none;
-  padding: 64px 72px 96px;
+  padding: 64px 24px 96px;
   font: calc(1rem * var(--editor-zoom)) / 1.7 var(--font-editor);
   letter-spacing: 0.16px;
   color: var(--color-slate);

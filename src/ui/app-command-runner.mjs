@@ -7,6 +7,11 @@ export function runAppCommand(command, context) {
     context.createStandaloneMarkdownDocument();
   } else if (command === "open-markdown-file") {
     return context.openMarkdownFile();
+  } else if (command.startsWith("open-recent-")) {
+    const index = parseInt(command.split("-")[2]);
+    if (Number.isFinite(index) && context.openRecentWorkspace) {
+      context.openRecentWorkspace(index);
+    }
   } else if (command === "save-document") {
     return context.saveDocument();
   } else if (command === "save-as-document") {
@@ -47,13 +52,20 @@ export function runAppCommand(command, context) {
     context.setEditorZoom(state.editorZoom - 0.1);
   } else if (command === "focus-search") {
     state.showReplace = false;
-    document.querySelector("[data-find-input]")?.focus();
-    context.render();
+    const findInput = document.querySelector("[data-find-input]");
+    if (findInput) {
+      findInput.focus();
+      findInput.select();
+    }
   } else if (command === "focus-replace") {
     state.showReplace = true;
     context.render();
     setTimeout(() => {
-      document.querySelector("[data-replace-input]")?.focus();
+      const findInput = document.querySelector("[data-find-input]");
+      if (findInput) {
+        findInput.focus();
+        findInput.select();
+      }
     }, 50);
   } else if (command === "find-next") {
     if (window.navigateFindResult) {

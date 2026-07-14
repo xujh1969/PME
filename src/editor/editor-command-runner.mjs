@@ -170,5 +170,33 @@ export function runEditorCommand(command, context) {
     if (config) {
       chain.setCallout({ type, title: config.title, text: config.label }).run();
     }
+  } else if (command === "heading-collapse") {
+    const { state } = editor;
+    const { selection } = state;
+    const $pos = selection.$anchor;
+    for (let d = $pos.depth; d >= 0; d--) {
+      const node = $pos.node(d);
+      if (node.type.name === "heading") {
+        const headingPos = $pos.before(d);
+        const tr = state.tr.setNodeMarkup(headingPos, undefined, {
+          ...node.attrs,
+          collapsed: !node.attrs.collapsed,
+        });
+        editor.view.dispatch(tr);
+        break;
+      }
+    }
+  } else if (command === "heading-expand-all") {
+    const { state } = editor;
+    let tr = state.tr;
+    state.doc.descendants((node, pos) => {
+      if (node.type.name === "heading" && node.attrs.collapsed) {
+        tr = tr.setNodeMarkup(pos, undefined, { ...node.attrs, collapsed: false });
+      }
+      return true;
+    });
+    if (tr.docChanged) {
+      editor.view.dispatch(tr);
+    }
   }
 }

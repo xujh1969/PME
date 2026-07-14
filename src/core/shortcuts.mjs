@@ -9,13 +9,16 @@ export function getAppShortcutCommand(event) {
   if (primary && key === "s") {
     return "save-document";
   }
+  if (primary && key === "f") {
+    return "focus-search";
+  }
+  if (primary && key === "h") {
+    return "focus-replace";
+  }
+  if (primary && key === "/") {
+    return "source-view";
+  }
   if (fromTextInput) {
-    if (primary && key === "h") {
-      return "focus-replace";
-    }
-    if (primary && key === "f") {
-      return "focus-search";
-    }
     return null;
   }
   if (key === "f2") {
@@ -81,12 +84,6 @@ export function getAppShortcutCommand(event) {
   if (primary && key === "]") {
     return "indent-more";
   }
-  if (primary && key === "f") {
-    return "focus-search";
-  }
-  if (primary && key === "h") {
-    return "focus-replace";
-  }
   if (primary && event.shiftKey && key === "9") {
     return "zoom-reset";
   }
@@ -98,9 +95,6 @@ export function getAppShortcutCommand(event) {
   }
   if (primary && key === "\\") {
     return "clear-format";
-  }
-  if (primary && key === "/") {
-    return "source-view";
   }
   if (key === "f3") {
     return "find-next";

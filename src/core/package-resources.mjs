@@ -1,11 +1,17 @@
 import { isSupportedImageName } from "./assets.mjs";
 
 export function isLocalAbsolutePath(path) {
+  if (!path || typeof path !== "string") {
+    return false;
+  }
   return /^[a-zA-Z]:[\\/]/.test(path) || path.startsWith("/") || path.startsWith("\\\\");
 }
 
 export function normalizeDocumentResourcePath(resourcePath, basePath) {
-  if (!resourcePath || !basePath || resourcePath.startsWith("/") || /^[a-zA-Z]:[\\/]/.test(resourcePath)) {
+  if (!resourcePath || !basePath) {
+    return resourcePath;
+  }
+  if (resourcePath.startsWith("/") || /^[a-zA-Z]:[\\/]/.test(resourcePath)) {
     return resourcePath;
   }
 

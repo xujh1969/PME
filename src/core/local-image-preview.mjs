@@ -17,10 +17,13 @@ async function getConvertFileSrc() {
 }
 
 export async function hydrateLocalImagePreviews(doc, loadImageResource, options = {}) {
+  if (!doc || typeof doc !== "object" || !doc.content || !Array.isArray(doc.content)) {
+    return doc;
+  }
   try {
     return {
       ...doc,
-      content: await hydrateLocalMediaNodes(doc.content || [], loadImageResource, options),
+      content: await hydrateLocalMediaNodes(doc.content, loadImageResource, options),
     };
   } catch (error) {
     console.warn("hydrateLocalImagePreviews failed:", error);
@@ -31,6 +34,9 @@ export async function hydrateLocalImagePreviews(doc, loadImageResource, options 
 export async function hydrateDocumentMapLocalImages(documents, loadImageResource, rootPath = "") {
   return Object.fromEntries(await Promise.all(
     Object.entries(documents).map(async ([path, doc]) => {
+      if (typeof doc !== "object" || !doc.content || !Array.isArray(doc.content)) {
+        return [path, doc];
+      }
       const fullPath = isLocalAbsolutePath(path) ? path : (rootPath ? `${rootPath.replace(/\\/g, "/").replace(/\/$/, "")}/${path}` : path);
       return [path, await hydrateLocalImagePreviews(doc, loadImageResource, { basePath: fullPath })];
     }),
@@ -41,6 +47,9 @@ async function hydrateLocalMediaNodes(nodes, loadImageResource, options = {}) {
   const { basePath } = options;
 
   function resolvePath(resourcePath) {
+    if (!resourcePath || typeof resourcePath !== "string") {
+      return null;
+    }
     if (isLocalAbsolutePath(resourcePath)) {
       return resourcePath;
     }
