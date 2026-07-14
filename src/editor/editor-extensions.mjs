@@ -13,11 +13,14 @@ import Highlight from "@tiptap/extension-highlight";
 import Details, { DetailsSummary, DetailsContent } from "@tiptap/extension-details";
 import DragHandle from "@tiptap/extension-drag-handle";
 import Typography from "@tiptap/extension-typography";
+import { NodeSelection } from "@tiptap/pm/state";
 import Superscript from "@tiptap/extension-superscript";
 import Subscript from "@tiptap/extension-subscript";
 import { Table, TableRow } from "@tiptap/extension-table";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
+import { Callout } from "./callout-extension.mjs";
+import { Video } from "./video-extension.mjs";
 
 export function createEditorExtensions(options) {
   return [
@@ -93,7 +96,29 @@ export function createEditorExtensions(options) {
     Typography,
     options.mermaidDiagram,
     options.assetImage,
+    Callout,
+    Video,
     Placeholder.configure({ placeholder: "开始输入..." }),
-    BubbleMenu.configure({ element: options.bubbleMenuElement }),
+    BubbleMenu.configure({
+      element: options.bubbleMenuElement,
+      shouldShow: ({ editor }) => {
+        const { selection } = editor.state;
+        if (!selection || selection.empty) {
+          return false;
+        }
+        if (selection instanceof NodeSelection) {
+          const node = selection.node;
+          const blockList = ["video", "image", "blockMath", "mermaidDiagram", "codeBlock"];
+          if (blockList.includes(node.type.name)) {
+            return false;
+          }
+        }
+        const fromNode = editor.state.doc.nodeAt(selection.from);
+        if (fromNode?.type?.name === "inlineCode" || fromNode?.type?.name === "inlineMath") {
+          return false;
+        }
+        return true;
+      },
+    }),
   ];
 }

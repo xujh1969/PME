@@ -207,11 +207,9 @@ fn export_binary_file_dialog(default_file_name: String, bytes: Vec<u8>) -> Resul
 fn read_binary_file_path(file_path: String) -> Result<BinaryFilePayload, String> {
     let path = PathBuf::from(file_path);
     if !path.is_file() {
-        return Err("The image file no longer exists.".to_string());
+        return Err("The file no longer exists.".to_string());
     }
-    let Some(mime_type) = image_mime(&path) else {
-        return Err("Please select an image file.".to_string());
-    };
+    let mime_type = image_mime(&path).or_else(|| video_mime(&path)).ok_or_else(|| "Please select an image or video file.".to_string())?;
     let bytes = fs::read(path).map_err(|error| error.to_string())?;
     Ok(BinaryFilePayload {
         bytes,
@@ -227,6 +225,17 @@ fn pick_image_file_dialog() -> Result<Vec<ImageFilePayload>, String> {
     file_paths
         .into_iter()
         .map(read_image_file_payload)
+        .collect()
+}
+
+#[tauri::command]
+fn pick_video_file_dialog() -> Result<Vec<ImageFilePayload>, String> {
+    let Some(file_paths) = pick_video_files()? else {
+        return Ok(Vec::new());
+    };
+    file_paths
+        .into_iter()
+        .map(read_video_file_payload)
         .collect()
 }
 
@@ -299,6 +308,7 @@ fn main() {
             export_binary_file_dialog,
             read_binary_file_path,
             pick_image_file_dialog,
+            pick_video_file_dialog,
             write_text_file,
             write_binary_file,
             remove_file,
@@ -443,6 +453,27 @@ fn read_image_file_payload(path: PathBuf) -> Result<ImageFilePayload, String> {
     })
 }
 
+fn read_video_file_payload(path: PathBuf) -> Result<ImageFilePayload, String> {
+    if !path.is_file() {
+        return Err("The video file no longer exists.".to_string());
+    }
+    let Some(mime_type) = video_mime(&path) else {
+        return Err("Please select a video file.".to_string());
+    };
+    let bytes = fs::read(&path).map_err(|error| error.to_string())?;
+    let encoded = general_purpose::STANDARD.encode(bytes);
+    Ok(ImageFilePayload {
+        name: path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("video")
+            .to_string(),
+        path: path.to_string_lossy().to_string(),
+        preview_url: format!("data:{};base64,{}", mime_type, encoded),
+        mime_type: mime_type.to_string(),
+    })
+}
+
 #[cfg(target_os = "windows")]
 fn command_no_window(program: &Path) -> Command {
     let mut command = Command::new(program);
@@ -538,6 +569,43 @@ if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
 
 #[cfg(not(target_os = "windows"))]
 fn pick_image_files() -> Result<Option<Vec<PathBuf>>, String> {
+    Ok(None)
+}
+
+#[cfg(target_os = "windows")]
+fn pick_video_files() -> Result<Option<Vec<PathBuf>>, String> {
+    let script = r#"
+Add-Type -AssemblyName System.Windows.Forms
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$dialog = New-Object System.Windows.Forms.OpenFileDialog
+$dialog.Title = 'Insert Videos'
+$dialog.Filter = 'Video Files (*.mp4;*.webm;*.ogg;*.mov;*.avi;*.mkv)|*.mp4;*.webm;*.ogg;*.mov;*.avi;*.mkv'
+$dialog.Multiselect = $true
+if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+  $dialog.FileNames | ForEach-Object { Write-Output $_ }
+}
+"#;
+    let mut command = command_no_window(Path::new("powershell"));
+    command.args(["-NoProfile", "-STA", "-WindowStyle", "Hidden", "-Command", script]);
+    let output = command.output().map_err(|error| error.to_string())?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+    }
+    let selected: Vec<PathBuf> = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(PathBuf::from)
+        .collect();
+    if selected.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(selected))
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn pick_video_files() -> Result<Option<Vec<PathBuf>>, String> {
     Ok(None)
 }
 
@@ -838,6 +906,19 @@ fn image_mime(path: &Path) -> Option<&'static str> {
         "gif" => Some("image/gif"),
         "webp" => Some("image/webp"),
         "svg" => Some("image/svg+xml"),
+        _ => None,
+    }
+}
+
+fn video_mime(path: &Path) -> Option<&'static str> {
+    let extension = path.extension()?.to_str()?.to_ascii_lowercase();
+    match extension.as_str() {
+        "mp4" => Some("video/mp4"),
+        "webm" => Some("video/webm"),
+        "ogg" => Some("video/ogg"),
+        "mov" => Some("video/quicktime"),
+        "avi" => Some("video/x-msvideo"),
+        "mkv" => Some("video/x-matroska"),
         _ => None,
     }
 }

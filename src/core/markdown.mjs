@@ -46,6 +46,32 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
+    const singleLineBracketMath = line.match(/^\\\[(.+)\\\]$/);
+    if (singleLineBracketMath) {
+      content.push({
+        type: "blockMath",
+        attrs: { latex: singleLineBracketMath[1].trim() },
+      });
+      index += 1;
+      continue;
+    }
+
+    const bracketMathFence = line.match(/^\s*\\\[\s*$/);
+    if (bracketMathFence) {
+      const latexLines = [];
+      index += 1;
+      while (index < lines.length && lines[index].trim() !== "\\]") {
+        latexLines.push(lines[index]);
+        index += 1;
+      }
+      content.push({
+        type: "blockMath",
+        attrs: { latex: latexLines.join("\n").trim() },
+      });
+      index += 1;
+      continue;
+    }
+
     const mathFence = line.match(/^\$\$\s*$/);
     if (mathFence) {
       const latexLines = [];
@@ -89,11 +115,11 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
-    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    const heading = line.match(/^(#{1,6})\s+(.*?)(\s*<!--collapsed-->)?$/);
     if (heading) {
       content.push({
         type: "heading",
-        attrs: { level: heading[1].length },
+        attrs: { level: heading[1].length, collapsed: !!heading[3] },
         content: parseInline(heading[2], footnotes),
       });
       index += 1;
@@ -120,11 +146,69 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
+    const htmlVideo = parseHtmlVideo(line);
+    if (htmlVideo) {
+      content.push({
+        type: "video",
+        attrs: htmlVideo,
+      });
+      index += 1;
+      continue;
+    }
+
     const quote = line.match(/^>\s?(.*)$/);
     if (quote) {
       content.push({
         type: "blockquote",
         content: parseInline(quote[1], footnotes),
+      });
+      index += 1;
+      continue;
+    }
+
+    const calloutMatch = line.match(/^<div\s+class="callout\s+callout--([^"]+)"\s+data-type="([^"]+)"\s+data-title="([^"]+)">([^<]*)<\/div>$/);
+    if (calloutMatch) {
+      content.push({
+        type: "callout",
+        attrs: { type: calloutMatch[2], title: calloutMatch[3] },
+        content: calloutMatch[4].trim() ? [{ type: "paragraph", content: parseInline(calloutMatch[4].trim(), footnotes) }] : [],
+      });
+      index += 1;
+      continue;
+    }
+
+    if (/^<details>\s*$/.test(line)) {
+      index += 1;
+      let summaryText = "";
+      const contentLines = [];
+
+      while (index < lines.length && !/^<\/details>\s*$/.test(lines[index])) {
+        const summaryMatch = lines[index].match(/^<summary>(.*)<\/summary>$/);
+        if (summaryMatch) {
+          summaryText = summaryMatch[1];
+        } else {
+          contentLines.push(lines[index]);
+        }
+        index += 1;
+      }
+
+      const parsedContent = parseMarkdown(contentLines.join("\n"));
+      const detailsContent = parsedContent.content?.length > 0
+        ? parsedContent.content
+        : [{ type: "paragraph" }];
+
+      content.push({
+        type: "details",
+        content: [
+          {
+            type: "detailsSummary",
+            content: summaryText ? [{ type: "text", text: summaryText }] : [],
+          },
+          {
+            type: "detailsContent",
+            content: detailsContent,
+          },
+        ],
       });
       index += 1;
       continue;
@@ -200,7 +284,8 @@ export function hydrateImagePreviews(doc, files, options = {}) {
 
 function serializeNode(node, options) {
   if (node.type === "heading") {
-    return `${"#".repeat(node.attrs.level)} ${plainText(node, options)}`;
+    const text = `${"#".repeat(node.attrs.level)} ${plainText(node, options)}`;
+    return node.attrs.collapsed ? `${text} <!--collapsed-->` : text;
   }
 
   if (node.type === "paragraph") {
@@ -278,20 +363,39 @@ function serializeNode(node, options) {
     return `![${node.attrs.alt || ""}](${src})`;
   }
 
+  if (node.type === "video") {
+    const videoPath = node.attrs.assetSrc || node.attrs.src;
+    const src = toMarkdownRelativePath(videoPath, options.basePath);
+    const attrs = [
+      `src="${escapeHtmlAttribute(src)}"`,
+      node.attrs.assetSrc ? `data-asset-src="${escapeHtmlAttribute(node.attrs.assetSrc)}"` : "",
+      node.attrs.width ? `width="${node.attrs.width}"` : "",
+      "controls",
+    ].filter(Boolean);
+    return `<video ${attrs.join(" ")} />`;
+  }
+
   if (node.type === "details") {
     const summary = node.content?.find((child) => child.type === "detailsSummary");
-    const content = node.content?.filter((child) => child.type !== "detailsSummary");
-    const summaryText = summary ? serializeText(summary) : "";
-    const contentText = content ? content.map((c) => serializeNode(c, options)).join("\n") : "";
+    const content = node.content?.find((child) => child.type === "detailsContent");
+    const summaryText = summary ? plainText(summary) : "";
+    const contentText = content ? content.content?.map((c) => serializeNode(c, options)).join("\n") : "";
     return `<details>\n<summary>${summaryText}</summary>\n${contentText}\n</details>`;
   }
 
   if (node.type === "detailsSummary") {
-    return `<summary>${serializeText(node)}</summary>`;
+    return `<summary>${plainText(node)}</summary>`;
   }
 
   if (node.type === "detailsContent") {
     return node.content?.map((c) => serializeNode(c, options)).join("\n") || "";
+  }
+
+  if (node.type === "callout") {
+    const type = node.attrs?.type || "note";
+    const title = node.attrs?.title || "Note";
+    const contentText = node.content ? node.content.map((c) => plainText(c, options)).join("\n") : "";
+    return `<div class="callout callout--${type}" data-type="${type}" data-title="${title}">${contentText}</div>`;
   }
 
   return "";
@@ -306,10 +410,23 @@ function toMarkdownRelativePath(assetPath, basePath) {
     return assetPath;
   }
 
-  const baseDirectory = basePath.includes("/")
-    ? basePath.split("/").slice(0, -1)
+  let normalizedAssetPath = assetPath.replace(/\\/g, "/");
+  let normalizedBasePath = basePath.replace(/\\/g, "/");
+
+  const assetHasDrive = /^[A-Za-z]:\//.test(normalizedAssetPath);
+  const baseHasDrive = /^[A-Za-z]:\//.test(normalizedBasePath);
+
+  if (assetHasDrive && !baseHasDrive) {
+    return assetPath;
+  }
+
+  normalizedAssetPath = normalizedAssetPath.replace(/^[A-Za-z]:\//, "");
+  normalizedBasePath = normalizedBasePath.replace(/^[A-Za-z]:\//, "");
+
+  const baseDirectory = normalizedBasePath.includes("/")
+    ? normalizedBasePath.split("/").slice(0, -1)
     : [];
-  const assetParts = assetPath.split("/").filter(Boolean);
+  const assetParts = normalizedAssetPath.split("/").filter(Boolean);
 
   while (
     baseDirectory.length &&
@@ -485,6 +602,29 @@ function parseHtmlImage(line) {
   };
 }
 
+function parseHtmlVideo(line) {
+  const match = line.match(/^<video\s+([^>]*?)\s*\/?>$/i);
+  if (!match) {
+    return null;
+  }
+
+  const attrs = {};
+  for (const attr of match[1].matchAll(/([a-zA-Z:-]+)=["']([^"']*)["']/g)) {
+    attrs[attr[1].toLowerCase()] = attr[2];
+  }
+  if (!attrs.src) {
+    return null;
+  }
+
+  const width = normalizeImageSize(attrs.width);
+  return {
+    src: attrs.src,
+    assetSrc: attrs["data-asset-src"] || null,
+    controls: attrs.controls !== undefined,
+    ...(width ? { width } : {}),
+  };
+}
+
 function normalizeImageSize(value) {
   const size = Number.parseInt(value, 10);
   return Number.isFinite(size) && size > 0 ? size : null;
@@ -512,6 +652,17 @@ function hydrateNodes(nodes, files, options) {
       };
     }
 
+    if (node.type === "video") {
+      const videoPath = node.attrs?.assetSrc || normalizeMarkdownImagePath(node.attrs?.src, options.basePath);
+      return {
+        ...node,
+        attrs: {
+          ...node.attrs,
+          assetSrc: videoPath,
+        },
+      };
+    }
+
     if (node.content) {
       return {
         ...node,
@@ -528,10 +679,21 @@ function normalizeMarkdownImagePath(imagePath, basePath) {
     return imagePath;
   }
 
-  const baseDirectory = basePath.includes("/")
-    ? basePath.split("/").slice(0, -1)
-    : [];
-  const parts = [...baseDirectory, ...imagePath.split("/")];
+  const normalizedBasePath = basePath.replace(/\\/g, "/");
+  const normalizedImagePath = imagePath.replace(/\\/g, "/");
+
+  const driveMatch = normalizedBasePath.match(/^([A-Za-z]:)/);
+  const drive = driveMatch ? driveMatch[1] : "";
+  
+  const baseWithoutDrive = normalizedBasePath.replace(/^[A-Za-z]:/, "");
+
+  const baseDirectory = baseWithoutDrive.startsWith("/") 
+    ? baseWithoutDrive.slice(1).split("/").slice(0, -1)
+    : baseWithoutDrive.includes("/")
+      ? baseWithoutDrive.split("/").slice(0, -1)
+      : [];
+  
+  const parts = [...baseDirectory, ...normalizedImagePath.split("/")];
   const normalized = [];
 
   for (const part of parts) {
@@ -545,7 +707,8 @@ function normalizeMarkdownImagePath(imagePath, basePath) {
     }
   }
 
-  return normalized.join("/");
+  const path = normalized.join("/");
+  return drive ? drive + "/" + path : path;
 }
 
 function textContent(text) {
@@ -579,7 +742,7 @@ function getNextSerializedFootnoteId(options) {
 function parseInline(text, footnotes = {}) {
   const nodes = [];
   let index = 0;
-  const pattern = /(\[\^([^\]]+)\]|\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|~~([^~]+)~~|`([^`]+)`|\$([^$\n]+)\$|\*([^*]+)\*|<span\s+style="([^"]+)">([^<]+)<\/span>|<mark\s+style="([^"]+)">([^<]+)<\/mark>|<u>([^<]+)<\/u>|<sup>([^<]+)<\/sup>|<sub>([^<]+)<\/sub>)/g;
+  const pattern = /(\[\^([^\]]+)\]|\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|~~([^~]+)~~|`([^`]+)`|\\\((.+?)\\\)|\$([^$\n]+)\$|\*([^*]+)\*|<span\s+style="([^"]+)">([^<]+)<\/span>|<mark\s+style="([^"]+)">([^<]+)<\/mark>|<u>([^<]+)<\/u>|<sup>([^<]+)<\/sup>|<sub>([^<]+)<\/sub>)/g;
   let match;
 
   while ((match = pattern.exec(text)) !== null) {
@@ -601,19 +764,21 @@ function parseInline(text, footnotes = {}) {
     } else if (match[8]) {
       nodes.push({ type: "inlineMath", attrs: { latex: match[8].trim() } });
     } else if (match[9]) {
-      nodes.push(markedText(match[9], "italic"));
-    } else if (match[11]) {
-      const styles = parseInlineStyles(match[10]);
-      nodes.push({ type: "text", text: match[11], marks: styles });
-    } else if (match[13]) {
-      const styles = parseHighlightStyles(match[12]);
-      nodes.push({ type: "text", text: match[13], marks: styles });
+      nodes.push({ type: "inlineMath", attrs: { latex: match[9].trim() } });
+    } else if (match[10]) {
+      nodes.push(markedText(match[10], "italic"));
+    } else if (match[12]) {
+      const styles = parseInlineStyles(match[11]);
+      nodes.push({ type: "text", text: match[12], marks: styles });
     } else if (match[14]) {
-      nodes.push(markedText(match[14], "underline"));
+      const styles = parseHighlightStyles(match[13]);
+      nodes.push({ type: "text", text: match[14], marks: styles });
     } else if (match[15]) {
-      nodes.push(markedText(match[15], "superscript"));
+      nodes.push(markedText(match[15], "underline"));
     } else if (match[16]) {
-      nodes.push(markedText(match[16], "subscript"));
+      nodes.push(markedText(match[16], "superscript"));
+    } else if (match[17]) {
+      nodes.push(markedText(match[17], "subscript"));
     }
 
     index = pattern.lastIndex;

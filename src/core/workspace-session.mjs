@@ -107,7 +107,7 @@ export async function addMarkdownFileSession(
     state.files,
     { basePath: newPath },
   );
-  state.documents[newPath] = hydrateDocument ? await hydrateDocument(document) : document;
+  state.documents[newPath] = hydrateDocument ? await hydrateDocument(document, { basePath: newPath }) : document;
   state.openTabs.push({
     name: fileName(newPath),
     path: newPath,

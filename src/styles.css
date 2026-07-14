@@ -690,6 +690,35 @@ textarea:focus-visible {
   min-height: 28px;
 }
 
+.find-box .icon-button.active {
+  background: var(--color-accent);
+  color: #ffffff;
+  border-radius: var(--radius-sm);
+}
+
+.find-box .icon-button.active svg {
+  fill: #ffffff !important;
+}
+
+.find-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.find-input-wrapper input {
+  padding-right: 40px;
+}
+
+.find-input-wrapper .find-clear {
+  position: absolute;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+
 .toolbar {
   gap: 18px;
 }
@@ -1462,6 +1491,9 @@ textarea:focus-visible {
 .table-bubble.is-menu-open .table-bubble__menu {
   display: grid;
 }
+
+
+
 
 .table-bubble__menu button {
   width: 100%;
@@ -2282,7 +2314,7 @@ textarea:focus-visible {
 }
 
 .color-picker-modal {
-  max-width: 400px;
+  max-width: 480px;
 }
 
 .color-picker-modal__body {
@@ -2329,26 +2361,34 @@ textarea:focus-visible {
 
 .ProseMirror details,
 .ProseMirror [data-type="details"] {
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-xl);
-  margin: 16px 0;
-  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  margin: 8px 0;
+  overflow: visible;
+}
+
+.ProseMirror [data-type="details"] {
+  display: flex;
+  align-items: flex-start;
 }
 
 .ProseMirror [data-type="details"] > button {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  width: 100%;
-  padding: 12px 16px;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 1.7em;
+  min-height: 0;
+  padding: 0;
   border: none;
   border-radius: 0;
-  background: var(--color-surface-soft);
+  background: transparent;
   cursor: pointer;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: 1.7;
   text-align: left;
-  min-height: 44px;
   color: var(--color-ink);
 }
 
@@ -2365,7 +2405,8 @@ textarea:focus-visible {
 }
 
 .ProseMirror [data-type="details"] > div {
-  padding: var(--space-sm) var(--space-md);
+  flex: 1;
+  padding: 0;
 }
 
 .ProseMirror [data-type="details"]:not(.is-open) > div > [data-type="detailsContent"] {
@@ -2373,11 +2414,41 @@ textarea:focus-visible {
 }
 
 .ProseMirror [data-type="detailsSummary"] {
-  font-weight: 500;
+  display: block;
+  padding: 0;
+  background: transparent;
+  font-weight: 700;
+  line-height: 1.7;
+  min-height: 0;
 }
 
 .ProseMirror [data-type="detailsContent"] {
-  padding-top: var(--space-xs);
+  padding: var(--space-sm) 0;
+}
+
+.heading-collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  user-select: none;
+  margin-right: 6px;
+  opacity: 0.4;
+  font-size: 10px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.heading-collapse-toggle:hover {
+  opacity: 1;
+}
+
+@media print {
+  .heading-collapse-toggle {
+    display: none !important;
+  }
 }
 
 .table-of-contents {
@@ -2702,4 +2773,103 @@ textarea:focus-visible {
 
 .animate-fade-rise-delay-2 {
   animation: fade-rise 0.8s ease-out 0.4s both;
+}
+
+.ProseMirror .callout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-radius: var(--radius-xl);
+  margin: 16px 0;
+  border-left: 4px solid currentColor;
+  gap: 12px;
+}
+
+.ProseMirror .callout__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ProseMirror .callout__icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  stroke: currentColor;
+  fill: none;
+  overflow: visible;
+}
+
+.ProseMirror .callout__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ProseMirror .callout__title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.ProseMirror .callout p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.ProseMirror .callout--note {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.ProseMirror .callout--note::before {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='%233b82f6' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='16' x2='12' y2='12'/%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'/%3E%3C/svg%3E");
+}
+
+.ProseMirror .callout--tip {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.ProseMirror .callout--tip::before {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='%2322c55e' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E");
+}
+
+.ProseMirror .callout--important {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: #a855f7;
+  color: #a855f7;
+}
+
+.ProseMirror .callout--important::before {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='%23a855f7' stroke-width='2'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E");
+}
+
+.ProseMirror .callout--warning {
+  background: rgba(249, 115, 22, 0.1);
+  border-color: #f97316;
+  color: #f97316;
+}
+
+.ProseMirror .callout--warning::before {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='%23f97316' stroke-width='2'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E");
+}
+
+.ProseMirror .callout--caution {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.ProseMirror .callout--caution::before {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='%23ef4444' stroke-width='2'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E");
 }

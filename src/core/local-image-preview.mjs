@@ -1,32 +1,81 @@
-import { isLocalAbsolutePath } from "./package-resources.mjs";
+import { isLocalAbsolutePath, normalizeDocumentResourcePath } from "./package-resources.mjs";
 
-export async function hydrateLocalImagePreviews(doc, loadImageResource) {
-  return {
-    ...doc,
-    content: await hydrateLocalImageNodes(doc.content || [], loadImageResource),
-  };
+const videoSrcCache = new Map();
+
+let convertFileSrc;
+
+async function getConvertFileSrc() {
+  if (!convertFileSrc) {
+    try {
+      const { convertFileSrc: cfs } = await import("@tauri-apps/api/core");
+      convertFileSrc = cfs;
+    } catch {
+      convertFileSrc = null;
+    }
+  }
+  return convertFileSrc;
 }
 
-export async function hydrateDocumentMapLocalImages(documents, loadImageResource) {
+export async function hydrateLocalImagePreviews(doc, loadImageResource, options = {}) {
+  try {
+    return {
+      ...doc,
+      content: await hydrateLocalMediaNodes(doc.content || [], loadImageResource, options),
+    };
+  } catch (error) {
+    console.warn("hydrateLocalImagePreviews failed:", error);
+    return doc;
+  }
+}
+
+export async function hydrateDocumentMapLocalImages(documents, loadImageResource, rootPath = "") {
   return Object.fromEntries(await Promise.all(
-    Object.entries(documents).map(async ([path, doc]) => [
-      path,
-      await hydrateLocalImagePreviews(doc, loadImageResource),
-    ]),
+    Object.entries(documents).map(async ([path, doc]) => {
+      const fullPath = isLocalAbsolutePath(path) ? path : (rootPath ? `${rootPath.replace(/\\/g, "/").replace(/\/$/, "")}/${path}` : path);
+      return [path, await hydrateLocalImagePreviews(doc, loadImageResource, { basePath: fullPath })];
+    }),
   ));
 }
 
-async function hydrateLocalImageNodes(nodes, loadImageResource) {
+async function hydrateLocalMediaNodes(nodes, loadImageResource, options = {}) {
+  const { basePath } = options;
+
+  function resolvePath(resourcePath) {
+    if (isLocalAbsolutePath(resourcePath)) {
+      return resourcePath;
+    }
+    if (basePath && !resourcePath.startsWith("http")) {
+      return normalizeDocumentResourcePath(resourcePath, basePath);
+    }
+    return null;
+  }
+
   return Promise.all(nodes.map(async (node) => {
-    const imagePath = node.attrs?.assetSrc || node.attrs?.src;
-    if (node.type === "image" && imagePath && isLocalAbsolutePath(imagePath)) {
+    const resourcePath = node.attrs?.assetSrc || node.attrs?.src;
+    const resolvedPath = resolvePath(resourcePath);
+    
+    if (node.type === "video") {
+      console.log("[VIDEO PATH DEBUG]", { nodeType: node.type, resourcePath, resolvedPath, basePath });
+    }
+    
+    if (!resolvedPath) {
+      if (node.content) {
+        return {
+          ...node,
+          content: await hydrateLocalMediaNodes(node.content, loadImageResource, options),
+        };
+      }
+      return node;
+    }
+    
+    if (node.type === "image") {
       try {
-        const blob = await loadImageResource(imagePath);
+        const blob = await loadImageResource(resolvedPath);
         return {
           ...node,
           attrs: {
             ...node.attrs,
-            assetSrc: imagePath,
+            assetSrc: resolvedPath,
             src: await blobToDataUrl(blob),
           },
         };
@@ -35,10 +84,56 @@ async function hydrateLocalImageNodes(nodes, loadImageResource) {
       }
     }
 
+    if (node.type === "video") {
+      try {
+        if (videoSrcCache.has(resolvedPath)) {
+          return {
+            ...node,
+            attrs: {
+              ...node.attrs,
+              assetSrc: resolvedPath,
+              src: videoSrcCache.get(resolvedPath),
+            },
+          };
+        }
+
+        const nativePath = resolvedPath.replace(/\//g, "\\");
+        const cfs = await getConvertFileSrc();
+        if (cfs) {
+          const url = cfs(nativePath);
+          console.log("[VIDEO DEBUG]", { resourcePath, resolvedPath, nativePath, basePath, url });
+          videoSrcCache.set(resolvedPath, url);
+          return {
+            ...node,
+            attrs: {
+              ...node.attrs,
+              assetSrc: resolvedPath,
+              src: url,
+            },
+          };
+        }
+
+        const blob = await loadImageResource(resolvedPath);
+        const url = URL.createObjectURL(blob);
+        videoSrcCache.set(resolvedPath, url);
+        return {
+          ...node,
+          attrs: {
+            ...node.attrs,
+            assetSrc: resolvedPath,
+            src: url,
+          },
+        };
+      } catch (error) {
+        console.warn("Failed to load video:", resolvedPath, error);
+        return node;
+      }
+    }
+
     if (node.content) {
       return {
         ...node,
-        content: await hydrateLocalImageNodes(node.content, loadImageResource),
+        content: await hydrateLocalMediaNodes(node.content, loadImageResource, options),
       };
     }
 

@@ -18,8 +18,9 @@ export async function loadImageResource(source, options = {}) {
       throw new Error(`HTTP ${response.status}`);
     }
     const blob = await response.blob();
-    if (!blob.type.startsWith("image/")) {
-      throw new Error("Not an image");
+    const allowedTypes = ["image/", "video/", "application/octet-stream"];
+    if (!allowedTypes.some(type => blob.type.startsWith(type))) {
+      throw new Error("Not an image or video");
     }
     return blob;
   }

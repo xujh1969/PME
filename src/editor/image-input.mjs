@@ -24,3 +24,23 @@ export function getImageIntrinsicWidth(src) {
     image.src = src;
   });
 }
+
+export function getVideoIntrinsicWidth(src) {
+  return new Promise((resolve) => {
+    if (!src) {
+      resolve(null);
+      return;
+    }
+
+    const video = document.createElement("video");
+    video.onloadedmetadata = () => {
+      resolve(video.videoWidth || null);
+      URL.revokeObjectURL(video.src);
+    };
+    video.onerror = () => {
+      resolve(null);
+      URL.revokeObjectURL(video.src);
+    };
+    video.src = src;
+  });
+}

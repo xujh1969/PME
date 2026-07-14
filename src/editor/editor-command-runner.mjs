@@ -55,15 +55,7 @@ export function runEditorCommand(command, context) {
   } else if (command === "subscript") {
     chain.toggleSubscript().run();
   } else if (command === "details") {
-    chain.setDetails().run();
-    const raf = context.requestAnimationFrame || globalThis.requestAnimationFrame;
-    raf?.(() => {
-      const detailsEls = editor.view.dom.querySelectorAll('[data-type="details"]');
-      const lastDetails = detailsEls[detailsEls.length - 1];
-      if (lastDetails && !lastDetails.classList.contains("is-open")) {
-        lastDetails.querySelector("button")?.click();
-      }
-    });
+    context.createDetailsBlock?.(editor);
   } else if (command === "code") {
     chain.toggleCode().run();
   } else if (command === "clear-format") {
@@ -129,10 +121,14 @@ export function runEditorCommand(command, context) {
     chain.splitCell().run();
   } else if (command === "image") {
     context.openImageInsertPanel?.();
+  } else if (command === "video") {
+    context.openVideoInsertPanel?.();
   } else if (command === "markdown-link") {
     context.insertMarkdownLink?.();
   } else if (command === "formula") {
     chain.insertBlockMath({ latex: "E = mc^2" }).run();
+  } else if (command === "inline-formula") {
+    chain.insertInlineMath({ latex: "x = y" }).run();
   } else if (command === "mermaid") {
     chain.insertMermaidDiagram({ code: "graph TD\n  A-->B" }).run();
   } else if (command === "heading-up") {
@@ -161,5 +157,18 @@ export function runEditorCommand(command, context) {
     context.insertFootnote?.();
   } else if (command === "table-of-contents") {
     chain.insertTableOfContents().run();
+  } else if (command.startsWith("callout-")) {
+    const type = command.replace("callout-", "");
+    const calloutConfig = {
+      note: { title: "Note", label: "提醒内容" },
+      tip: { title: "Tip", label: "建议信息" },
+      important: { title: "Important", label: "重要信息" },
+      warning: { title: "Warning", label: "警告内容" },
+      caution: { title: "Caution", label: "注意内容" },
+    };
+    const config = calloutConfig[type];
+    if (config) {
+      chain.setCallout({ type, title: config.title, text: config.label }).run();
+    }
   }
 }

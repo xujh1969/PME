@@ -1,12 +1,13 @@
 import { strToU8, zipSync } from "fflate";
 
 import { serializeMarkdown } from "./markdown.mjs";
-import { packageImageNodes } from "./package-resources.mjs";
+import { packageImageNodes, packageVideoNodes } from "./package-resources.mjs";
 import { collectLinkedMarkdownPackage } from "./linked-markdown-package.mjs";
 
 export async function buildMarkdownPackage({
   doc,
   imageNodes,
+  videoNodes,
   markdownName,
   rootSourcePath,
   loadText,
@@ -26,13 +27,14 @@ export async function buildMarkdownPackage({
     };
   }
 
-  const packageResult = await packageImageNodes(imageNodes, loadImageResource);
-  const zipEntries = { ...packageResult.entries };
+  const imageResult = await packageImageNodes(imageNodes, loadImageResource);
+  const videoResult = videoNodes ? await packageVideoNodes(videoNodes, loadImageResource) : { entries: {}, missing: [] };
+  const zipEntries = { ...imageResult.entries, ...videoResult.entries };
 
   zipEntries[markdownName] = strToU8(serializeMarkdown(doc, { basePath: markdownName }));
   return {
     blob: new Blob([zipSync(zipEntries)], { type: "application/zip" }),
-    missing: packageResult.missing,
+    missing: [...imageResult.missing, ...videoResult.missing],
   };
 }
 

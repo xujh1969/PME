@@ -3,7 +3,9 @@ import { strToU8 } from "fflate";
 import { parseMarkdown, serializeMarkdown } from "./markdown.mjs";
 import {
   buildPackagedImageName,
+  buildPackagedVideoName,
   collectImageNodes,
+  collectVideoNodes,
   isLocalAbsolutePath,
   normalizeDocumentResourcePath,
 } from "./package-resources.mjs";
@@ -20,7 +22,9 @@ export async function collectLinkedMarkdownPackage({
   const documentPaths = new Map();
   const visited = new Set();
   const imagePaths = new Map();
+  const videoPaths = new Map();
   let imageIndex = 1;
+  let videoIndex = 1;
 
   if (rootSourcePath) {
     documentPaths.set(canonicalPath(rootSourcePath), rootName);
@@ -47,6 +51,30 @@ export async function collectLinkedMarkdownPackage({
 
       node.attrs.assetSrc = imagePaths.get(source);
       node.attrs.src = imagePaths.get(source);
+    }
+  }
+
+  async function packageVideos(doc, sourcePath) {
+    for (const node of collectVideoNodes(doc)) {
+      const original = node.attrs?.assetSrc || node.attrs?.src;
+      if (!original) continue;
+      const source = resolveResourcePath(original, sourcePath);
+
+      if (!videoPaths.has(source)) {
+        try {
+          const blob = await loadImageResource(source);
+          const assetPath = `assets/${buildPackagedVideoName(source, blob.type, videoIndex)}`;
+          videoIndex += 1;
+          entries[assetPath] = new Uint8Array(await blob.arrayBuffer());
+          videoPaths.set(source, assetPath);
+        } catch {
+          missing.push(source);
+          continue;
+        }
+      }
+
+      node.attrs.assetSrc = videoPaths.get(source);
+      node.attrs.src = videoPaths.get(source);
     }
   }
 
@@ -82,6 +110,7 @@ export async function collectLinkedMarkdownPackage({
     }
 
     await packageImages(doc, sourcePath);
+    await packageVideos(doc, sourcePath);
     entries[packagePath] = strToU8(serializeMarkdown(doc, { basePath: packagePath }));
   }
 

@@ -340,6 +340,7 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
         width: min(920px, 100%);
       }
       header, footer { display: none !important; }
+      .heading-collapse-toggle { display: none !important; }
       ::-webkit-print-color-adjust { exact; }
     }
   </style>

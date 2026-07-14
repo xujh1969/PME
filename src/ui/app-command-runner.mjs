@@ -46,7 +46,23 @@ export function runAppCommand(command, context) {
   } else if (command === "zoom-out") {
     context.setEditorZoom(state.editorZoom - 0.1);
   } else if (command === "focus-search") {
+    state.showReplace = false;
     document.querySelector("[data-find-input]")?.focus();
+    context.render();
+  } else if (command === "focus-replace") {
+    state.showReplace = true;
+    context.render();
+    setTimeout(() => {
+      document.querySelector("[data-replace-input]")?.focus();
+    }, 50);
+  } else if (command === "find-next") {
+    if (window.navigateFindResult) {
+      window.navigateFindResult(1);
+    }
+  } else if (command === "find-prev") {
+    if (window.navigateFindResult) {
+      window.navigateFindResult(-1);
+    }
   } else if (command === "about") {
     context.openMessageModal({
       title: "关于 PME",

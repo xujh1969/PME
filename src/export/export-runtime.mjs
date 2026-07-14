@@ -1,7 +1,23 @@
 export async function loadLocalImageResource(source) {
   const { invoke } = await import("@tauri-apps/api/core");
   const result = await invoke("read_binary_file_path", { filePath: source });
-  return new Blob([new Uint8Array(result.bytes)], { type: result.mimeType || "application/octet-stream" });
+  
+  let mimeType = result.mimeType || "application/octet-stream";
+  if (mimeType === "application/octet-stream") {
+    const ext = source.split(".").pop().toLowerCase();
+    const mimeTypes = {
+      mp4: "video/mp4",
+      webm: "video/webm",
+      ogg: "video/ogg",
+      mov: "video/quicktime",
+      avi: "video/x-msvideo",
+    };
+    if (mimeTypes[ext]) {
+      mimeType = mimeTypes[ext];
+    }
+  }
+  
+  return new Blob([new Uint8Array(result.bytes)], { type: mimeType });
 }
 
 export function downloadBlob(blob, fileName) {

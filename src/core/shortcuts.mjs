@@ -10,6 +10,12 @@ export function getAppShortcutCommand(event) {
     return "save-document";
   }
   if (fromTextInput) {
+    if (primary && key === "h") {
+      return "focus-replace";
+    }
+    if (primary && key === "f") {
+      return "focus-search";
+    }
     return null;
   }
   if (key === "f2") {
@@ -78,6 +84,9 @@ export function getAppShortcutCommand(event) {
   if (primary && key === "f") {
     return "focus-search";
   }
+  if (primary && key === "h") {
+    return "focus-replace";
+  }
   if (primary && event.shiftKey && key === "9") {
     return "zoom-reset";
   }
@@ -89,6 +98,15 @@ export function getAppShortcutCommand(event) {
   }
   if (primary && key === "\\") {
     return "clear-format";
+  }
+  if (primary && key === "/") {
+    return "source-view";
+  }
+  if (key === "f3") {
+    return "find-next";
+  }
+  if (event.shiftKey && key === "f3") {
+    return "find-prev";
   }
 
   return null;
