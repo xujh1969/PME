@@ -1,7 +1,7 @@
 # PME 数据模型与 Markdown 转换设计文档
 
-版本：0.1.0  
-更新时间：2026-07-09
+版本：0.1.2  
+更新时间：2026-07-15
 
 ## 1. 设计目标
 
@@ -147,7 +147,7 @@ interface WorkspaceAdapter {
 
 | Markdown | ProseMirror 类型 | 说明 |
 | --- | --- | --- |
-| `#` 到 `######` | `heading` | 标题 |
+| `#` 到 `######` | `heading` | 标题，支持 `collapsed` 属性 |
 | 普通文本 | `paragraph` | 段落 |
 | `---` / `***` | `horizontalRule` | 分割线 |
 | `- item` | `bulletList` | 无序列表 |
@@ -159,6 +159,7 @@ interface WorkspaceAdapter {
 | pipe table | `table` | 表格，支持对齐 |
 | Markdown image | `image` | 图片 |
 | HTML `img` | `image` | 用于保存图片尺寸 |
+| HTML `video` | `video` | 视频，支持本地文件 |
 
 ### 6.2 行内标记
 
@@ -200,7 +201,56 @@ interface ImageAttrs {
 <img src="image.png" alt="" width="480" data-pme-scale="50" data-pme-original-width="960" />
 ```
 
-## 8. Mermaid 模型
+## 8. 视频模型
+
+视频节点属性：
+
+```ts
+interface VideoAttrs {
+  src: string;
+  assetSrc?: string;
+  width?: number;
+  controls?: boolean;
+}
+```
+
+存储格式使用 HTML `video` 标签：
+
+```html
+<video src="video.mp4" controls width="640"></video>
+```
+
+当前策略：
+
+- 视频文件插入后保留原始路径。
+- 打包时视频文件会被复制到 `assets/` 目录。
+- 从不同目录下选择的同名视频会自动生成唯一文件名，避免相互覆盖。
+
+## 8.1 标题折叠属性
+
+标题节点支持 `collapsed` 属性：
+
+```ts
+interface HeadingAttrs {
+  level: number;
+  collapsed?: boolean;
+}
+```
+
+折叠状态保存：
+
+- 使用 HTML 注释保存折叠状态。
+- 格式：`<!-- pme-heading-collapsed -->`
+- 位于标题行之后。
+
+示例：
+
+```markdown
+## 标题二
+<!-- pme-heading-collapsed -->
+```
+
+## 10. Mermaid 模型
 
 节点类型：`mermaidDiagram`
 
@@ -222,7 +272,7 @@ flowchart TD
 
 当前缩放主要是编辑器视图状态。是否把缩放比例写入 Markdown，未来需要另行设计。建议保持 Markdown 标准语法，必要时使用 HTML 注释或外部元数据，但不要破坏 Typora 兼容性。
 
-## 9. 表格模型
+## 11. 表格模型
 
 表格使用 TipTap table 系列扩展：
 
@@ -247,7 +297,7 @@ Markdown 对齐保存为表格分隔行：
 | left | center | right |
 ```
 
-## 10. 代码块模型
+## 12. 代码块模型
 
 代码块使用 `@tiptap/extension-code-block-lowlight`，语言保存在：
 
@@ -267,7 +317,29 @@ console.log("PME");
 
 自动缩进逻辑在 `src/core/code-indent.mjs`，根据语言返回 2 或 4 空格，并识别 `{`、`[`、`(`、Python 冒号、Shell `then/do` 等增加缩进的场景。
 
-## 11. 导出与打包数据规则
+## 13. 目录（TOC）模型
+
+目录节点类型：`tableOfContents`
+
+```ts
+interface TableOfContentsAttrs {
+  type: "tableOfContents";
+}
+```
+
+存储格式使用 HTML：
+
+```html
+<nav class="table-of-contents"></nav>
+```
+
+渲染逻辑：
+
+- 编辑器中使用 NodeView 动态渲染目录内容。
+- 导出 HTML/PDF 时，根据文档中的标题节点生成目录列表。
+- 目录包含一级到六级标题，按层级缩进显示。
+
+## 14. 导出与打包数据规则
 
 ### 11.1 PDF
 
@@ -285,23 +357,43 @@ msedge --headless=new --print-to-pdf=...
 
 并使用 `--no-pdf-header-footer` 等参数移除浏览器打印页眉页脚。
 
-### 11.2 Markdown ZIP
+### 14.2 Markdown ZIP
 
 前端函数：`packageCurrentDocument()`
 
 规则：
 
-1. 扫描当前文档中的图片节点。
-2. 如果没有图片，直接导出 Markdown。
-3. 如果有图片，提示用户将下载/复制资源。
+1. 扫描当前文档中的图片和视频节点。
+2. 如果没有图片和视频，直接导出 Markdown。
+3. 如果有图片和视频，提示用户将下载/复制资源。
 4. 对同一个来源只生成一个包内 asset。
 5. 生成 ZIP：
    - `文档名.md`
-   - `assets/图片文件`
-6. 修改副本里的图片地址为 `assets/...`。
+   - `assets/图片和视频文件`
+6. 修改副本里的图片/视频地址为 `assets/...`。
 7. 原始 Markdown 不变。
+8. 从不同目录下选择的同名图片/视频会自动生成唯一文件名，避免相互覆盖。
 
-## 12. 已知限制
+### 14.3 HTML 打包
+
+前端函数：`packageCurrentDocumentAsHtml()`
+
+规则：
+
+1. 获取编辑器 DOM 的 HTML 内容。
+2. 扫描当前文档中的图片和视频节点。
+3. 临时展开所有折叠的标题（确保导出内容完整）。
+4. 获取编辑器 HTML 后恢复折叠状态。
+5. 下载/复制图片和视频资源到 `assets/`。
+6. 修改 HTML 中的图片/视频地址为 `assets/...`。
+7. 渲染目录（TOC）内容为完整列表。
+8. 生成完整的 HTML 页面（包含样式、脚本）。
+9. 生成 ZIP：
+   - `文档名.html`
+   - `assets/图片和视频文件`
+10. 原始 Markdown 不变。
+
+## 15. 已知限制
 
 - Markdown parser 是轻量实现，不是完整 CommonMark 解析器。
 - 复杂嵌套列表、复杂 HTML、脚注、Front Matter 等尚未完整支持。
