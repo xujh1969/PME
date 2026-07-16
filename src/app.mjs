@@ -3968,11 +3968,15 @@ function handlePaste(event) {
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    const parsed = parseMarkdown(text);
-    if (parsed.content && parsed.content.length > 0) {
-      editor.chain().focus().insertContent(parsed).run();
-    } else {
+    if (editor.isActive("codeBlock") || editor.isActive("mermaidDiagram") || editor.isActive("blockMath")) {
       editor.chain().focus().insertContent(text).run();
+    } else {
+      const parsed = parseMarkdown(text);
+      if (parsed.content && parsed.content.length > 0) {
+        editor.chain().focus().insertContent(parsed).run();
+      } else {
+        editor.chain().focus().insertContent(text).run();
+      }
     }
   }
 }
