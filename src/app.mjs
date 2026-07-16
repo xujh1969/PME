@@ -3383,6 +3383,7 @@ function openCreateWorkspaceModal() {
     const status = overlay.querySelector("[data-create-workspace-status]");
     const close = (result) => {
       overlay.remove();
+      document.querySelector("[data-table-bubble]")?.classList.add("is-visible");
       resolve(result);
     };
 
@@ -3424,6 +3425,7 @@ function openCreateWorkspaceModal() {
       }
     });
 
+    document.querySelector("[data-table-bubble]")?.classList.remove("is-visible");
     document.body.appendChild(overlay);
     nameInput.focus();
     nameInput.select();
@@ -3800,8 +3802,18 @@ async function insertNetworkVideo(url, options = {}) {
   }
 
   const scale = normalizeImageScale(options.scale);
-  const originalWidth = scale ? await getVideoIntrinsicWidth(url) : null;
-  const width = getScaledImageWidth(scale, originalWidth);
+  const originalWidth = await getVideoIntrinsicWidth(url);
+  const containerWidth = editor.view.dom.clientWidth - 40;
+  let width = null;
+  
+  if (scale && originalWidth) {
+    width = getScaledImageWidth(scale, originalWidth);
+  } else if (originalWidth && originalWidth > containerWidth) {
+    width = containerWidth;
+  } else if (originalWidth) {
+    width = originalWidth;
+  }
+  
   editor.chain().focus().setVideo({
     src: url,
     controls: true,
@@ -3814,8 +3826,18 @@ async function insertVideoFiles(videoFiles, options = {}) {
     const previewUrl = URL.createObjectURL(file);
     const assetPath = file.path ? file.path.replace(/\\/g, "/") : (file.name || "video.mp4");
     const scale = normalizeImageScale(options.scale);
-    const originalWidth = scale ? await getVideoIntrinsicWidth(previewUrl) : null;
-    const width = getScaledImageWidth(scale, originalWidth);
+    const originalWidth = await getVideoIntrinsicWidth(previewUrl);
+    const containerWidth = editor.view.dom.clientWidth - 40;
+    let width = null;
+    
+    if (scale && originalWidth) {
+      width = getScaledImageWidth(scale, originalWidth);
+    } else if (originalWidth && originalWidth > containerWidth) {
+      width = containerWidth;
+    } else if (originalWidth) {
+      width = originalWidth;
+    }
+    
     editor.chain().focus().setVideo({
       src: previewUrl,
       assetSrc: assetPath,
@@ -3831,8 +3853,18 @@ async function insertVideoAsset(asset, options = {}) {
   }
 
   const scale = normalizeImageScale(options.scale);
-  const originalWidth = scale ? await getVideoIntrinsicWidth(asset.previewUrl) : null;
-  const width = getScaledImageWidth(scale, originalWidth);
+  const originalWidth = await getVideoIntrinsicWidth(asset.previewUrl);
+  const containerWidth = editor.view.dom.clientWidth - 40;
+  let width = null;
+  
+  if (scale && originalWidth) {
+    width = getScaledImageWidth(scale, originalWidth);
+  } else if (originalWidth && originalWidth > containerWidth) {
+    width = containerWidth;
+  } else if (originalWidth) {
+    width = originalWidth;
+  }
+  
   editor.chain().focus().setVideo({
     src: asset.previewUrl,
     assetSrc: asset.assetPath,

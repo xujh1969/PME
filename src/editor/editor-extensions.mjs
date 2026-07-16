@@ -106,6 +106,13 @@ export function createEditorExtensions(options) {
         if (!selection || selection.empty) {
           return false;
         }
+        if (selection.from === selection.to) {
+          return false;
+        }
+        const docContent = editor.state.doc.content;
+        if (!docContent || docContent.size <= 2) {
+          return false;
+        }
         if (selection instanceof NodeSelection) {
           const node = selection.node;
           const blockList = ["video", "image", "blockMath", "mermaidDiagram", "codeBlock"];

@@ -1,3 +1,5 @@
+import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
+
 export function openMarkdownLinkModal(adapter) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
@@ -27,6 +29,7 @@ export function openMarkdownLinkModal(adapter) {
     };
     const close = (result) => {
       overlay.remove();
+      showTableBubbleToolbar();
       resolve(result);
     };
 
@@ -54,6 +57,7 @@ export function openMarkdownLinkModal(adapter) {
     });
     labelInput.addEventListener("input", updateApplyState);
 
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     overlay.querySelector("[data-markdown-link-pick]").focus();
   });

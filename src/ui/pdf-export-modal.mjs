@@ -1,3 +1,5 @@
+import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
+
 export function openPdfExportOptionsModal() {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
@@ -37,6 +39,7 @@ export function openPdfExportOptionsModal() {
 
     const close = (result) => {
       overlay.remove();
+      showTableBubbleToolbar();
       resolve(result);
     };
 
@@ -63,6 +66,7 @@ export function openPdfExportOptionsModal() {
       }
     });
 
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     overlay.querySelector("[data-pdf-orientation]")?.focus();
   });

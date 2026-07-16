@@ -461,8 +461,6 @@ fn read_video_file_payload(path: PathBuf) -> Result<ImageFilePayload, String> {
     let Some(mime_type) = video_mime(&path) else {
         return Err("Please select a video file.".to_string());
     };
-    let bytes = fs::read(&path).map_err(|error| error.to_string())?;
-    let encoded = general_purpose::STANDARD.encode(bytes);
     Ok(ImageFilePayload {
         name: path
             .file_name()
@@ -470,7 +468,7 @@ fn read_video_file_payload(path: PathBuf) -> Result<ImageFilePayload, String> {
             .unwrap_or("video")
             .to_string(),
         path: path.to_string_lossy().to_string(),
-        preview_url: format!("data:{};base64,{}", mime_type, encoded),
+        preview_url: path.to_string_lossy().to_string(),
         mime_type: mime_type.to_string(),
     })
 }

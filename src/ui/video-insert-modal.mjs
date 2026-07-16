@@ -1,6 +1,21 @@
 import { escapeHtml } from "../core/html-utils.mjs";
 import { normalizeImageScale } from "../core/image-size.mjs";
 import { isTauriRuntime } from "../core/tauri-workspace.mjs";
+import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
+
+let convertFileSrc;
+
+async function getConvertFileSrc() {
+  if (!convertFileSrc) {
+    try {
+      const { convertFileSrc: cfs } = await import("@tauri-apps/api/core");
+      convertFileSrc = cfs;
+    } catch {
+      convertFileSrc = null;
+    }
+  }
+  return convertFileSrc;
+}
 
 export function openVideoInsertModal() {
   return new Promise((resolve) => {
@@ -54,6 +69,7 @@ export function openVideoInsertModal() {
     const close = (result) => {
       disposePreviewUrl();
       overlay.remove();
+      showTableBubbleToolbar();
       resolve(result);
     };
     const describeSelection = (nextSelection) => {
@@ -84,16 +100,23 @@ export function openVideoInsertModal() {
       const { invoke } = await import("@tauri-apps/api/core");
       const videos = await invoke("pick_video_file_dialog");
       if (!videos.length) return;
-      const toAsset = (video) => ({
-        alt: video.name.replace(/\.[^.]+$/, ""),
-        assetPath: video.path.replace(/\\/g, "/"),
-        previewUrl: video.previewUrl,
-        src: video.previewUrl,
-      });
+      const cfs = await getConvertFileSrc();
+      const toAsset = (video) => {
+        const nativePath = video.previewUrl.replace(/\//g, "\\");
+        const previewUrl = cfs ? cfs(nativePath) : video.previewUrl;
+        return {
+          alt: video.name.replace(/\.[^.]+$/, ""),
+          assetPath: video.path.replace(/\\/g, "/"),
+          previewUrl,
+          src: previewUrl,
+        };
+      };
       if (videos.length === 1) {
-        updateSelection({ kind: "asset", asset: toAsset(videos[0]), previewUrl: videos[0].previewUrl });
+        const asset = toAsset(videos[0]);
+        updateSelection({ kind: "asset", asset, previewUrl: asset.previewUrl });
       } else {
-        updateSelection({ kind: "assets", assets: videos.map(toAsset), previewUrl: videos[0].previewUrl });
+        const assets = videos.map(toAsset);
+        updateSelection({ kind: "assets", assets, previewUrl: assets[0].previewUrl });
       }
     };
 
@@ -129,6 +152,7 @@ export function openVideoInsertModal() {
       }
     });
 
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     (videoUrl || videoFiles)?.focus();
   });

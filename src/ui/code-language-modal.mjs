@@ -1,4 +1,5 @@
 import { escapeHtml } from "../core/html-utils.mjs";
+import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
 
 const codeLanguageOptions = [
   ["", "无"],
@@ -61,6 +62,7 @@ export function openCodeLanguageModal(value) {
     const input = overlay.querySelector("[data-code-language-input]");
     const close = (result) => {
       overlay.remove();
+      showTableBubbleToolbar();
       resolve(result);
     };
     const apply = () => close(input.value.trim());
@@ -91,6 +93,7 @@ export function openCodeLanguageModal(value) {
       }
     });
 
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     input.focus();
     input.select();

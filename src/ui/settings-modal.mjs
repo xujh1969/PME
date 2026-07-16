@@ -1,5 +1,6 @@
 import { escapeHtml } from "../core/html-utils.mjs";
 import { getCurrentFonts, setFonts, saveConfig, DEFAULT_CONFIG, getCurrentTheme, setTheme } from "../core/config.mjs";
+import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
 
 const THEMES = [
   { value: "light", label: "浅色主题" },
@@ -104,6 +105,7 @@ export function openSettingsModal() {
 
     const close = (result) => {
       overlay.remove();
+      showTableBubbleToolbar();
       resolve(result);
     };
 
@@ -167,6 +169,7 @@ export function openSettingsModal() {
       }
     });
 
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     applyFonts();
     chineseSelect.focus();

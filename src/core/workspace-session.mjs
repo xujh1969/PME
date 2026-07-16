@@ -68,7 +68,7 @@ export function createOpenedWorkspaceSession({
 
 export function addUntitledMarkdownSession(state, { getNextUntitledPath, parseMarkdown }) {
   const newPath = getNextUntitledPath(state.files);
-  const markdown = `# ${newPath.replace(/\.md$/, "")}\n\n`;
+  const markdown = "";
 
   state.files[newPath] = markdown;
   state.paths = [...state.paths, newPath];
@@ -159,7 +159,7 @@ export function createMarkdownFileSession(
   path,
   { parseMarkdown, getWorkspacePaths, buildWorkspaceTree },
 ) {
-  const markdown = `# ${path.replace(/\.md$/i, "")}\n\n`;
+  const markdown = "";
 
   state.files[path] = markdown;
   state.documents[path] = parseMarkdown(markdown);

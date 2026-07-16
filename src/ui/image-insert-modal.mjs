@@ -2,6 +2,7 @@ import { getImageFilesFromFileList } from "../core/assets.mjs";
 import { escapeHtml } from "../core/html-utils.mjs";
 import { normalizeImageScale } from "../core/image-size.mjs";
 import { isTauriRuntime } from "../core/tauri-workspace.mjs";
+import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
 
 export function openImageInsertModal() {
   return new Promise((resolve) => {
@@ -55,6 +56,7 @@ export function openImageInsertModal() {
     const close = (result) => {
       disposePreviewUrl();
       overlay.remove();
+      showTableBubbleToolbar();
       resolve(result);
     };
     const describeSelection = (nextSelection) => {
@@ -129,6 +131,7 @@ export function openImageInsertModal() {
       }
     });
 
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     (imageUrl || imageFiles)?.focus();
   });

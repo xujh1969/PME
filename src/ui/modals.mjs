@@ -1,6 +1,31 @@
 import { escapeHtml } from "../core/html-utils.mjs";
 import { normalizeImageScale } from "../core/image-size.mjs";
 
+export function hideTableBubbleToolbar() {
+  const bubble = document.querySelector("[data-table-bubble]");
+  bubble?.classList.remove("is-visible");
+}
+
+export function showTableBubbleToolbar() {
+  const bubble = document.querySelector("[data-table-bubble]");
+  const editorElement = document.querySelector("#tiptapEditor");
+  if (bubble && editorElement) {
+    const contentElement = editorElement.querySelector(".ProseMirror");
+    if (contentElement) {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const cell = range.commonAncestorContainer?.closest?.("td, th");
+        if (cell) {
+          bubble.classList.add("is-visible");
+          return;
+        }
+      }
+    }
+  }
+  bubble?.classList.remove("is-visible");
+}
+
 export function openTableInsertModal() {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
@@ -18,7 +43,7 @@ export function openTableInsertModal() {
     const rowsInput = overlay.querySelector("[data-table-rows]");
     const colsInput = overlay.querySelector("[data-table-cols]");
     const headerInput = overlay.querySelector("[data-table-header]");
-    const close = (result) => { overlay.remove(); resolve(result); };
+    const close = (result) => { overlay.remove(); showTableBubbleToolbar(); resolve(result); };
     const apply = () => close({
       rows: clampInteger(rowsInput.value, 1, 30, 3),
       cols: clampInteger(colsInput.value, 1, 20, 3),
@@ -32,6 +57,7 @@ export function openTableInsertModal() {
       if (event.key === "Escape") { event.preventDefault(); close(null); }
       if (event.key === "Enter") { event.preventDefault(); apply(); }
     });
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     rowsInput.focus();
     rowsInput.select();
@@ -51,12 +77,12 @@ export function openImageSizeModal(value) {
       <div class="text-modal__dialog image-size-modal" role="dialog" aria-modal="true" aria-label="图片大小">
         <header class="text-modal__header"><strong>图片大小</strong><button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button></header>
         <section class="image-size-modal__body">
-          <label class="image-size-field image-size-field--stacked"><span>原图百分比</span><input data-image-scale type="number" min="10" max="300" step="5" placeholder="自动" value="${escapeHtml(value)}" /></label>
+          <label><span>原图百分比</span><input data-image-scale type="number" min="10" max="300" step="5" placeholder="自动" value="${escapeHtml(value)}" /></label>
         </section>
-        <footer class="text-modal__footer"><span>100 表示原图大小，留空表示自动。</span><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
+        <footer class="text-modal__footer"><span>100=原图，留空=自动</span><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
       </div>`;
     const input = overlay.querySelector("[data-image-scale]");
-    const close = (result) => { overlay.remove(); resolve(result); };
+    const close = (result) => { overlay.remove(); showTableBubbleToolbar(); resolve(result); };
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay || event.target.dataset.modalAction === "cancel") close(undefined);
       if (event.target.dataset.modalAction === "apply") close(normalizeImageScale(input.value));
@@ -65,6 +91,7 @@ export function openImageSizeModal(value) {
       if (event.key === "Escape") { event.preventDefault(); close(undefined); }
       if (event.key === "Enter") { event.preventDefault(); close(normalizeImageScale(input.value)); }
     });
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     input.focus();
     input.select();
@@ -82,7 +109,7 @@ export function openTextInputModal({ title, label, value = "", placeholder = "" 
         <footer class="text-modal__footer"><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
       </div>`;
     const input = overlay.querySelector("[data-text-input]");
-    const close = (result) => { overlay.remove(); resolve(result); };
+    const close = (result) => { overlay.remove(); showTableBubbleToolbar(); resolve(result); };
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay || event.target.dataset.modalAction === "cancel") close(null);
       if (event.target.dataset.modalAction === "apply") close(input.value);
@@ -91,6 +118,7 @@ export function openTextInputModal({ title, label, value = "", placeholder = "" 
       if (event.key === "Escape") { event.preventDefault(); close(null); }
       if (event.key === "Enter") { event.preventDefault(); close(input.value); }
     });
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     input.focus();
     input.select();
@@ -108,7 +136,7 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true }
         <footer class="text-modal__footer"><span>按 Ctrl+Enter 确定</span><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
       </div>`;
     const textarea = overlay.querySelector("textarea");
-    const close = (result) => { overlay.remove(); resolve(result); };
+    const close = (result) => { overlay.remove(); showTableBubbleToolbar(); resolve(result); };
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay || event.target.dataset.modalAction === "cancel") close(null);
       if (event.target.dataset.modalAction === "apply") close(textarea.value);
@@ -117,6 +145,7 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true }
       if (event.key === "Escape") { event.preventDefault(); close(null); }
       if (event.key === "Enter" && event.ctrlKey) { event.preventDefault(); close(textarea.value); }
     });
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     textarea.value = value;
     textarea.focus();
@@ -137,8 +166,9 @@ export function openWaitModal({ title, message }) {
       <header class="text-modal__header"><strong>${escapeHtml(title)}</strong></header>
       <section class="message-modal__body">${escapeHtml(message)}</section>
     </div>`;
+  hideTableBubbleToolbar();
   document.body.appendChild(overlay);
-  return () => { overlay.remove(); };
+  return () => { overlay.remove(); showTableBubbleToolbar(); };
 }
 
 export function openConfirmModal({ title, message, confirmLabel = "确定", cancelLabel = "取消" }) {
@@ -171,7 +201,7 @@ function openDecisionModal({ title, message, buttons, resolveAction, defaultActi
         <section class="message-modal__body">${escapeHtml(message)}</section>
         <footer class="text-modal__footer">${buttons.map(({ action, label, primary }) => `<button class="${primary ? "primary" : ""}" data-modal-action="${action}">${escapeHtml(label)}</button>`).join("")}</footer>
       </div>`;
-    const close = (action) => { overlay.remove(); resolve(resolveAction(action)); };
+    const close = (action) => { overlay.remove(); showTableBubbleToolbar(); resolve(resolveAction(action)); };
     overlay.addEventListener("click", (event) => {
       const action = event.target === overlay ? defaultAction : event.target.dataset.modalAction;
       if (action) close(action);
@@ -180,6 +210,7 @@ function openDecisionModal({ title, message, buttons, resolveAction, defaultActi
       const action = event.key === "Escape" ? defaultAction : event.key === "Enter" ? enterAction : null;
       if (action) { event.preventDefault(); close(action); }
     });
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     overlay.querySelector(`[data-modal-action='${focusAction || buttons[0].action}']`)?.focus();
   });

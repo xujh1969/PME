@@ -1,4 +1,5 @@
 import { escapeHtml } from "../core/html-utils.mjs";
+import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
 
 export function openLinkModal(value) {
   return new Promise((resolve) => {
@@ -37,6 +38,7 @@ export function openLinkModal(value) {
     const hrefInput = overlay.querySelector("[data-link-href]");
     const close = (result) => {
       overlay.remove();
+      showTableBubbleToolbar();
       resolve(result);
     };
     const apply = () => close({
@@ -76,6 +78,7 @@ export function openLinkModal(value) {
       }
     }, 50);
 
+    hideTableBubbleToolbar();
     document.body.appendChild(overlay);
     (textInput.value ? hrefInput : textInput).focus();
     (textInput.value ? hrefInput : textInput).select();
@@ -113,6 +116,7 @@ export function openTextColorPicker(editor) {
 
   const close = () => {
     overlay.remove();
+    showTableBubbleToolbar();
   };
 
   const applyColor = (color) => {
@@ -143,6 +147,7 @@ export function openTextColorPicker(editor) {
     }
   });
 
+  hideTableBubbleToolbar();
   document.body.appendChild(overlay);
 }
 
@@ -178,6 +183,7 @@ export function openHighlightColorPicker(editor) {
 
   const close = () => {
     overlay.remove();
+    showTableBubbleToolbar();
   };
 
   const applyColor = (color) => {
@@ -208,6 +214,7 @@ export function openHighlightColorPicker(editor) {
     }
   });
 
+  hideTableBubbleToolbar();
   document.body.appendChild(overlay);
 }
 
@@ -250,6 +257,7 @@ export function openEmojiPicker(editor) {
 
   const close = () => {
     overlay.remove();
+    showTableBubbleToolbar();
   };
 
   const insertEmoji = (emoji) => {
@@ -274,6 +282,7 @@ export function openEmojiPicker(editor) {
     }
   });
 
+  hideTableBubbleToolbar();
   document.body.appendChild(overlay);
 }
 

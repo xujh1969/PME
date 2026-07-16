@@ -32,14 +32,18 @@ export function getVideoIntrinsicWidth(src) {
       return;
     }
 
+    const timeout = setTimeout(() => {
+      resolve(null);
+    }, 5000);
+
     const video = document.createElement("video");
     video.onloadedmetadata = () => {
+      clearTimeout(timeout);
       resolve(video.videoWidth || null);
-      URL.revokeObjectURL(video.src);
     };
     video.onerror = () => {
+      clearTimeout(timeout);
       resolve(null);
-      URL.revokeObjectURL(video.src);
     };
     video.src = src;
   });
