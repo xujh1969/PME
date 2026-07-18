@@ -160,7 +160,7 @@ export function parseMarkdown(markdown) {
     if (quote) {
       content.push({
         type: "blockquote",
-        content: parseInline(quote[1], footnotes),
+        content: [{ type: "paragraph", content: parseInline(quote[1], footnotes) }],
       });
       index += 1;
       continue;
