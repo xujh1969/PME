@@ -1,4 +1,5 @@
 import { getCurrentFonts } from "./config.mjs";
+import katexCss from "./katex-fonts.css?raw";
 
 export function sanitizePdfFileName(name) {
   return name.replace(/[\\/:*?"<>|]/g, "_").trim() || "PME";
@@ -19,10 +20,10 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       --color-ink: #0c0a09;
       --color-slate: #4e4e4e;
       --color-stone: #777169;
-      --color-canvas: #f5f5f5;
-      --color-canvas-soft: #fafafa;
-      --color-surface-soft: #fafafa;
-      --color-surface-strong: #f0efed;
+      --color-canvas: #ffffff;
+      --color-canvas-soft: #ffffff;
+      --color-surface-soft: #ffffff;
+      --color-surface-strong: #f8f8f8;
       --color-hairline: #e7e5e4;
       --color-hairline-strong: #d6d3d1;
       --color-code-keyword: #7c3aed;
@@ -324,8 +325,16 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       height: auto !important;
     }
     
+    ${katexCss}
     .katex-display { overflow: visible; }
     .katex { font-family: KaTeX_Main, ${fonts.english}; }
+    .tiptap-mathematics-render { display: inline; }
+    .tiptap-mathematics-render[data-type="block-math"] { 
+      display: block; 
+      margin: 18px 0;
+      text-align: center;
+      overflow-x: auto;
+    }
     
     .table-of-contents {
       display: grid;

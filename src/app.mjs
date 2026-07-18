@@ -3492,7 +3492,7 @@ async function printDocument() {
   const html = buildPdfExportHtml({
     title,
     documentHtml,
-    options: { includeTitle: true, paper: "A4", orientation: "portrait" },
+    options: { includeTitle: false, paper: "A4", orientation: "portrait" },
   });
 
   printPdfHtml(html, () => {
@@ -3521,7 +3521,7 @@ async function exportCurrentDocumentToPdf(options) {
   const html = buildPdfExportHtml({
     title,
     documentHtml,
-    options,
+    options: { ...options, includeTitle: false },
   });
 
   if (isTauriRuntime()) {

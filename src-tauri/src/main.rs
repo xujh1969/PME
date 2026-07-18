@@ -3,6 +3,7 @@
 use base64::{engine::general_purpose, Engine as _};
 use serde::Serialize;
 use tauri::{Emitter, Manager};
+use tauri_plugin_dialog::DialogExt;
 use std::{
     collections::BTreeMap,
     env, fs,
@@ -56,11 +57,19 @@ struct ImageFilePayload {
 }
 
 #[tauri::command]
-fn open_markdown_file_dialog() -> Result<Option<WorkspacePayload>, String> {
-    let Some(file_path) = pick_markdown_file()? else {
-        return Ok(None);
-    };
-    read_markdown_file_workspace(file_path)
+fn open_markdown_file_dialog(app: tauri::AppHandle) -> Result<Option<WorkspacePayload>, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.dialog()
+        .file()
+        .add_filter("Markdown Files", &["md", "markdown"])
+        .pick_file(move |result| {
+            let _ = tx.send(result);
+        });
+    match rx.recv() {
+        Ok(Some(file_path)) => read_markdown_file_workspace(file_path.as_path().unwrap().to_path_buf()),
+        Ok(None) => Ok(None),
+        Err(_) => Ok(None),
+    }
 }
 
 #[tauri::command]
@@ -73,8 +82,15 @@ fn open_markdown_file_path(file_path: String) -> Result<Option<WorkspacePayload>
 }
 
 #[tauri::command]
-fn pick_markdown_link_dialog() -> Result<Option<String>, String> {
-    Ok(pick_markdown_file()?.map(|path| path.to_string_lossy().to_string()))
+fn pick_markdown_link_dialog(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.dialog()
+        .file()
+        .add_filter("Markdown Files", &["md", "markdown"])
+        .pick_file(move |result| {
+            let _ = tx.send(result);
+        });
+    Ok(rx.recv().ok().flatten().map(|file_path| file_path.as_path().unwrap().to_string_lossy().to_string()))
 }
 
 #[tauri::command]
@@ -96,20 +112,29 @@ fn write_text_file_path(file_path: String, content: String) -> Result<(), String
 }
 
 #[tauri::command]
-fn pick_workspace_parent_dialog() -> Result<Option<String>, String> {
-    Ok(pick_folder()?.map(|path| path.to_string_lossy().to_string()))
+fn pick_workspace_parent_dialog(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.dialog().file().pick_folder(move |result| {
+        let _ = tx.send(result);
+    });
+    Ok(rx.recv().ok().flatten().map(|file_path| file_path.as_path().unwrap().to_string_lossy().to_string()))
 }
 
 #[tauri::command]
 fn create_workspace_dialog(
+    app: tauri::AppHandle,
     project_name: String,
     parent_path: String,
 ) -> Result<Option<WorkspacePayload>, String> {
     let parent = if parent_path.trim().is_empty() {
-        let Some(parent) = pick_folder()? else {
-            return Ok(None);
-        };
-        parent
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.dialog().file().pick_folder(move |result| {
+            let _ = tx.send(result);
+        });
+        match rx.recv() {
+            Ok(Some(p)) => p.as_path().unwrap().to_path_buf(),
+            _ => return Ok(None),
+        }
     } else {
         PathBuf::from(parent_path)
     };
@@ -122,11 +147,16 @@ fn create_workspace_dialog(
 }
 
 #[tauri::command]
-fn open_workspace_dialog() -> Result<Option<WorkspacePayload>, String> {
-    let Some(root) = pick_folder()? else {
-        return Ok(None);
-    };
-    read_workspace(root)
+fn open_workspace_dialog(app: tauri::AppHandle) -> Result<Option<WorkspacePayload>, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.dialog().file().pick_folder(move |result| {
+        let _ = tx.send(result);
+    });
+    match rx.recv() {
+        Ok(Some(root)) => read_workspace(root.as_path().unwrap().to_path_buf()),
+        Ok(None) => Ok(None),
+        Err(_) => Ok(None),
+    }
 }
 
 #[tauri::command]
@@ -163,6 +193,7 @@ fn export_html_to_pdf_dialog(
             "--allow-file-access-from-files",
             "--no-pdf-header-footer",
             "--print-to-pdf-no-header",
+            "--virtual-time-budget=3000",
             &format!("--user-data-dir={}", temp_profile.to_string_lossy()),
             &format!("--print-to-pdf={}", pdf_path.to_string_lossy()),
             &file_url,
@@ -293,6 +324,7 @@ fn main() {
     };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             open_markdown_file_dialog,
             open_markdown_file_path,
@@ -485,24 +517,7 @@ fn command_no_window(program: &Path) -> Command {
     Command::new(program)
 }
 
-#[cfg(target_os = "windows")]
-fn pick_folder() -> Result<Option<PathBuf>, String> {
-    let script = r#"
-Add-Type -AssemblyName System.Windows.Forms
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-$dialog.Description = 'Select PME workspace folder'
-if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-  Write-Output $dialog.SelectedPath
-}
-"#;
-    run_path_dialog_script(script, None)
-}
 
-#[cfg(not(target_os = "windows"))]
-fn pick_folder() -> Result<Option<PathBuf>, String> {
-    Ok(None)
-}
 
 #[cfg(target_os = "windows")]
 fn pick_pdf_save_file(default_file_name: &str) -> Result<Option<PathBuf>, String> {
@@ -514,25 +529,7 @@ fn pick_pdf_save_file(_default_file_name: &str) -> Result<Option<PathBuf>, Strin
     Ok(None)
 }
 
-#[cfg(target_os = "windows")]
-fn pick_markdown_file() -> Result<Option<PathBuf>, String> {
-    let script = r#"
-Add-Type -AssemblyName System.Windows.Forms
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$dialog = New-Object System.Windows.Forms.OpenFileDialog
-$dialog.Title = 'Open Markdown'
-$dialog.Filter = 'Markdown Files (*.md;*.markdown)|*.md;*.markdown'
-if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-  Write-Output $dialog.FileName
-}
-"#;
-    run_path_dialog_script(script, None)
-}
 
-#[cfg(not(target_os = "windows"))]
-fn pick_markdown_file() -> Result<Option<PathBuf>, String> {
-    Ok(None)
-}
 
 #[cfg(target_os = "windows")]
 fn pick_image_files() -> Result<Option<Vec<PathBuf>>, String> {
@@ -654,25 +651,6 @@ fn pick_save_file(
     _title: &str,
 ) -> Result<Option<PathBuf>, String> {
     Ok(None)
-}
-
-#[cfg(target_os = "windows")]
-fn run_path_dialog_script(script: &str, env_pair: Option<(&str, &str)>) -> Result<Option<PathBuf>, String> {
-    let mut command = command_no_window(Path::new("powershell"));
-    command.args(["-NoProfile", "-STA", "-WindowStyle", "Hidden", "-Command", script]);
-    if let Some((key, value)) = env_pair {
-        command.env(key, value);
-    }
-    let output = command.output().map_err(|error| error.to_string())?;
-    if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
-    }
-    let selected = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if selected.is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(PathBuf::from(selected)))
-    }
 }
 
 #[cfg(target_os = "windows")]

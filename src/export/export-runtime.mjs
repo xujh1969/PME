@@ -32,9 +32,14 @@ export function downloadBlob(blob, fileName) {
 }
 
 export function printPdfHtml(html, onPrintError) {
+  document.querySelectorAll('.pdf-print-frame').forEach(f => f.remove());
+  
   const frame = document.createElement("iframe");
   frame.className = "pdf-print-frame";
   frame.setAttribute("aria-hidden", "true");
+  frame.style.position = "absolute";
+  frame.style.top = "-9999px";
+  frame.style.width = "100%";
   document.body.appendChild(frame);
 
   const frameWindow = frame.contentWindow;
@@ -45,14 +50,40 @@ export function printPdfHtml(html, onPrintError) {
     return;
   }
 
+  const cleanup = () => {
+    try {
+      frame.remove();
+    } catch (e) {}
+  };
+
+  frameWindow.onafterprint = cleanup;
+  window.setTimeout(cleanup, 10000);
+  
   frameDocument.open();
   frameDocument.write(html);
   frameDocument.close();
+  
+  frame.onload = () => {
+    frameWindow.setTimeout(() => {
+      try {
+        frameWindow.focus();
+        frameWindow.print();
+      } catch (e) {
+        cleanup();
+        onPrintError?.();
+      }
+    }, 500);
+  };
+  
   frameWindow.setTimeout(() => {
-    frameWindow.focus();
-    frameWindow.print();
-    window.setTimeout(() => frame.remove(), 1000);
-  }, 250);
+    try {
+      frameWindow.focus();
+      frameWindow.print();
+    } catch (e) {
+      cleanup();
+      onPrintError?.();
+    }
+  }, 1000);
 }
 
 export function waitForNextFrame() {
@@ -74,11 +105,37 @@ export async function getPrintableDocumentHtml(doc) {
   clone.querySelectorAll(".ProseMirror-selectednode").forEach((element) => {
     element.classList.remove("ProseMirror-selectednode");
   });
+  cleanupMathElementsForPrint(clone);
   await inlinePrintableImages(clone);
   if (doc) {
     renderTableOfContentsForPrint(clone, doc);
   }
   return clone.innerHTML;
+}
+
+function cleanupMathElementsForPrint(root) {
+  root.querySelectorAll(".tiptap-mathematics-render").forEach((mathElement) => {
+    const katexDisplayElement = mathElement.querySelector(".katex-display");
+    const katexElement = mathElement.querySelector(".katex");
+    
+    if (katexDisplayElement) {
+      mathElement.innerHTML = "";
+      mathElement.appendChild(katexDisplayElement.cloneNode(true));
+    } else if (katexElement) {
+      mathElement.innerHTML = "";
+      mathElement.appendChild(katexElement.cloneNode(true));
+    } else {
+      const katexError = mathElement.querySelector(".katex-error");
+      if (katexError) {
+        mathElement.innerHTML = "";
+        mathElement.appendChild(katexError.cloneNode(true));
+      } else {
+        mathElement.innerHTML = "";
+      }
+    }
+    
+    mathElement.setAttribute("data-type", mathElement.dataset.type || "inline-math");
+  });
 }
 
 function renderTableOfContentsForPrint(root, doc) {
