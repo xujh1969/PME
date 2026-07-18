@@ -67,6 +67,9 @@
   --font-ui: "Inter", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
   --font-editor: "Inter", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: "Cascadia Mono", "SFMono-Regular", Consolas, "Microsoft YaHei UI", monospace;
+  --font-family-chinese: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-family-english: "Inter", "SF Pro Display", "Segoe UI", sans-serif;
+  --font-family-code: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   font-family: var(--font-ui);
   font-size: 16px;
   letter-spacing: 0.16px;
@@ -1252,7 +1255,9 @@ textarea:focus-visible {
   margin: 0 auto;
   outline: none;
   padding: 64px 24px 96px;
-  font: calc(1rem * var(--editor-zoom)) / 1.7 var(--font-editor);
+  font-size: calc(1rem * var(--editor-zoom));
+  line-height: 1.7;
+  font-family: var(--font-family-chinese, var(--font-editor)), var(--font-family-english, var(--font-editor));
   letter-spacing: 0.16px;
   color: var(--color-slate);
   background: var(--color-canvas);
@@ -1264,7 +1269,7 @@ textarea:focus-visible {
   line-height: 1.2;
   color: var(--color-ink);
   font-weight: 500;
-  font-family: var(--font-display);
+  font-family: var(--font-family-chinese, var(--font-display)), var(--font-family-english, var(--font-display));
   letter-spacing: -0.32px;
 }
 
@@ -1394,7 +1399,7 @@ textarea:focus-visible {
   background: var(--color-surface-soft);
   padding: 0.15em 0.4em;
   color: var(--color-charcoal);
-  font-family: var(--font-mono);
+  font-family: var(--font-family-code, var(--font-mono));
   font-size: 0.9em;
 }
 
@@ -1427,7 +1432,7 @@ textarea:focus-visible {
 }
 
 .ProseMirror pre code {
-  font-family: var(--font-mono);
+  font-family: var(--font-family-code, var(--font-mono));
   font-size: 0.9rem;
   line-height: 1.6;
 }

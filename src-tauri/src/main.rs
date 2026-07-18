@@ -413,6 +413,11 @@ fn read_readme_file() -> Result<String, String> {
     let mut current_dir = exe_path.parent().ok_or_else(|| "Failed to get app directory.".to_string())?;
     
     for _ in 0..5 {
+        let manual_path = current_dir.join("PME使用说明书.md");
+        if manual_path.exists() {
+            return fs::read_to_string(manual_path).map_err(|error| error.to_string());
+        }
+        
         let readme_path = current_dir.join("README.md");
         if readme_path.exists() {
             return fs::read_to_string(readme_path).map_err(|error| error.to_string());
@@ -424,7 +429,7 @@ fn read_readme_file() -> Result<String, String> {
         current_dir = parent;
     }
     
-    Ok("# PME - Portable Markdown Editor\n\nREADME.md not found.".to_string())
+    Ok("# PME - Portable Markdown Editor\n\n使用说明书未找到。".to_string())
 }
 
 fn read_workspace(root: PathBuf) -> Result<Option<WorkspacePayload>, String> {

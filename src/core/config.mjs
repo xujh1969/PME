@@ -100,6 +100,10 @@ export function setFonts(fonts) {
 }
 
 function applyFontsToEditor() {
+  document.documentElement.style.setProperty("--font-family-chinese", config.fonts.chinese);
+  document.documentElement.style.setProperty("--font-family-english", config.fonts.english);
+  document.documentElement.style.setProperty("--font-family-code", config.fonts.code);
+  
   let style = document.getElementById("pme-font-styles");
   if (!style) {
     style = document.createElement("style");
@@ -107,17 +111,12 @@ function applyFontsToEditor() {
     document.head.appendChild(style);
   }
   style.textContent = `
-    :root {
-      --font-family-chinese: ${config.fonts.chinese};
-      --font-family-english: ${config.fonts.english};
-      --font-family-code: ${config.fonts.code};
-    }
     .ProseMirror {
-      font-family: ${config.fonts.chinese}, ${config.fonts.english};
+      font-family: var(--font-family-chinese), var(--font-family-english) !important;
     }
     .ProseMirror code,
     .ProseMirror pre {
-      font-family: ${config.fonts.code};
+      font-family: var(--font-family-code) !important;
     }
     .ProseMirror h1,
     .ProseMirror h2,
@@ -125,11 +124,11 @@ function applyFontsToEditor() {
     .ProseMirror h4,
     .ProseMirror h5,
     .ProseMirror h6 {
-      font-family: ${config.fonts.chinese}, ${config.fonts.english};
+      font-family: var(--font-family-chinese), var(--font-family-english) !important;
     }
     .ProseMirror th,
     .ProseMirror td {
-      font-family: ${config.fonts.chinese}, ${config.fonts.english};
+      font-family: var(--font-family-chinese), var(--font-family-english) !important;
     }
   `;
 }
