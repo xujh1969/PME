@@ -15,6 +15,8 @@ const CHINESE_FONTS = [
   { value: "\"WenQuanYi Micro Hei\", \"Microsoft YaHei\", sans-serif", label: "WenQuanYi Micro Hei" },
   { value: "\"SimSun\", \"Microsoft YaHei\", serif", label: "SimSun" },
   { value: "\"SimHei\", \"Microsoft YaHei\", sans-serif", label: "SimHei" },
+  { value: "\"KaiTi\", \"KaiTi_GB2312\", serif", label: "KaiTi" },
+  { value: "\"FangSong\", \"FangSong_GB2312\", serif", label: "FangSong" },
 ];
 
 const ENGLISH_FONTS = [

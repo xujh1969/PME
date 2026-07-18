@@ -2,6 +2,8 @@
 
 PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 TipTap v3 构建。
 
+**当前版本**: 0.1.5
+
 ## 功能特性
 
 ### 核心编辑功能
@@ -50,9 +52,16 @@ PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 Ti
 
 ### 导出与打印
 
-- **PDF 导出**：支持导出为 PDF 文件，使用配置的字体渲染
-- **打印功能**：支持打印到打印机，包含打印预览
-- **ZIP 打包**：支持将文档及相关资源打包为 ZIP 文件
+- **PDF 导出**：支持导出为 PDF 文件，使用配置的字体渲染，支持数学公式和代码块渲染
+- **打印功能**：支持打印到打印机，包含打印预览，修复了打印预览重复弹出问题
+- **ZIP 打包**：支持将文档及相关资源打包为 ZIP 文件，Base64 嵌入图片会自动提取保存为单独文件，使用相对路径引用，保持与其他 Markdown 工具的兼容性
+
+### 交互体验
+
+- **菜单悬停**：菜单打开后，鼠标在主菜单栏上移动时自动切换菜单
+- **编辑界面底色统一**：文档编辑区底色与文档内容底色保持一致，无论文档长短
+- **深色主题优化**：下拉框、输入框等控件适配深色主题，接近 VS Code 深色主题风格
+- **中文字体扩展**：中文字体配置增加楷体 (KaiTi) 和仿宋体 (FangSong) 选项
 
 ## 技术栈
 
@@ -99,8 +108,8 @@ npm run tauri:build
 ### 构建产物
 
 - 可执行文件：`src-tauri/target/release/pme.exe`
-- NSIS 安装包：`src-tauri/target/release/bundle/nsis/PME_0.1.1_x64-setup.exe`
-- MSI 安装包：`src-tauri/target/release/bundle/msi/PME_0.1.1_x64_en-US.msi`
+- NSIS 安装包：`src-tauri/target/release/bundle/nsis/PME_0.1.5_x64-setup.exe`
+- MSI 安装包：`src-tauri/target/release/bundle/msi/PME_0.1.5_x64_en-US.msi`
 
 ## 项目结构
 

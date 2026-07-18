@@ -423,10 +423,18 @@ function toMarkdownRelativePath(assetPath, basePath) {
   normalizedAssetPath = normalizedAssetPath.replace(/^[A-Za-z]:\//, "");
   normalizedBasePath = normalizedBasePath.replace(/^[A-Za-z]:\//, "");
 
+  if (normalizedAssetPath.startsWith("/")) {
+    return assetPath;
+  }
+
   const baseDirectory = normalizedBasePath.includes("/")
     ? normalizedBasePath.split("/").slice(0, -1)
     : [];
   const assetParts = normalizedAssetPath.split("/").filter(Boolean);
+
+  if (assetParts.length > 0 && assetParts[0] === "assets") {
+    return normalizedAssetPath;
+  }
 
   while (
     baseDirectory.length &&

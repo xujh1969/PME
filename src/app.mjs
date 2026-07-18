@@ -708,7 +708,8 @@ function renderAppMenu() {
       menuItem("zoom-out", "缩小", "Ctrl+Shift+-"),
     ]],
     ["帮助", [
-      menuItem("about", "关于 PME"),
+      menuItem("help", "使用说明"),
+      menuItem("about", "关于"),
     ]],
   ];
 
@@ -1094,6 +1095,17 @@ function bindMenuEvents() {
       closeAppMenus();
       item.classList.toggle("is-open", shouldOpen);
     });
+    
+    button.addEventListener("mouseover", (event) => {
+      const item = button.closest(".app-menu__item");
+      if (!item.classList.contains("is-open")) {
+        const anyMenuOpen = document.querySelector(".app-menu__item.is-open");
+        if (anyMenuOpen) {
+          closeAppMenus();
+          item.classList.add("is-open");
+        }
+      }
+    });
   });
 
   document.querySelectorAll("[data-menu-command]").forEach((button) => {
@@ -1155,6 +1167,7 @@ async function runMenuCommand(command) {
       runEditorCommand,
       openSettingsModal,
       printDocument,
+      openHelpDocument,
     });
   } catch (error) {
     console.error(error);
@@ -3467,6 +3480,39 @@ function openSettingsModal() {
   });
 }
 
+async function openHelpDocument() {
+  const helpPath = "pme://help";
+  
+  if (state.openTabs.some((tab) => tab.path === helpPath)) {
+    state.selectedPath = helpPath;
+    render();
+    return;
+  }
+
+  let markdown = "# PME - Portable Markdown Editor\n\n帮助文档加载失败。";
+  
+  try {
+    if (isTauriRuntime()) {
+      const { invoke } = await import("@tauri-apps/api/core");
+      markdown = await invoke("read_readme_file");
+    } else {
+      const response = await fetch("README.md");
+      if (response.ok) {
+        markdown = await response.text();
+      }
+    }
+  } catch {
+  }
+
+  const parsed = parseMarkdown(markdown);
+  state.files[helpPath] = markdown;
+  state.documents[helpPath] = parsed;
+  state.paths = [...new Set([...state.paths, helpPath])];
+  state.openTabs.push({ name: "帮助", path: helpPath, modified: false });
+  state.selectedPath = helpPath;
+  render();
+}
+
 async function printDocument() {
   if (!state.selectedPath) {
     openMessageModal({ title: "无法打印", message: "请先打开一个 Markdown 文档。" });
@@ -3592,7 +3638,7 @@ async function packageCurrentDocument() {
       message: "有 " + packageResult.missing.length + " 个文档或图片资源无法读取。是否继续生成 ZIP？\n\n"
         + packageResult.missing.slice(0, 5).join("\n"),
       confirmLabel: "继续生成",
-      cancelLabel: "鍙栨秷",
+      cancelLabel: "取消",
     });
     if (!shouldContinue) {
       return;

@@ -12,7 +12,22 @@ export async function loadImageResource(source, options = {}) {
     selectedPath = "",
   } = options;
 
-  if (source.startsWith("data:") || source.startsWith("blob:") || /^https?:\/\//i.test(source)) {
+  if (source.startsWith("data:")) {
+    const match = source.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) {
+      throw new Error("Invalid data URI");
+    }
+    const mimeType = match[1];
+    const base64Data = match[2];
+    const binaryData = atob(base64Data);
+    const bytes = new Uint8Array(binaryData.length);
+    for (let i = 0; i < binaryData.length; i++) {
+      bytes[i] = binaryData.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mimeType });
+  }
+
+  if (source.startsWith("blob:") || /^https?:\/\//i.test(source)) {
     const response = await fetchResource(source);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);

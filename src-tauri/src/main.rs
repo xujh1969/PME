@@ -347,6 +347,7 @@ fn main() {
             read_config_file,
             write_config_file,
             get_command_line_file,
+            read_readme_file,
         ])
         .setup(move |app| {
             let window = app.get_webview_window("main").unwrap();
@@ -403,6 +404,27 @@ fn get_command_line_file() -> Result<Option<String>, String> {
         }
     }
     Ok(None)
+}
+
+#[tauri::command]
+fn read_readme_file() -> Result<String, String> {
+    let exe_path = env::current_exe().map_err(|error| error.to_string())?;
+    
+    let mut current_dir = exe_path.parent().ok_or_else(|| "Failed to get app directory.".to_string())?;
+    
+    for _ in 0..5 {
+        let readme_path = current_dir.join("README.md");
+        if readme_path.exists() {
+            return fs::read_to_string(readme_path).map_err(|error| error.to_string());
+        }
+        
+        let Some(parent) = current_dir.parent() else {
+            break;
+        };
+        current_dir = parent;
+    }
+    
+    Ok("# PME - Portable Markdown Editor\n\nREADME.md not found.".to_string())
 }
 
 fn read_workspace(root: PathBuf) -> Result<Option<WorkspacePayload>, String> {

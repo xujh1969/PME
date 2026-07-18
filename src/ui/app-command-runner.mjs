@@ -77,6 +77,8 @@ export function runAppCommand(command, context) {
     if (window.navigateFindResult) {
       window.navigateFindResult(-1);
     }
+  } else if (command === "help") {
+    context.openHelpDocument();
   } else if (command === "about") {
     context.openMessageModal({
       title: "关于 PME",

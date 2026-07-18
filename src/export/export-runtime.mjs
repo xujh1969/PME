@@ -50,10 +50,23 @@ export function printPdfHtml(html, onPrintError) {
     return;
   }
 
+  let printed = false;
   const cleanup = () => {
     try {
       frame.remove();
     } catch (e) {}
+  };
+
+  const doPrint = () => {
+    if (printed) return;
+    printed = true;
+    try {
+      frameWindow.focus();
+      frameWindow.print();
+    } catch (e) {
+      cleanup();
+      onPrintError?.();
+    }
   };
 
   frameWindow.onafterprint = cleanup;
@@ -64,26 +77,10 @@ export function printPdfHtml(html, onPrintError) {
   frameDocument.close();
   
   frame.onload = () => {
-    frameWindow.setTimeout(() => {
-      try {
-        frameWindow.focus();
-        frameWindow.print();
-      } catch (e) {
-        cleanup();
-        onPrintError?.();
-      }
-    }, 500);
+    frameWindow.setTimeout(doPrint, 500);
   };
   
-  frameWindow.setTimeout(() => {
-    try {
-      frameWindow.focus();
-      frameWindow.print();
-    } catch (e) {
-      cleanup();
-      onPrintError?.();
-    }
-  }, 1000);
+  frameWindow.setTimeout(doPrint, 1000);
 }
 
 export function waitForNextFrame() {

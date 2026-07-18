@@ -146,7 +146,10 @@ function isLocalMarkdownPath(path) {
 }
 
 function resolveResourcePath(path, sourcePath) {
-  if (/^(https?:|data:|blob:)/i.test(path) || isLocalAbsolutePath(path) || !sourcePath) {
+  if (/^(data:|blob:)/i.test(path)) {
+    return path;
+  }
+  if (/^https?:/i.test(path) || isLocalAbsolutePath(path) || !sourcePath) {
     return canonicalPath(path);
   }
   return canonicalPath(normalizeDocumentResourcePath(path, canonicalPath(sourcePath)));

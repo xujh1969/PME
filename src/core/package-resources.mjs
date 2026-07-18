@@ -164,6 +164,9 @@ export function getPackagedVideoExtension(source, mimeType = "") {
 
 export function getPackagedImageBaseName(source) {
   try {
+    if (source.startsWith("data:")) {
+      return "";
+    }
     const pathname = /^https?:\/\//i.test(source) ? new URL(source).pathname : source;
     return getFileName(pathname)
       .replace(/\.[^.]+$/, "")
