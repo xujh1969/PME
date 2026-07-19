@@ -15,6 +15,9 @@ export function getAppShortcutCommand(event) {
   if (primary && key === "h") {
     return "focus-replace";
   }
+  if (primary && event.shiftKey && key === "a") {
+    return "ai-assistant";
+  }
   if (primary && key === "/") {
     return "source-view";
   }

@@ -55,6 +55,7 @@ import {
   Trash2,
   Unlink,
   Workflow,
+  Wand2,
   X,
   createIcons,
 } from "lucide";
@@ -166,8 +167,9 @@ import {
   openTextInputModal,
   openWaitModal,
 } from "./ui/modals.mjs";
-import { initConfig } from "./core/config.mjs";
+import { initConfig, isAiEnabled } from "./core/config.mjs";
 import { openSettingsModal as openSettingsModalDialog } from "./ui/settings-modal.mjs";
+import { openAiModal } from "./ui/ai-modal.mjs";
 
 const initialFiles = [
   "README.md",
@@ -223,6 +225,7 @@ const lucideIcons = {
   Trash2,
   Unlink,
   Workflow,
+  Wand2,
   X,
   Underline: UnderlineIcon,
   Superscript: SuperscriptIcon,
@@ -371,7 +374,7 @@ function renderWelcome() {
       </video>
       <section class="welcome-hero">
         <div class="welcome-hero__content">
-          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.1.6</span></p>
+          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.1.7</span></p>
           <h1>PME</h1>
           <p class="welcome-hero__copy">为长文档、图表、公式和素材而生的本地 Markdown 工作台。</p>
           <div class="welcome-hero__actions">
@@ -527,8 +530,8 @@ function renderShell() {
             </svg>
           </button>
         </div>
-        <button class="icon-button save-button" data-action="save-document" title="保存" aria-label="保存">
-          ${icon("Save")}
+        <button class="icon-button ai-magic-button" data-action="open-ai-assistant" title="AI 助手" aria-label="AI 助手">
+          ${icon("Wand2")}
         </button>
       </section>
       <section class="${workspaceClasses}">
@@ -979,6 +982,12 @@ function bindEvents() {
     button.addEventListener("click", () => openRecentWorkspace(Number(button.dataset.recentWorkspace)));
   });
   document.querySelector("[data-action='save-document']")?.addEventListener("click", handleSaveDocumentRequest);
+  document.querySelectorAll("[data-action='open-ai-assistant']").forEach((button) => {
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+    button.addEventListener("click", () => openAiAssistant());
+  });
   document.querySelector("[data-find-input]")?.addEventListener("input", handleFindInput);
   document.querySelector("[data-find-input]")?.addEventListener("keydown", handleFindKeydown);
   document.querySelector("[data-replace-input]")?.addEventListener("input", handleReplaceInput);
@@ -1133,6 +1142,10 @@ function bindGlobalShortcuts() {
 
     event.preventDefault();
     closeAppMenus();
+    if (command === "ai-assistant") {
+      openAiAssistant();
+      return;
+    }
     runMenuCommand(command);
   });
   globalShortcutsBound = true;
@@ -2561,6 +2574,24 @@ function setupFileDragAndDrop() {
   });
 }
 
+function openAiAssistant() {
+  if (!isAiEnabled()) {
+    openMessageModal({
+      title: "AI 助手未启用",
+      message: "请先在「文件 → 配置 → AI 助手」中开启 AI 功能并完成模型配置。",
+    });
+    return;
+  }
+  const { selection } = editor.state;
+  console.log("DEBUG: openAiAssistant - selection.empty:", selection.empty, "from:", selection.from, "to:", selection.to);
+  let selectedText = "";
+  if (!selection.empty) {
+    selectedText = editor.state.doc.textBetween(selection.from, selection.to, "\n") || "";
+    console.log("DEBUG: openAiAssistant - selectedText:", selectedText.substring(0, 50), "...");
+  }
+  openAiModal({ title: "AI 助手", selectedText, editor });
+}
+
 function renderBubbleMenu() {
   const menu = document.querySelector("#bubble-menu");
   if (!menu) return;
@@ -2575,6 +2606,10 @@ function renderBubbleMenu() {
     toolButton("highlight-color", "Highlighter", "高亮"),
     '<span class="bubble-menu__separator"></span>',
     toolButton("link", "Link", "链接"),
+    '<span class="bubble-menu__separator"></span>',
+    '<button class="icon-button ai-magic-button" data-action="open-ai-assistant" title="AI 助手" aria-label="AI 助手">',
+    icon("Wand2"),
+    '</button>',
     '</div>',
   ].join("");
   menu.querySelectorAll("[data-command]").forEach((button) => {
@@ -2584,6 +2619,15 @@ function renderBubbleMenu() {
     button.addEventListener("click", (event) => {
       event.preventDefault();
       runEditorCommand(button.dataset.command);
+    });
+  });
+  menu.querySelectorAll("[data-action='open-ai-assistant']").forEach((button) => {
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      openAiAssistant();
     });
   });
 }

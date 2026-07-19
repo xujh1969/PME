@@ -102,6 +102,12 @@ export function createEditorExtensions(options) {
     BubbleMenu.configure({
       element: options.bubbleMenuElement,
       shouldShow: ({ editor }) => {
+        if (document.querySelector(".text-modal, .ai-modal")) {
+          return false;
+        }
+        if (document.querySelector(".app-menu__item.is-open")) {
+          return false;
+        }
         const { selection } = editor.state;
         if (!selection || selection.empty) {
           return false;
