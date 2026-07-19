@@ -1,8 +1,13 @@
-﻿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
-const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+const stylesDir = new URL("../src/styles/", import.meta.url);
+const styles = readdirSync(stylesDir)
+  .filter((f) => f.endsWith(".css"))
+  .sort()
+  .map((f) => readFileSync(new URL(f, stylesDir), "utf8"))
+  .join("\n");
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
 const modalSource = readFileSync(new URL("../src/ui/modals.mjs", import.meta.url), "utf8");
 const imageInsertModalSource = readFileSync(new URL("../src/ui/image-insert-modal.mjs", import.meta.url), "utf8");

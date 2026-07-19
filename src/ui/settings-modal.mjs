@@ -149,7 +149,7 @@ function renderAiTab(ai) {
           </label>
         </div>
       </div>
-      <div class="settings-section" data-ai-section="ollama" style="display:none;">
+      <div class="settings-section is-hidden" data-ai-section="ollama">
         <label>
           <span>接口地址</span>
           <input type="text" data-ai-ollama-endpoint value="${escapeHtml(ollama.endpoint || "http://localhost:11434")}" placeholder="http://localhost:11434" />
@@ -227,7 +227,7 @@ export function openSettingsModal() {
     const switchTab = (tabValue) => {
       tabButtons.forEach(btn => btn.classList.toggle("is-active", btn.dataset.settingsTab === tabValue));
       tabPanels.forEach(panel => {
-        panel.style.display = panel.dataset.tabPanel === tabValue ? "" : "none";
+        panel.classList.toggle("is-hidden", panel.dataset.tabPanel !== tabValue);
       });
     };
 
@@ -249,8 +249,8 @@ export function openSettingsModal() {
 
     const applyProviderToggle = () => {
       const provider = aiProviderSelect.value;
-      cloudSection.style.display = provider === "cloud" ? "" : "none";
-      ollamaSection.style.display = provider === "ollama" ? "" : "none";
+      cloudSection.classList.toggle("is-hidden", provider !== "cloud");
+      ollamaSection.classList.toggle("is-hidden", provider !== "ollama");
     };
 
     const collectAiConfig = () => ({

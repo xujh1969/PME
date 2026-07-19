@@ -1,0 +1,22 @@
+/* ============================================================
+ * index.css
+ * PME 编辑器样式入口文件
+ * 通过 @import 聚合所有拆分后的样式模块
+ *
+ * 导入顺序说明：
+ *   1. variables.css 必须在最前面，定义 :root 与 [data-theme="dark"] 的 CSS 变量
+ *   2. 之后是各业务模块样式
+ *   3. utilities.css 放在业务模块之后，提供滚动条/动画等通用工具样式
+ *   4. ai-modal.css 在最后，避免覆盖其他模块样式
+ * ============================================================ */
+
+@import "./variables.css";
+@import "./welcome.css";
+@import "./forms.css";
+@import "./app-shell.css";
+@import "./tree-outline.css";
+@import "./editor.css";
+@import "./modals.css";
+@import "./settings.css";
+@import "./utilities.css";
+@import "./ai-modal.css";

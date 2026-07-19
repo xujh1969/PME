@@ -1,4 +1,4 @@
-import { escapeHtml } from "../core/html-utils.mjs";
+﻿﻿import { escapeHtml } from "../core/html-utils.mjs";
 import { generateText, buildPolishPrompt, buildTranslatePrompt, buildSummaryPrompt, buildContinuePrompt, buildTemplatePrompt, buildTablePrompt } from "../core/ai-service.mjs";
 import { isAiEnabled, getAiConfig, getAiActions, saveAiActions } from "../core/config.mjs";
 import { parseMarkdown } from "../core/markdown.mjs";
@@ -66,7 +66,7 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
         </header>
         <section class="ai-modal__body">
           ${renderActionSelector()}
-          <div class="ai-modal__lang-section" data-ai-lang-section style="display: none;">
+          <div class="ai-modal__lang-section is-hidden" data-ai-lang-section>
             <label><span>目标语言</span></label>
             <div class="ai-modal__lang-grid">
               ${TRANSLATE_LANGS.map((lang) => `
@@ -77,7 +77,7 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
               `).join("")}
             </div>
           </div>
-          <div class="ai-modal__summary-section" data-ai-summary-section style="display: none;">
+          <div class="ai-modal__summary-section is-hidden" data-ai-summary-section>
             <label><span>摘要长度</span></label>
             <div class="ai-modal__summary-grid">
               ${SUMMARY_LENGTHS.map((len) => `
@@ -90,7 +90,7 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
               `).join("")}
             </div>
           </div>
-          <div class="ai-modal__continue-section" data-ai-continue-section style="display: none;">
+          <div class="ai-modal__continue-section is-hidden" data-ai-continue-section>
             <label><span>续写长度</span></label>
             <div class="ai-modal__continue-grid">
               ${CONTINUE_LENGTHS.map((len) => `
@@ -103,7 +103,7 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
               `).join("")}
             </div>
           </div>
-          <div class="ai-modal__template-section" data-ai-template-section style="display: none;">
+          <div class="ai-modal__template-section is-hidden" data-ai-template-section>
             <label><span>选择模板</span></label>
             <div class="ai-modal__template-grid">
               ${DOC_TEMPLATES.map((tpl) => `
@@ -121,7 +121,7 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
             <span class="ai-modal__input-count">已选中 ${selectedText.length} 字</span>
             <button class="ai-modal__input-toggle" data-ai-toggle-input>查看文本</button>
           </div>
-          <div class="ai-modal__input-section" data-ai-input-section style="display: none;">
+          <div class="ai-modal__input-section is-hidden" data-ai-input-section>
             <textarea class="ai-modal__input" data-ai-input>${escapeHtml(selectedText)}</textarea>
           </div>
           ` : ""}
@@ -129,7 +129,7 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
             <label><span>补充命令</span></label>
             <input class="ai-modal__command-input" data-ai-command-input placeholder="输入额外的指令，如：使用简洁的语言表达..." />
           </div>
-          <div class="ai-modal__preview-section" data-ai-preview-section style="display: none;">
+          <div class="ai-modal__preview-section is-hidden" data-ai-preview-section>
             <div class="ai-modal__preview-header">
               <span data-ai-preview-title>输出内容</span>
               <button class="ai-modal__preview-toggle" data-ai-preview-toggle title="隐藏">隐藏</button>
@@ -208,35 +208,35 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
           currentAction = button.dataset.aiPolishAction;
           
           if (currentAction === "translate") {
-            langSection.style.display = "block";
-            summarySection.style.display = "none";
-            continueSection.style.display = "none";
-            templateSection.style.display = "none";
+            langSection.classList.remove("is-hidden");
+            summarySection.classList.add("is-hidden");
+            continueSection.classList.add("is-hidden");
+            templateSection.classList.add("is-hidden");
           } else if (currentAction === "summary") {
-            langSection.style.display = "none";
-            summarySection.style.display = "block";
-            continueSection.style.display = "none";
-            templateSection.style.display = "none";
+            langSection.classList.add("is-hidden");
+            summarySection.classList.remove("is-hidden");
+            continueSection.classList.add("is-hidden");
+            templateSection.classList.add("is-hidden");
           } else if (currentAction === "continue") {
-            langSection.style.display = "none";
-            summarySection.style.display = "none";
-            continueSection.style.display = "block";
-            templateSection.style.display = "none";
+            langSection.classList.add("is-hidden");
+            summarySection.classList.add("is-hidden");
+            continueSection.classList.remove("is-hidden");
+            templateSection.classList.add("is-hidden");
           } else if (currentAction === "template") {
-            langSection.style.display = "none";
-            summarySection.style.display = "none";
-            continueSection.style.display = "none";
-            templateSection.style.display = "block";
+            langSection.classList.add("is-hidden");
+            summarySection.classList.add("is-hidden");
+            continueSection.classList.add("is-hidden");
+            templateSection.classList.remove("is-hidden");
           } else if (currentAction === "table") {
-            langSection.style.display = "none";
-            summarySection.style.display = "none";
-            continueSection.style.display = "none";
-            templateSection.style.display = "none";
+            langSection.classList.add("is-hidden");
+            summarySection.classList.add("is-hidden");
+            continueSection.classList.add("is-hidden");
+            templateSection.classList.add("is-hidden");
           } else {
-            langSection.style.display = "none";
-            summarySection.style.display = "none";
-            continueSection.style.display = "none";
-            templateSection.style.display = "none";
+            langSection.classList.add("is-hidden");
+            summarySection.classList.add("is-hidden");
+            continueSection.classList.add("is-hidden");
+            templateSection.classList.add("is-hidden");
           }
         });
       });
@@ -262,16 +262,16 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
         copyButton.disabled = true;
         insertBelowButton.disabled = true;
         replaceButton.disabled = true;
-        actionSection.style.display = "none";
-        langSection.style.display = "none";
-        summarySection.style.display = "none";
-        continueSection.style.display = "none";
-        templateSection.style.display = "none";
-        if (inputInfo) inputInfo.style.display = "none";
-        if (inputSection) inputSection.style.display = "none";
-        if (commandInput) commandInput.parentElement.style.display = "none";
-        previewSection.style.display = "block";
-        previewDiv.style.display = "block";
+        actionSection.classList.add("is-hidden");
+        langSection.classList.add("is-hidden");
+        summarySection.classList.add("is-hidden");
+        continueSection.classList.add("is-hidden");
+        templateSection.classList.add("is-hidden");
+        if (inputInfo) inputInfo.classList.add("is-hidden");
+        if (inputSection) inputSection.classList.add("is-hidden");
+        if (commandInput) commandInput.parentElement.classList.add("is-hidden");
+        previewSection.classList.remove("is-hidden");
+        previewDiv.classList.remove("is-hidden");
         if (previewToggle) previewToggle.textContent = "隐藏";
       }
     }
@@ -577,8 +577,8 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
     if (inputToggle) {
       inputToggle.addEventListener("click", () => {
         if (inputSection) {
-          const isHidden = inputSection.style.display === "none";
-          inputSection.style.display = isHidden ? "block" : "none";
+          const isHidden = inputSection.classList.contains("is-hidden");
+          inputSection.classList.toggle("is-hidden", !isHidden);
           inputToggle.textContent = isHidden ? "隐藏文本" : "查看文本";
         }
       });
@@ -586,16 +586,30 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
 
     if (previewToggle) {
       previewToggle.addEventListener("click", () => {
-        const isHidden = previewDiv.style.display === "none";
-        previewDiv.style.display = isHidden ? "block" : "none";
+        const isHidden = previewSection.classList.contains("is-hidden");
+        previewSection.classList.toggle("is-hidden", !isHidden);
         previewToggle.textContent = isHidden ? "隐藏" : "展开";
         if (!isHidden) {
-          actionSection.style.display = "block";
-          if (currentAction === "translate") langSection.style.display = "block";
-          if (currentAction === "summary") summarySection.style.display = "block";
-          if (currentAction === "continue") continueSection.style.display = "block";
-          if (currentAction === "template") templateSection.style.display = "block";
+          actionSection.classList.remove("is-hidden");
+          if (currentAction === "translate") langSection.classList.remove("is-hidden");
+          if (currentAction === "summary") summarySection.classList.remove("is-hidden");
+          if (currentAction === "continue") continueSection.classList.remove("is-hidden");
+          if (currentAction === "template") templateSection.classList.remove("is-hidden");
+          commandInput?.parentElement?.classList.remove("is-hidden");
+          if (inputInfo) inputInfo.classList.remove("is-hidden");
+          copyButton.disabled = true;
+          insertBelowButton.disabled = true;
+          replaceButton.disabled = true;
           generateButton.textContent = "开始生成";
+        } else {
+          actionSection.classList.add("is-hidden");
+          langSection.classList.add("is-hidden");
+          summarySection.classList.add("is-hidden");
+          continueSection.classList.add("is-hidden");
+          templateSection.classList.add("is-hidden");
+          commandInput?.parentElement?.classList.add("is-hidden");
+          if (inputInfo) inputInfo.classList.add("is-hidden");
+          if (inputSection) inputSection.classList.add("is-hidden");
         }
       });
     }

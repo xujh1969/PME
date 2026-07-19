@@ -1,0 +1,315 @@
+/* ============================================================
+ * app-shell.css
+ * 应用主界面框架（.shell / .menubar / .toolbar / .statusbar /
+ * .app-menu / .find-box / .tool-group / .save-button / .icon-button / .workspace）
+ * 对应原 styles.css: L547-855
+ * ============================================================ */
+
+.shell {
+  height: 100vh;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 52px 52px 1fr 36px;
+  --editor-zoom: 1;
+  overflow: hidden;
+  background: var(--color-canvas);
+}
+
+.shell--status-hidden {
+  grid-template-rows: 52px 52px 1fr;
+}
+
+.menubar,
+.toolbar,
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--color-hairline);
+  background: var(--color-canvas);
+  padding: 0 var(--space-md);
+  min-height: 0;
+}
+
+.toolbar,
+.statusbar {
+  overflow: hidden;
+}
+
+.statusbar {
+  border-bottom: 0;
+  border-top: 1px solid var(--color-hairline);
+  gap: 18px;
+  color: var(--color-slate);
+  font-size: 12px;
+}
+
+.menubar nav {
+  display: flex;
+  gap: 4px;
+}
+
+.app-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-menu__item {
+  position: relative;
+}
+
+.app-menu__panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  min-width: 220px;
+  display: none;
+  padding: 8px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-card);
+  box-shadow: var(--shadow-modal);
+}
+
+.app-menu__item.is-open .app-menu__panel {
+  display: grid;
+}
+
+.app-menu__panel button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: var(--space-xs) var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-md);
+  text-align: left;
+  background: transparent;
+}
+
+.app-menu__submenu-panel button {
+  width: fit-content;
+  grid-template-columns: 18px auto auto;
+  white-space: nowrap;
+}
+
+.app-menu__panel button:hover {
+  background: var(--color-surface-strong);
+}
+
+.app-menu__panel hr {
+  width: 100%;
+  height: 1px;
+  margin: 5px 0;
+  border: 0;
+  background: var(--color-hairline);
+}
+
+.app-menu__submenu {
+  position: relative;
+}
+
+.app-menu__submenu-trigger {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 30px;
+  padding: var(--space-xs) var(--space-sm);
+  border: 0;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  background: transparent;
+}
+
+.app-menu__submenu-trigger:hover {
+  background: var(--color-surface);
+}
+
+.app-menu__arrow {
+  color: var(--color-muted);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 16px;
+}
+
+.app-menu__submenu-panel {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  z-index: 50;
+  min-width: 200px;
+  max-width: 500px;
+  width: fit-content;
+  display: none;
+  padding: 5px;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  box-shadow: var(--shadow-modal);
+  margin-left: 4px;
+}
+
+.app-menu__submenu-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 100%;
+  width: 4px;
+  height: 100%;
+}
+
+.app-menu__submenu:hover > .app-menu__submenu-panel {
+  display: grid;
+}
+
+.app-menu__check {
+  color: var(--color-primary);
+  font-size: 0.85rem;
+}
+
+.app-menu__label {
+  overflow: visible;
+  display: block;
+  font-size: 0.85rem;
+}
+
+.app-menu__sublabel {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  display: block;
+  padding-top: 2px;
+}
+
+.app-menu__shortcut {
+  color: var(--color-stone);
+  font-size: 12px;
+}
+
+.menubar button,
+.toolbar button,
+.tree-item,
+.tab {
+  border-color: transparent;
+  background: transparent;
+}
+
+.find-box {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.find-box input {
+  width: 200px;
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-strong);
+  border: 1px solid var(--color-hairline);
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+.find-box input:focus {
+  outline: none;
+  border-color: var(--color-ink);
+  background: var(--color-surface-card);
+}
+
+.find-box span {
+  min-width: 44px;
+  color: var(--color-stone);
+  font-size: 12px;
+  text-align: center;
+}
+
+.find-box .icon-button {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+}
+
+.find-box .icon-button.active {
+  background: var(--color-accent);
+  color: #ffffff;
+  border-radius: var(--radius-sm);
+}
+
+.find-box .icon-button.active svg {
+  fill: #ffffff !important;
+}
+
+.find-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.find-input-wrapper input {
+  padding-right: 40px;
+}
+
+.find-input-wrapper .find-clear {
+  position: absolute;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+
+.toolbar {
+  gap: 18px;
+}
+
+.tool-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tool-group span {
+  color: var(--color-stone);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.save-button {
+  margin-left: auto;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.icon-button {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--radius-md);
+}
+
+.icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.workspace {
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+.workspace--sidebar-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}

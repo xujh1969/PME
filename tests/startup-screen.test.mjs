@@ -1,10 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
 const indexHtml = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
-const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+const stylesDir = new URL("../src/styles/", import.meta.url);
+const styles = readdirSync(stylesDir)
+  .filter((f) => f.endsWith(".css"))
+  .sort()
+  .map((f) => readFileSync(new URL(f, stylesDir), "utf8"))
+  .join("\n");
 
 test("keeps an empty themed startup surface before the app bundle renders", () => {
   assert.equal(indexHtml.includes("boot-screen"), false);

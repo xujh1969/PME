@@ -55,3 +55,58 @@
   4. 异步初始化顺序问题（确保配置在渲染前完成）
 ---
 
+## 三、CSS 与样式硬规则（防止样式污染与开发/生产不一致）
+
+> 本章节为强制规范，每次涉及 UI/样式修改时必须遵守。
+
+### 1. 禁止在 JS 中写 display 内联样式
+- ❌ 禁止：`el.style.display = "none" / "block" / "flex" / "grid"`
+- ✅ 统一使用 `classList` 切换工具类：
+  - 隐藏：`el.classList.add("is-hidden")` 或 `el.classList.toggle("is-hidden", cond)`
+  - 显示：`el.classList.remove("is-hidden")`
+  - 判断隐藏态：`el.classList.contains("is-hidden")`
+- ✅ 工具类定义在 `src/styles/utilities.css`：`.is-hidden { display: none !important; }`
+- ✅ 如需切换不同布局（flex/grid），定义语义类如 `.as-grid { display: grid }`、`.as-flex { display: flex }`，通过 `classList` 切换
+
+### 2. 禁止在 HTML 模板字符串中写 `style="display:..."`
+- ❌ 禁止：`<div style="display: none;">...</div>`
+- ✅ 改用：`<div class="... is-hidden">...</div>` 作为初始隐藏态
+
+### 3. CSS 文件组织规范
+- 所有样式必须放在 `src/styles/` 目录下对应模块文件中，不得新建独立 CSS 文件
+- 单个 CSS 文件行数阈值：**1200 行**。超过时需按子模块拆分，并经用户确认
+- 禁止将新样式堆到 `settings.css` 或 `ai-modal.css` 中（这两个文件已偏大）
+- 新增样式优先归入最贴近的模块文件；如无合适模块，先与用户确认是否新建模块
+
+### 4. `!important` 使用约束
+- 仅在覆盖第三方库（如 ProseMirror、TipTap）默认样式时允许使用
+- 业务样式禁止使用 `!important`，应通过提升选择器特异性解决优先级问题
+- 新增 `!important` 时必须在代码中注释说明理由
+
+### 5. 开发/生产一致性验证流程（每次 UI/样式修改后必跑）
+按顺序执行三步对比：
+```bash
+npm run dev         # 开发环境（HMR），验证功能正常
+npm run build       # 生产构建
+npm run preview     # 在 http://127.0.0.1:4173 预览生产产物
+```
+对关键界面（AI 弹窗、设置面板、欢迎页、编辑器）做**视觉对比**，重点检查：
+- 元素显示/隐藏是否正确
+- flex/grid 布局是否生效
+- 深色主题色值是否一致
+- 动态注入样式是否生效
+
+### 6. Tauri 双环境验证（按本规范第二章第10条）
+- `npm run tauri dev` 验证开发态
+- `npm run tauri build` 后安装 exe，验证生产态
+- 重点测试：字体切换、主题切换、帮助菜单、动态样式注入功能
+
+### 7. 提交前自查清单
+- [ ] 是否新增了 `style.xxx =` 内联样式？（应为否）
+- [ ] 是否新增了 `style="..."` 内联属性？（应为否，除非是 CSS 变量动态值如 `--font-family-xxx`）
+- [ ] 是否新增了 `!important`？（需注释说明理由）
+- [ ] 新增 CSS 是否放在对应模块文件中，而非堆到 settings.css / ai-modal.css？
+- [ ] 是否执行了 `npm run preview` 视觉对比？
+- [ ] 是否执行了 `npm run tauri dev` + `npm run tauri build` 双环境验证？
+---
+
