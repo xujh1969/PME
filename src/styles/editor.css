@@ -626,6 +626,10 @@
   height: auto;
 }
 
+.ProseMirror .mermaid-diagram__content > svg {
+  width: auto;
+}
+
 .ProseMirror .mermaid-diagram--error {
   color: var(--color-error);
   font-family: var(--font-mono);

@@ -72,6 +72,13 @@ test("prevents button labels from wrapping", () => {
   assert.equal(buttonRule.includes("white-space: nowrap;"), true);
 });
 
+test("keeps app icon sizing from leaking into rendered Mermaid SVGs", () => {
+  assert.equal(/(^|})\s*svg\s*\{[^}]*width:\s*17px[^}]*\}/.test(styles), false);
+  assert.equal(styles.includes(".app-menu svg"), true);
+  assert.equal(styles.includes(".toolbar svg"), true);
+  assert.equal(styles.includes(".ProseMirror .mermaid-diagram__content > svg"), true);
+});
+
 test("uses compact form controls inside editor dialogs", () => {
   const compactRule = styles.match(/\.image-modal__url-row input,[\s\S]+?\.code-language-modal__body select\s*\{[^}]+\}/)?.[0] || "";
 

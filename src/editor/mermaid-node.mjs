@@ -3,10 +3,90 @@ import mermaid from "mermaid";
 
 let mermaidRenderId = 0;
 
-mermaid.initialize({
-  startOnLoad: false,
-  securityLevel: "strict",
-});
+function getMermaidThemeVariables() {
+  const theme = document.documentElement.getAttribute("data-theme") || "light";
+  if (theme === "dark") {
+    return {
+      darkMode: true,
+      background: "#1e1e1e",
+      fontFamily: "'Inter', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif",
+      primaryColor: "#2d2d30",
+      primaryTextColor: "#e4e4e7",
+      primaryBorderColor: "#4a4a4f",
+      secondaryColor: "#37373d",
+      secondaryTextColor: "#e4e4e7",
+      secondaryBorderColor: "#4a4a4f",
+      tertiaryColor: "#37373d",
+      tertiaryTextColor: "#e4e4e7",
+      tertiaryBorderColor: "#4a4a4f",
+      lineColor: "#52525b",
+      nodeBorder: "#4a4a4f",
+      edgeColor: "#52525b",
+      signalColor: "#52525b",
+      textColor: "#e4e4e7",
+    };
+  }
+  return {
+    darkMode: false,
+    background: "#f5f5f5",
+    fontFamily: "'Inter', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif",
+    primaryColor: "#ffffff",
+    primaryTextColor: "#1f2937",
+    primaryBorderColor: "#d1d5db",
+    secondaryColor: "#f9fafb",
+    secondaryTextColor: "#1f2937",
+    secondaryBorderColor: "#d1d5db",
+    tertiaryColor: "#f3f4f6",
+    tertiaryTextColor: "#1f2937",
+    tertiaryBorderColor: "#d1d5db",
+    lineColor: "#6b7280",
+    nodeBorder: "#d1d5db",
+    edgeColor: "#6b7280",
+    signalColor: "#6b7280",
+    textColor: "#1f2937",
+  };
+}
+
+function initMermaidTheme() {
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: "strict",
+    theme: "base",
+    themeVariables: getMermaidThemeVariables(),
+  });
+}
+
+function wrapMermaidCodeWithTheme(code) {
+  const variables = getMermaidThemeVariables();
+  const safeVariables = { ...variables };
+  if (safeVariables.fontFamily) {
+    safeVariables.fontFamily = safeVariables.fontFamily.replace(/', '/g, ' ').replace(/['"]/g, '');
+  }
+  const initConfig = {
+    theme: "base",
+    themeVariables: safeVariables,
+  };
+  return `%%{init: ${JSON.stringify(initConfig)}}%%\n${code}`;
+}
+
+initMermaidTheme();
+
+export async function updateMermaidTheme() {
+  try {
+    mermaid.reset();
+    initMermaidTheme();
+    const diagrams = document.querySelectorAll(".mermaid-diagram__content");
+    for (const element of diagrams) {
+      const diagram = element.closest(".mermaid-diagram");
+      if (diagram && diagram.dataset.code) {
+        element.textContent = "";
+        await renderMermaidDiagram(element, diagram.dataset.code);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to update Mermaid theme:", error);
+  }
+}
 
 export const MermaidDiagram = Node.create({
   name: "mermaidDiagram",
@@ -119,13 +199,52 @@ async function renderMermaidDiagram(element, code) {
 
   try {
     element.textContent = "";
-    const { svg } = await mermaid.render(id, code);
+    const themedCode = wrapMermaidCodeWithTheme(code);
+    const { svg } = await mermaid.render(id, themedCode);
+    
     element.innerHTML = svg;
+    const renderedSvg = element.querySelector("svg");
+    if (renderedSvg) {
+      applyMermaidSvgThemeFallback(renderedSvg);
+      renderedSvg.style.setProperty("max-width", "none", "important");
+    }
     element.closest(".mermaid-diagram")?.classList.remove("mermaid-diagram--error");
   } catch (error) {
     element.textContent = error.message || "Invalid Mermaid diagram";
     element.closest(".mermaid-diagram")?.classList.add("mermaid-diagram--error");
   }
+}
+
+function applyMermaidSvgThemeFallback(svg) {
+  const variables = getMermaidThemeVariables();
+
+  svg.querySelectorAll(".node rect, .node circle, .node ellipse, .node polygon, .node path").forEach((element) => {
+    setMermaidSvgPaint(element, "fill", variables.primaryColor);
+    setMermaidSvgPaint(element, "stroke", variables.primaryBorderColor);
+  });
+
+  svg.querySelectorAll(".flowchart-link, .messageLine0, .messageLine1, .relation").forEach((element) => {
+    setMermaidSvgPaint(element, "fill", "none");
+    setMermaidSvgPaint(element, "stroke", variables.lineColor);
+  });
+
+  svg.querySelectorAll("marker path").forEach((element) => {
+    setMermaidSvgPaint(element, "fill", variables.lineColor);
+    setMermaidSvgPaint(element, "stroke", variables.lineColor);
+  });
+
+  svg.querySelectorAll("text, tspan").forEach((element) => {
+    setMermaidSvgPaint(element, "fill", variables.textColor);
+  });
+
+  svg.querySelectorAll(".nodeLabel, .edgeLabel, .label, foreignObject span, foreignObject div").forEach((element) => {
+    element.style.color = variables.primaryTextColor;
+  });
+}
+
+function setMermaidSvgPaint(element, property, value) {
+  element.setAttribute(property, value);
+  element.style.setProperty(property, value, "important");
 }
 
 function createMermaidZoomButton(label, title) {
@@ -159,6 +278,10 @@ function getMermaidFitZoom(viewport, element) {
 
   const baseSize = getSvgBaseSize(svg);
   if (!baseSize.width || !baseSize.height) {
+    return 1;
+  }
+
+  if (viewport.clientWidth < 50) {
     return 1;
   }
 
@@ -267,4 +390,3 @@ function bindMermaidPan(viewport, wrapper) {
     window.addEventListener("pointercancel", stopPanning);
   });
 }
-

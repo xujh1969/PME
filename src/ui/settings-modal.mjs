@@ -11,6 +11,7 @@ import {
 } from "../core/config.mjs";
 import { testConnection } from "../core/ai-service.mjs";
 import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
+import { updateMermaidTheme } from "../editor/mermaid-node.mjs";
 
 const THEMES = [
   { value: "light", label: "浅色主题" },
@@ -231,8 +232,9 @@ export function openSettingsModal() {
       });
     };
 
-    const applyThemeChange = () => {
+    const applyThemeChange = async () => {
       setTheme(themeSelect.value);
+      await updateMermaidTheme();
     };
 
     const applyFonts = () => {

@@ -194,7 +194,13 @@ button.is-primary:hover {
   background: var(--color-primary-pressed);
 }
 
-svg {
+.app-menu svg,
+.toolbar svg,
+.statusbar svg,
+.icon-button svg,
+.tab svg,
+.tree-icon svg,
+.recent-menu svg {
   width: 17px;
   height: 17px;
   stroke-width: 1.9;

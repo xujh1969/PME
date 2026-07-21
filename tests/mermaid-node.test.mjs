@@ -15,3 +15,13 @@ test("owns the Mermaid node and rendering interactions outside the app entry", (
   assert.equal(appSource.includes("const MermaidDiagram = Node.create"), false);
   assert.equal(appSource.includes("function renderMermaidDiagram"), false);
 });
+
+test("applies critical Mermaid colors after render for packaged WebView reliability", () => {
+  assert.equal(mermaidSource.includes("function applyMermaidSvgThemeFallback"), true);
+  assert.equal(mermaidSource.includes("function setMermaidSvgPaint"), true);
+  assert.equal(mermaidSource.includes('querySelectorAll(".node rect'), true);
+  assert.equal(mermaidSource.includes('setMermaidSvgPaint(element, "fill", variables.primaryColor)'), true);
+  assert.equal(mermaidSource.includes('setMermaidSvgPaint(element, "stroke", variables.lineColor)'), true);
+  assert.equal(mermaidSource.includes('style.setProperty(property, value, "important")'), true);
+  assert.equal(mermaidSource.includes("applyMermaidSvgThemeFallback(renderedSvg);"), true);
+});

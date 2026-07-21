@@ -1,4 +1,4 @@
-﻿﻿import { escapeHtml } from "../core/html-utils.mjs";
+﻿﻿﻿﻿import { escapeHtml } from "../core/html-utils.mjs";
 import { generateText, buildPolishPrompt, buildTranslatePrompt, buildSummaryPrompt, buildContinuePrompt, buildTemplatePrompt, buildTablePrompt } from "../core/ai-service.mjs";
 import { isAiEnabled, getAiConfig, getAiActions, saveAiActions } from "../core/config.mjs";
 import { parseMarkdown } from "../core/markdown.mjs";
