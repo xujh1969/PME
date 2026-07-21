@@ -306,6 +306,7 @@ let globalShortcutsBound = false;
 let tableBubbleCloseBound = false;
 let lastSelectionBlockPos = null;
 let documentLinkPressTabState = null;
+let pastePlainTextMode = false;
 
 initConfig();
 document.addEventListener("contextmenu", (event) => event.preventDefault());
@@ -607,6 +608,7 @@ function renderAppMenu() {
       menuItem("cut", "剪切", "Ctrl+X"),
       menuItem("copy", "复制", "Ctrl+C"),
       menuItem("paste", "粘贴", "Ctrl+V"),
+      menuItem("paste-plain", "粘贴纯文本", "Ctrl+Shift+V"),
       menuSeparator(),
       menuItem("select-all", "全选", "Ctrl+A"),
       menuSubmenu("查找和替换", [
@@ -1026,6 +1028,9 @@ function bindEvents() {
   document.querySelector(".editor-area")?.addEventListener("dragleave", handleDragLeave);
   document.querySelector(".editor-area")?.addEventListener("drop", handleDrop);
   document.querySelector(".editor-area")?.addEventListener("paste", handlePaste, { capture: true });
+  document.querySelector(".editor-area")?.addEventListener("copy", handleCopy, { capture: true });
+  document.querySelector(".editor-area")?.addEventListener("cut", handleCut, { capture: true });
+  document.querySelector(".editor-area")?.addEventListener("keydown", handlePasteShortcut, { capture: true });
   document.querySelector(".editor")?.addEventListener("scroll", () => updateTableBubbleToolbar());
   document.querySelector(".source-editor")?.addEventListener("input", handleSourceInput);
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleMathClick, { capture: true });
@@ -1221,8 +1226,29 @@ function claimDocumentLinkPressEvent(event) {
   event.stopImmediatePropagation?.();
 }
 
-function runClipboardMenuCommand(command) {
+async function runClipboardMenuCommand(command) {
   focusCurrentEditable();
+
+  if (command === "copy") {
+    await copyEditorSelectionAsMarkdown();
+    return;
+  }
+
+  if (command === "cut") {
+    await cutEditorSelectionAsMarkdown();
+    return;
+  }
+
+  if (command === "paste") {
+    await pasteMarkdown();
+    return;
+  }
+
+  if (command === "paste-plain") {
+    await pastePlainText();
+    return;
+  }
+
   const succeeded = document.execCommand?.(command);
   if (!succeeded && command === "paste") {
     openMessageModal({
@@ -1230,6 +1256,165 @@ function runClipboardMenuCommand(command) {
       message: "浏览器限制了菜单粘贴操作，请使用 Ctrl+V 粘贴内容。",
     });
   }
+}
+
+async function copyEditorSelectionAsMarkdown() {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    const selectedText = sourceEditor.value.substring(sourceEditor.selectionStart, sourceEditor.selectionEnd);
+    if (selectedText) {
+      await navigator.clipboard.writeText(selectedText);
+    }
+    return;
+  }
+
+  if (!editor) return;
+
+  const { selection } = editor.state;
+  if (selection.empty) return;
+
+  const slice = editor.state.doc.slice(selection.from, selection.to);
+  const json = slice.toJSON();
+  const markdown = serializeMarkdown(json);
+  await navigator.clipboard.writeText(markdown);
+}
+
+async function cutEditorSelectionAsMarkdown() {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    const selectedText = sourceEditor.value.substring(sourceEditor.selectionStart, sourceEditor.selectionEnd);
+    if (selectedText) {
+      await navigator.clipboard.writeText(selectedText);
+      sourceEditor.value = sourceEditor.value.substring(0, sourceEditor.selectionStart) + sourceEditor.value.substring(sourceEditor.selectionEnd);
+    }
+    return;
+  }
+
+  if (!editor) return;
+
+  const { selection } = editor.state;
+  if (selection.empty) return;
+
+  const slice = editor.state.doc.slice(selection.from, selection.to);
+  const json = slice.toJSON();
+  const markdown = serializeMarkdown(json);
+  await navigator.clipboard.writeText(markdown);
+  editor.chain().focus().deleteSelection().run();
+}
+
+async function pasteMarkdown() {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    const text = await navigator.clipboard.readText();
+    sourceEditor.value = sourceEditor.value.substring(0, sourceEditor.selectionStart) + text + sourceEditor.value.substring(sourceEditor.selectionEnd);
+    sourceEditor.focus();
+    return;
+  }
+
+  if (!editor) return;
+
+  try {
+    const text = await navigator.clipboard.readText();
+    if (editor.isActive("codeBlock") || editor.isActive("mermaidDiagram") || editor.isActive("blockMath")) {
+      editor.chain().focus().insertContent(text).run();
+    } else {
+      const parsed = parseMarkdown(text);
+      if (parsed.content && parsed.content.length > 0) {
+        editor.chain().focus().insertContent(parsed).run();
+      } else {
+        editor.chain().focus().insertContent(text).run();
+      }
+    }
+  } catch {
+    openMessageModal({
+      title: "无法粘贴",
+      message: "浏览器限制了粘贴操作，请使用 Ctrl+V 粘贴内容。",
+    });
+  }
+}
+
+async function pastePlainText() {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    try {
+      const text = await navigator.clipboard.readText();
+      const plainText = stripMarkdownFormatting(text);
+      sourceEditor.value = sourceEditor.value.substring(0, sourceEditor.selectionStart) + plainText + sourceEditor.value.substring(sourceEditor.selectionEnd);
+      sourceEditor.focus();
+    } catch {
+      openMessageModal({
+        title: "无法粘贴",
+        message: "浏览器限制了粘贴操作，请使用 Ctrl+V 粘贴内容。",
+      });
+    }
+    return;
+  }
+
+  if (!editor) return;
+
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text) {
+      const plainText = stripMarkdownFormatting(text);
+      editor.chain().focus().insertContent(plainText).run();
+    }
+  } catch (error) {
+    console.error("pastePlainText error:", error);
+    openMessageModal({
+      title: "无法粘贴",
+      message: "浏览器限制了粘贴操作，请使用 Ctrl+Shift+V 粘贴内容。",
+    });
+  }
+}
+
+function stripMarkdownFormatting(text) {
+  let result = text;
+
+  result = result.replace(/^#{1,6}\s+/gm, "");
+
+  result = result.replace(/\*\*\*(.*?)\*\*\*/g, "$1");
+  result = result.replace(/\*\*(.*?)\*\*/g, "$1");
+  result = result.replace(/\*(.*?)\*/g, "$1");
+  result = result.replace(/___(.*?)___/g, "$1");
+  result = result.replace(/__(.*?)__/g, "$1");
+  result = result.replace(/_(.*?)_/g, "$1");
+
+  result = result.replace(/^>\s+/gm, "");
+
+  result = result.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  result = result.replace(/\[([^\]]+)\]\[[^\]]+\]/g, "$1");
+
+  result = result.replace(/`{3,}[^`]*`{3,}/g, "");
+  result = result.replace(/`([^`]+)`/g, "$1");
+
+  result = result.replace(/^[-*+]\s+/gm, "");
+  result = result.replace(/^\d+\.\s+/gm, "");
+
+  result = result.replace(/^\s*-{3,}\s*$/gm, "");
+  result = result.replace(/^\s*={3,}\s*$/gm, "");
+
+  result = result.replace(/^```\w*\s*$/gm, "");
+
+  result = result.replace(/~~(.*?)~~/g, "$1");
+
+  result = result.replace(/!\[[^\]]*\]\([^)]+\)/g, "");
+  result = result.replace(/!\[[^\]]*\]\[[^\]]+\]/g, "");
+
+  result = result.replace(/<[^>]+>/g, "");
+
+  result = result.replace(/^\s*\|[\s:-]+\|\s*$/gm, "");
+
+  result = result.replace(/^\|(.*)\|$/gm, "$1");
+
+  result = result.replace(/\|/g, "\t");
+
+  result = result.replace(/[^\S\n\r]{2,}/g, " ");
+
+  result = result.replace(/^\s+$/gm, "");
+
+  result = result.trim();
+
+  return result;
 }
 
 function selectCurrentDocument() {
@@ -4030,7 +4215,18 @@ function handleDrop(event) {
   insertImageFiles(imageFiles);
 }
 
-function handlePaste(event) {
+async function handlePaste(event) {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    event.preventDefault();
+    const text = await navigator.clipboard.readText();
+    const finalText = pastePlainTextMode ? stripMarkdownFormatting(text) : text;
+    pastePlainTextMode = false;
+    sourceEditor.value = sourceEditor.value.substring(0, sourceEditor.selectionStart) + finalText + sourceEditor.value.substring(sourceEditor.selectionEnd);
+    sourceEditor.focus();
+    return;
+  }
+
   if (!editor) {
     return;
   }
@@ -4058,7 +4254,19 @@ function handlePaste(event) {
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    if (editor.isActive("codeBlock") || editor.isActive("mermaidDiagram") || editor.isActive("blockMath")) {
+
+    const isPlainText = pastePlainTextMode;
+    pastePlainTextMode = false;
+
+    if (isPlainText) {
+      const plainText = stripMarkdownFormatting(text);
+      const parsed = parseMarkdown(plainText);
+      if (parsed.content && parsed.content.length > 0) {
+        editor.chain().focus().insertContent(parsed).run();
+      } else {
+        editor.chain().focus().insertContent(plainText).run();
+      }
+    } else if (editor.isActive("codeBlock") || editor.isActive("mermaidDiagram") || editor.isActive("blockMath")) {
       editor.chain().focus().insertContent(text).run();
     } else {
       const parsed = parseMarkdown(text);
@@ -4068,6 +4276,61 @@ function handlePaste(event) {
         editor.chain().focus().insertContent(text).run();
       }
     }
+  }
+}
+
+async function handleCopy(event) {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    const selectedText = sourceEditor.value.substring(sourceEditor.selectionStart, sourceEditor.selectionEnd);
+    if (selectedText) {
+      event.preventDefault();
+      await navigator.clipboard.writeText(selectedText);
+    }
+    return;
+  }
+
+  if (!editor) return;
+
+  const { selection } = editor.state;
+  if (selection.empty) return;
+
+  event.preventDefault();
+  const slice = editor.state.doc.slice(selection.from, selection.to);
+  const json = slice.toJSON();
+  const markdown = serializeMarkdown(json);
+  await navigator.clipboard.writeText(markdown);
+}
+
+async function handleCut(event) {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    const selectedText = sourceEditor.value.substring(sourceEditor.selectionStart, sourceEditor.selectionEnd);
+    if (selectedText) {
+      event.preventDefault();
+      await navigator.clipboard.writeText(selectedText);
+      sourceEditor.value = sourceEditor.value.substring(0, sourceEditor.selectionStart) + sourceEditor.value.substring(sourceEditor.selectionEnd);
+    }
+    return;
+  }
+
+  if (!editor) return;
+
+  const { selection } = editor.state;
+  if (selection.empty) return;
+
+  event.preventDefault();
+  const slice = editor.state.doc.slice(selection.from, selection.to);
+  const json = slice.toJSON();
+  const markdown = serializeMarkdown(json);
+  await navigator.clipboard.writeText(markdown);
+  editor.chain().focus().deleteSelection().run();
+}
+
+function handlePasteShortcut(event) {
+  const primary = Boolean(event.ctrlKey || event.metaKey);
+  if (primary && event.shiftKey && event.key.toLowerCase() === "v") {
+    pastePlainTextMode = true;
   }
 }
 

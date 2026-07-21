@@ -24,7 +24,7 @@ export function runAppCommand(command, context) {
     return context.openPdfExportModal();
   } else if (command === "close-current-tab") {
     return context.closeDocumentTab(state.selectedPath);
-  } else if (command === "cut" || command === "copy" || command === "paste") {
+  } else if (command === "cut" || command === "copy" || command === "paste" || command === "paste-plain") {
     context.runClipboardMenuCommand(command);
   } else if (command === "select-all") {
     context.selectCurrentDocument();

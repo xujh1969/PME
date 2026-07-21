@@ -105,7 +105,6 @@ export function getAppShortcutCommand(event) {
   if (event.shiftKey && key === "f3") {
     return "find-prev";
   }
-
   return null;
 }
 
