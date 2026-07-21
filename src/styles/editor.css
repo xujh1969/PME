@@ -635,6 +635,33 @@
   font-family: var(--font-mono);
 }
 
+.ProseMirror .mermaid-diagram--error .mermaid-diagram__viewport {
+  background-color: rgba(239, 68, 68, 0.05);
+  border-color: var(--color-error);
+}
+
+.ProseMirror .mermaid-diagram__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  max-width: 100%;
+}
+
+.ProseMirror .mermaid-diagram__error-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ProseMirror .mermaid-diagram__error-message {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-error);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
 .drop-overlay {
   position: absolute;
   inset: 38px 0 28px 0;

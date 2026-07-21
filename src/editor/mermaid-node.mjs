@@ -1,5 +1,6 @@
 import { Node } from "@tiptap/core";
 import mermaid from "mermaid";
+import { escapeHtml } from "../core/html-utils.mjs";
 
 let mermaidRenderId = 0;
 
@@ -210,10 +211,18 @@ async function renderMermaidDiagram(element, code) {
     }
     element.closest(".mermaid-diagram")?.classList.remove("mermaid-diagram--error");
   } catch (error) {
-    element.textContent = error.message || "Invalid Mermaid diagram";
+    console.error("Mermaid rendering error:", error);
+    mermaid.reset();
+    initMermaidTheme();
+    element.innerHTML = `<div class="mermaid-diagram__error">
+      <div class="mermaid-diagram__error-icon">⚠</div>
+      <div class="mermaid-diagram__error-message">${escapeHtml(error.message || "Mermaid 图表渲染错误")}</div>
+    </div>`;
     element.closest(".mermaid-diagram")?.classList.add("mermaid-diagram--error");
   }
 }
+
+
 
 function applyMermaidSvgThemeFallback(svg) {
   const variables = getMermaidThemeVariables();

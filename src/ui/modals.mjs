@@ -1,5 +1,10 @@
 import { escapeHtml } from "../core/html-utils.mjs";
 import { normalizeImageScale } from "../core/image-size.mjs";
+import { generateText } from "../core/ai-service.mjs";
+
+function wand2Icon() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>`;
+}
 
 export function hideTableBubbleToolbar() {
   const bubble = document.querySelector("[data-table-bubble]");
@@ -125,21 +130,40 @@ export function openTextInputModal({ title, label, value = "", placeholder = "" 
   });
 }
 
-export function openTextEditorModal({ title, value, rows = 8, monospace = true }) {
+export function openTextEditorModal({ title, value, rows = 8, monospace = true, onAiGenerate }) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "text-modal";
     overlay.innerHTML = `
       <div class="text-modal__dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
-        <header class="text-modal__header"><strong>${escapeHtml(title)}</strong><button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button></header>
+        <header class="text-modal__header">
+          <strong>${escapeHtml(title)}</strong>
+          ${onAiGenerate ? `<button class="icon-button ai-magic-button" data-modal-action="ai" title="AI助手" aria-label="AI助手">${wand2Icon()}</button>` : ""}
+          <button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button>
+        </header>
         <textarea class="${monospace ? "is-monospace" : ""}" rows="${rows}" spellcheck="false"></textarea>
         <footer class="text-modal__footer"><span>按 Ctrl+Enter 确定</span><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
       </div>`;
     const textarea = overlay.querySelector("textarea");
     const close = (result) => { overlay.remove(); showTableBubbleToolbar(); resolve(result); };
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") close(null);
-      if (event.target.dataset.modalAction === "apply") close(textarea.value);
+      const targetButton = event.target.closest("[data-modal-action]");
+      const action = targetButton?.dataset.modalAction;
+      
+      if (event.target === overlay || action === "cancel") close(null);
+      if (action === "apply") close(textarea.value);
+      if (action === "ai" && onAiGenerate) {
+        textarea.value = "AI 正在生成中...";
+        onAiGenerate((chunk) => {
+          if (textarea.value === "AI 正在生成中...") {
+            textarea.value = chunk;
+          } else {
+            textarea.value += chunk;
+          }
+          textarea.focus();
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        });
+      }
     });
     overlay.addEventListener("keydown", (event) => {
       if (event.key === "Escape") { event.preventDefault(); close(null); }
@@ -150,6 +174,71 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true }
     textarea.value = value;
     textarea.focus();
     textarea.setSelectionRange(0, textarea.value.length);
+  });
+}
+
+export function openMermaidAiModal({ onChunk }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "text-modal";
+    overlay.innerHTML = `
+      <div class="text-modal__dialog mermaid-ai-modal" role="dialog" aria-modal="true" aria-label="AI生成Mermaid图表">
+        <header class="text-modal__header"><strong>AI生成Mermaid图表</strong><button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button></header>
+        <section class="mermaid-ai-modal__body">
+          <label><span>图表描述</span><textarea rows="4" data-mermaid-ai-input placeholder="TCP/IP建立连接发送数据再断开连接的交互流程(序列图)"></textarea></label>
+        </section>
+        <footer class="text-modal__footer"><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
+      </div>`;
+
+    const input = overlay.querySelector("[data-mermaid-ai-input]");
+    const applyButton = overlay.querySelector("[data-modal-action='apply']");
+
+    const close = () => { overlay.remove(); showTableBubbleToolbar(); };
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay || event.target.dataset.modalAction === "cancel") { close(); resolve(null); }
+      if (event.target.dataset.modalAction === "apply") {
+        handleApply();
+      }
+    });
+
+    overlay.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") { event.preventDefault(); close(); resolve(null); }
+      if (event.key === "Enter" && event.ctrlKey) { event.preventDefault(); handleApply(); }
+    });
+
+    async function handleApply() {
+      const description = input.value.trim();
+      if (!description) return;
+
+      applyButton.disabled = true;
+      close();
+
+      try {
+        const prompt = `请根据以下描述生成Mermaid流程图代码，输出标准的Mermaid语法，不需要任何解释文字，直接输出代码内容。
+
+描述：${description}
+
+要求：
+1. 输出标准的Mermaid流程图代码（推荐使用graph TD或flowchart TD）
+2. 使用清晰的节点命名和连线
+3. 添加适当的注释说明关键步骤
+4. 直接输出代码，不要包含markdown代码块标记（如\`\`\`mermaid）`;
+
+        await generateText(prompt, (chunk) => {
+          onChunk?.(chunk);
+        });
+
+        resolve(true);
+      } catch (error) {
+        console.error("AI生成失败:", error);
+        resolve(null);
+      }
+    }
+
+    hideTableBubbleToolbar();
+    document.body.appendChild(overlay);
+    input.focus();
   });
 }
 

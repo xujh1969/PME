@@ -161,6 +161,7 @@ import {
   openConfirmModal,
   openImageSizeModal,
   openMessageModal,
+  openMermaidAiModal,
   openSaveChangesModal,
   openTableInsertModal,
   openTextEditorModal,
@@ -555,9 +556,9 @@ function renderShell() {
       </section>
       ${state.showStatusbar ? `<footer class="statusbar">
         <span>${state.selectedPath || "未打开文档"}</span>
-        <span>Words: ${words}</span>
-        <span>Chars: ${editor?.storage.characterCount?.characters() || documentText.length}</span>
-        <span>Chars(no spaces): ${editor?.storage.characterCount?.charactersWithoutSpaces() || documentText.replace(/\s/g, "").length}</span>
+        <span>字数: ${words}</span>
+        <span>字符: ${editor?.storage.characterCount?.characters() || documentText.length}</span>
+        <span>字符(不含空格): ${editor?.storage.characterCount?.charactersWithoutSpaces() || documentText.replace(/\s/g, "").length}</span>
         <span>UTF-8</span>
         <span>${state.editorMode === "source" ? "Markdown 源码" : "所见即所得"}</span>
       </footer>` : ""}
@@ -3458,6 +3459,9 @@ async function editMermaidNode(node, pos) {
     value: node.attrs.code || "",
     rows: 18,
     monospace: true,
+    onAiGenerate: (onChunk) => {
+      openMermaidAiModal({ onChunk });
+    },
   });
   if (code === null) {
     return;
@@ -4387,10 +4391,10 @@ function refreshEditorMetadata() {
   const statusItems = document.querySelectorAll(".statusbar span");
   const stats = getDocumentStats(getDocumentText());
   if (statusItems[1]) {
-    statusItems[1].textContent = "Words: " + stats.words;
+    statusItems[1].textContent = "字数: " + stats.words;
   }
   if (statusItems[2]) {
-    statusItems[2].textContent = "Characters: " + stats.characters;
+    statusItems[2].textContent = "字符: " + stats.characters;
   }
   refreshToolbarState();
 }

@@ -320,3 +320,44 @@
 [data-theme="dark"] .settings-section select:focus {
   border-color: #007acc;
 }
+
+.mermaid-ai-modal {
+  width: min(640px, 100%);
+}
+
+.mermaid-ai-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
+
+.mermaid-ai-modal__body label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mermaid-ai-modal__body label span {
+  font-size: 14px;
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+.mermaid-ai-modal__body textarea {
+  width: 100%;
+  min-height: 100px;
+  resize: none;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  color: var(--color-ink);
+  line-height: 1.6;
+  font-size: 14px;
+  outline: none;
+  background: var(--color-canvas);
+}
+
+.mermaid-ai-modal__body textarea:focus {
+  border-color: var(--color-primary);
+}
