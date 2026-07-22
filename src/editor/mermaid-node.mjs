@@ -61,7 +61,7 @@ function wrapMermaidCodeWithTheme(code) {
   const variables = getMermaidThemeVariables();
   const safeVariables = { ...variables };
   if (safeVariables.fontFamily) {
-    safeVariables.fontFamily = safeVariables.fontFamily.replace(/', '/g, ' ').replace(/['"]/g, '');
+    safeVariables.fontFamily = safeVariables.fontFamily.replace(/', '/g, ', ');
   }
   const initConfig = {
     theme: "base",
@@ -227,12 +227,12 @@ async function renderMermaidDiagram(element, code) {
 function applyMermaidSvgThemeFallback(svg) {
   const variables = getMermaidThemeVariables();
 
-  svg.querySelectorAll(".node rect, .node circle, .node ellipse, .node polygon, .node path").forEach((element) => {
+  svg.querySelectorAll(".node rect, .node circle, .node ellipse, .node polygon, .node path, .cluster rect, .cluster path").forEach((element) => {
     setMermaidSvgPaint(element, "fill", variables.primaryColor);
     setMermaidSvgPaint(element, "stroke", variables.primaryBorderColor);
   });
 
-  svg.querySelectorAll(".flowchart-link, .messageLine0, .messageLine1, .relation").forEach((element) => {
+  svg.querySelectorAll(".flowchart-link, .messageLine0, .messageLine1, .relation, .edgePath path, .edgeLabel path").forEach((element) => {
     setMermaidSvgPaint(element, "fill", "none");
     setMermaidSvgPaint(element, "stroke", variables.lineColor);
   });
@@ -248,6 +248,15 @@ function applyMermaidSvgThemeFallback(svg) {
 
   svg.querySelectorAll(".nodeLabel, .edgeLabel, .label, foreignObject span, foreignObject div").forEach((element) => {
     element.style.color = variables.primaryTextColor;
+  });
+
+  svg.querySelectorAll(".nodeLabel text, .edgeLabel text, .label text").forEach((element) => {
+    setMermaidSvgPaint(element, "fill", variables.primaryTextColor);
+  });
+
+  svg.querySelectorAll(".state rect, .state path, .activity rect").forEach((element) => {
+    setMermaidSvgPaint(element, "fill", variables.primaryColor);
+    setMermaidSvgPaint(element, "stroke", variables.primaryBorderColor);
   });
 }
 
