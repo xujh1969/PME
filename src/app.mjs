@@ -4018,13 +4018,18 @@ async function saveBlobExport(defaultFileName, blob) {
 }
 
 async function savePdfHtmlWithTauri(html, defaultFileName) {
-  const { invoke } = await import("@tauri-apps/api/core");
-  const savedPath = await invoke("export_html_to_pdf_dialog", {
-    defaultFileName,
-    html,
-  });
-  if (savedPath) {
-    await openMessageModal({ title: "导出完成", message: "PDF 已保存到：\n" + savedPath });
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const savedPath = await invoke("export_html_to_pdf_dialog", {
+      defaultFileName,
+      html,
+    });
+    if (savedPath) {
+      await openMessageModal({ title: "导出完成", message: "PDF 已保存到：\n" + savedPath });
+    }
+  } catch (error) {
+    console.error("PDF export error:", error);
+    await openMessageModal({ title: "导出失败", message: "PDF 导出失败：\n" + (error.message || error) });
   }
 }
 

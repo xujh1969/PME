@@ -303,26 +303,35 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       width: 100%;
       margin: 16px 0;
       overflow: visible;
-      break-inside: avoid;
     }
     
     .mermaid-diagram__viewport {
       height: auto !important;
       overflow: visible !important;
-      border: 1px solid var(--color-hairline);
-      border-radius: var(--radius-xl);
-      padding: 10px;
+      border: 0 !important;
+      border-radius: 0;
+      padding: 10px 0;
     }
     
     .mermaid-diagram__content {
       width: 100% !important;
       min-width: 0 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: flex-start !important;
     }
     
     .mermaid-diagram svg {
-      width: 100% !important;
+      width: auto !important;
       max-width: 100% !important;
       height: auto !important;
+    }
+    
+    .mermaid-diagram img {
+      display: block !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 0 auto !important;
     }
     
     ${katexCss}

@@ -274,6 +274,41 @@ function buildHtmlExportHtml({ title, documentHtml }) {
       border-radius: var(--radius-sm);
     }
 
+    .mermaid-diagram {
+      width: 100%;
+      margin: 16px 0;
+      overflow: visible;
+    }
+
+    .mermaid-diagram__viewport {
+      height: auto !important;
+      overflow: visible !important;
+      border: 0 !important;
+      border-radius: 0;
+      padding: 10px 0;
+    }
+
+    .mermaid-diagram__content {
+      width: 100% !important;
+      min-width: 0 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: flex-start !important;
+    }
+
+    .mermaid-diagram svg {
+      width: auto !important;
+      max-width: 100% !important;
+      height: auto !important;
+    }
+
+    .mermaid-diagram img {
+      display: block !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 0 auto !important;
+    }
+
     .callout {
       margin: 1em 0;
       padding: 1em;

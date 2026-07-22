@@ -193,7 +193,7 @@ fn export_html_to_pdf_dialog(
             "--allow-file-access-from-files",
             "--no-pdf-header-footer",
             "--print-to-pdf-no-header",
-            "--virtual-time-budget=3000",
+            "--virtual-time-budget=10000",
             &format!("--user-data-dir={}", temp_profile.to_string_lossy()),
             &format!("--print-to-pdf={}", pdf_path.to_string_lossy()),
             &file_url,
@@ -729,7 +729,7 @@ fn percent_encode_path(path: &str) -> String {
 }
 
 fn wait_for_pdf_file(path: &Path) -> Result<(), String> {
-    for _ in 0..50 {
+    for attempt in 0..100 {
         if path.metadata().map(|metadata| metadata.len() > 0).unwrap_or(false) {
             return Ok(());
         }

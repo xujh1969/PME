@@ -102,12 +102,170 @@ export async function getPrintableDocumentHtml(doc) {
   clone.querySelectorAll(".ProseMirror-selectednode").forEach((element) => {
     element.classList.remove("ProseMirror-selectednode");
   });
+  await prepareMermaidDiagramsForPrint(clone);
   cleanupMathElementsForPrint(clone);
   await inlinePrintableImages(clone);
   if (doc) {
     renderTableOfContentsForPrint(clone, doc);
   }
   return clone.innerHTML;
+}
+
+async function prepareMermaidDiagramsForPrint(root) {
+  const diagrams = root.querySelectorAll(".mermaid-diagram");
+  const promises = [];
+
+  diagrams.forEach((diagram) => {
+    const viewport = diagram.querySelector(".mermaid-diagram__viewport");
+    const content = diagram.querySelector(".mermaid-diagram__content");
+    const svg = content?.querySelector("svg");
+
+    if (viewport) {
+      viewport.style.height = "auto";
+      viewport.style.overflow = "visible";
+      viewport.style.transform = "none";
+    }
+
+    if (content) {
+      content.style.width = "100%";
+      content.style.minWidth = "0";
+      content.style.transform = "none";
+    }
+
+    if (svg) {
+      const promise = new Promise((resolve) => {
+        const pageMaxWidth = 600;
+        const pageMaxHeight = 760;
+        const {
+          sourceWidth: svgWidth,
+          sourceHeight: svgHeight,
+          targetWidth,
+          targetHeight,
+        } = getSvgPrintDimensions(svg, pageMaxWidth, pageMaxHeight);
+
+        if (!svg.getAttribute("viewBox")) {
+          svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+        }
+
+        const dpr = 2;
+
+        try {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          canvas.width = targetWidth * dpr;
+          canvas.height = targetHeight * dpr;
+          ctx.scale(dpr, dpr);
+
+          const svgData = new XMLSerializer().serializeToString(svg);
+          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+          const url = URL.createObjectURL(svgBlob);
+
+          const img = new Image();
+          const timeout = setTimeout(() => {
+            URL.revokeObjectURL(url);
+            fallbackToSvg(svg, content, svgWidth, svgHeight, pageMaxWidth, pageMaxHeight);
+            resolve();
+          }, 5000);
+
+          img.onload = () => {
+            clearTimeout(timeout);
+            try {
+              ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+              URL.revokeObjectURL(url);
+
+              const dataUrl = canvas.toDataURL("image/png");
+              const imgElement = document.createElement("img");
+              imgElement.src = dataUrl;
+              imgElement.setAttribute("width", targetWidth);
+              imgElement.setAttribute("height", targetHeight);
+              imgElement.style.width = `${targetWidth}px`;
+              imgElement.style.maxWidth = "100%";
+              imgElement.style.height = "auto";
+              imgElement.style.borderRadius = "8px";
+
+              content.innerHTML = "";
+              content.appendChild(imgElement);
+            } catch {
+              fallbackToSvg(svg, content, svgWidth, svgHeight, pageMaxWidth, pageMaxHeight);
+            }
+            resolve();
+          };
+          img.onerror = () => {
+            clearTimeout(timeout);
+            URL.revokeObjectURL(url);
+            fallbackToSvg(svg, content, svgWidth, svgHeight, pageMaxWidth, pageMaxHeight);
+            resolve();
+          };
+          img.src = url;
+        } catch {
+          fallbackToSvg(svg, content, svgWidth, svgHeight, pageMaxWidth, pageMaxHeight);
+          resolve();
+        }
+      });
+      promises.push(promise);
+    }
+  });
+
+  await Promise.all(promises);
+}
+
+export function getSvgPrintDimensions(svg, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
+  const viewBox = parseSvgViewBox(svg.getAttribute("viewBox"));
+  const sourceWidth = getSvgLength(svg.getAttribute("width")) || getSvgLength(svg.style.width) || viewBox?.width || 800;
+  const sourceHeight = getSvgLength(svg.getAttribute("height")) || getSvgLength(svg.style.height) || viewBox?.height || 600;
+  const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight);
+
+  return {
+    sourceWidth,
+    sourceHeight,
+    targetWidth: Math.round(sourceWidth * scale),
+    targetHeight: Math.round(sourceHeight * scale),
+  };
+}
+
+function parseSvgViewBox(value) {
+  if (!value) {
+    return null;
+  }
+
+  const parts = value.trim().split(/[\s,]+/).map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isFinite(part))) {
+    return null;
+  }
+
+  return {
+    width: parts[2],
+    height: parts[3],
+  };
+}
+
+function getSvgLength(value) {
+  if (!value || String(value).includes("%")) {
+    return 0;
+  }
+
+  const length = Number.parseFloat(value);
+  return Number.isFinite(length) && length > 0 ? length : 0;
+}
+
+function fallbackToSvg(svg, content, svgWidth, svgHeight, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
+  if (!svg.getAttribute("viewBox")) {
+    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+  }
+
+  const scale = Math.min(1, maxWidth / svgWidth, maxHeight / svgHeight);
+  const targetWidth = Math.round(svgWidth * scale);
+  const targetHeight = Math.round(svgHeight * scale);
+
+  svg.setAttribute("width", targetWidth.toString());
+  svg.setAttribute("height", targetHeight.toString());
+  svg.style.width = `${targetWidth}px`;
+  svg.style.maxWidth = "100%";
+  svg.style.height = "auto";
+  svg.style.transform = "none";
+
+  content.innerHTML = "";
+  content.appendChild(svg);
 }
 
 function cleanupMathElementsForPrint(root) {
