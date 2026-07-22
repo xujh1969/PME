@@ -129,7 +129,7 @@ import { runEditorCommand as runEditorCommandWithContext } from "./editor/editor
 import { getClipboardHtmlImageUrl, getImageIntrinsicWidth, getVideoIntrinsicWidth } from "./editor/image-input.mjs";
 import { createEditorExtensions } from "./editor/editor-extensions.mjs";
 import { headingCollapsePlugin } from "./editor/heading-collapse.mjs";
-import { AlignedTableCell, AlignedTableHeader, AssetImage } from "./editor/custom-nodes.mjs";
+import { AlignedTableCell, AlignedTableHeader, AssetImage, ParagraphWithIndent } from "./editor/custom-nodes.mjs";
 import { MermaidDiagram } from "./editor/mermaid-node.mjs";
 import {
   SmartCodeBlockLowlight,
@@ -376,7 +376,7 @@ function renderWelcome() {
       </video>
       <section class="welcome-hero">
         <div class="welcome-hero__content">
-          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.1.7</span></p>
+          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.1.8</span></p>
           <h1>PME</h1>
           <p class="welcome-hero__copy">为长文档、图表、公式和素材而生的本地 Markdown 工作台。</p>
           <div class="welcome-hero__actions">
@@ -2635,6 +2635,7 @@ function mountEditor() {
     editor = new Editor({
     element,
     extensions: createEditorExtensions({
+      paragraphWithIndent: ParagraphWithIndent,
       customOrderedList: CustomOrderedList,
       customListItem: CustomListItem,
       delayedHeading: DelayedHeading,

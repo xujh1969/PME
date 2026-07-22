@@ -1,4 +1,5 @@
 import ImageExtension from "@tiptap/extension-image";
+import Paragraph from "@tiptap/extension-paragraph";
 import { TableCell, TableHeader } from "@tiptap/extension-table";
 import { getRenderedImageWidth, normalizeImageScale, normalizeImageWidth } from "../core/image-size.mjs";
 import { normalizeTextAlign } from "../core/text-align.mjs";
@@ -50,6 +51,19 @@ export const AssetImage = ImageExtension.extend({
         default: null,
         parseHTML: (element) => normalizeImageWidth(element.getAttribute("data-pme-original-width")),
         renderHTML: (attributes) => attributes.originalWidth ? { "data-pme-original-width": attributes.originalWidth } : {},
+      },
+    };
+  },
+});
+
+export const ParagraphWithIndent = Paragraph.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      indent: {
+        default: 0,
+        parseHTML: (element) => Number.parseInt(element.getAttribute("data-indent") || "0", 10) || 0,
+        renderHTML: (attributes) => attributes.indent ? { "data-indent": attributes.indent } : {},
       },
     };
   },

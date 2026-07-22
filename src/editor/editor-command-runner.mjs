@@ -33,9 +33,17 @@ export function runEditorCommand(command, context) {
   } else if (command === "align-justify") {
     chain.setTextAlign("justify").run();
   } else if (command === "indent-more") {
-    chain.updateAttributes("paragraph", { indent: (editor.getAttributes("paragraph").indent || 0) + 1 }).run();
+    if (editor.isActive("listItem")) {
+      chain.sinkListItem("listItem").run();
+    } else {
+      chain.updateAttributes("paragraph", { indent: Math.min(5, (editor.getAttributes("paragraph").indent || 0) + 1) }).run();
+    }
   } else if (command === "indent-less") {
-    chain.updateAttributes("paragraph", { indent: Math.max(0, (editor.getAttributes("paragraph").indent || 0) - 1) }).run();
+    if (editor.isActive("listItem")) {
+      chain.liftListItem("listItem").run();
+    } else {
+      chain.updateAttributes("paragraph", { indent: Math.max(0, (editor.getAttributes("paragraph").indent || 0) - 1) }).run();
+    }
   } else if (command === "bold") {
     chain.toggleBold().run();
   } else if (command === "italic") {
@@ -140,14 +148,6 @@ export function runEditorCommand(command, context) {
     const currentLevel = editor.getAttributes("heading").level;
     if (currentLevel && currentLevel > 1) {
       chain.setHeading({ level: currentLevel - 1 }).run();
-    }
-  } else if (command === "indent-more") {
-    if (editor.isActive("listItem")) {
-      chain.toggleList("bulletList").run();
-    }
-  } else if (command === "indent-less") {
-    if (editor.isActive("listItem")) {
-      chain.liftListItem("listItem").run();
     }
   } else if (command === "insert-paragraph-above") {
     context.insertParagraphAroundSelection?.(editor, "above");

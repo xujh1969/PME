@@ -1,6 +1,6 @@
 # PME（Portable Markdown Editor）软件使用说明书
 
-> 版本：0.1.7  
+> 版本：0.1.8  
 
 > 适用对象：需要使用 PME 进行 Markdown 文档写作、编辑、导出与分享的用户  
 
