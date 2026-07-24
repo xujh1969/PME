@@ -19,3 +19,16 @@ test("renders mindmap export markers for PDF and HTML static conversion", () => 
   assert.equal(source.includes("mindmap-diagram__content"), true);
   assert.equal(source.includes("data-mindmap"), true);
 });
+
+test("cleans up node view listeners before rerendering or destroying", () => {
+  assert.equal(source.includes('content.removeEventListener("input", syncData)'), true);
+  assert.equal(source.includes('content.removeEventListener("pointerup", syncData)'), true);
+  assert.equal(source.includes('content.removeEventListener("keyup", syncData)'), true);
+});
+
+test("preserves malformed persisted mindmap data and guards replacements", () => {
+  assert.equal(source.includes('raw: {\n        default: "",\n        parseHTML:'), true);
+  assert.equal(source.includes('error: {\n        default: "",\n        parseHTML:'), true);
+  assert.equal(source.includes('attributes.raw || serializeMindMapData(attributes.data)'), true);
+  assert.equal(source.includes("editor.state.doc.nodeAt(options.pos)"), true);
+});

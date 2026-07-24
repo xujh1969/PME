@@ -17,14 +17,18 @@ export const MindMap = Node.create({
     return {
       data: {
         default: createDefaultMindMapData(),
-        parseHTML: (element) => normalizeMindMapData(element.getAttribute("data-mindmap") || "").data,
-        renderHTML: (attributes) => ({ "data-mindmap": serializeMindMapData(attributes.data) }),
+        parseHTML: (element) => parseMindMapAttribute(element).data,
+        renderHTML: (attributes) => ({
+          "data-mindmap": attributes.raw || serializeMindMapData(attributes.data),
+        }),
       },
       raw: {
         default: "",
+        parseHTML: (element) => parseMindMapAttribute(element).raw,
       },
       error: {
         default: "",
+        parseHTML: (element) => parseMindMapAttribute(element).error,
       },
     };
   },
@@ -45,7 +49,9 @@ export const MindMap = Node.create({
           attrs: normalizeMindMapData(options.data || createDefaultMindMapData()),
         })
       ),
-      updateMindMap: (options) => ({ tr }) => {
+      updateMindMap: (options = {}) => ({ tr, editor }) => {
+        const node = editor.state.doc.nodeAt(options.pos);
+        if (!node || node.type.name !== this.name) return false;
         tr.setNodeMarkup(options.pos, this.type, normalizeMindMapData(options.data));
         return true;
       },
@@ -74,6 +80,20 @@ export const MindMap = Node.create({
       let mind = null;
       let updateTimer = 0;
 
+      const removeListeners = () => {
+        content.removeEventListener("input", syncData);
+        content.removeEventListener("pointerup", syncData);
+        content.removeEventListener("keyup", syncData);
+      };
+
+      const clearContent = () => {
+        window.clearTimeout(updateTimer);
+        updateTimer = 0;
+        removeListeners();
+        mind = null;
+        content.innerHTML = "";
+      };
+
       const syncData = () => {
         if (!mind || !editor.isEditable) return;
         window.clearTimeout(updateTimer);
@@ -90,7 +110,7 @@ export const MindMap = Node.create({
       const render = (attrs) => {
         const normalized = normalizeMindMapData(attrs.raw || attrs.data);
         wrapper.dataset.mindmap = normalized.raw || serializeMindMapData(normalized.data);
-        content.innerHTML = "";
+        clearContent();
         if (normalized.error) {
           content.innerHTML = `<div class="mindmap-diagram__error">${escapeHtml(normalized.error)}</div>`;
           return;
@@ -121,10 +141,13 @@ export const MindMap = Node.create({
           return true;
         },
         destroy: () => {
-          window.clearTimeout(updateTimer);
-          content.innerHTML = "";
+          clearContent();
         },
       };
     };
   },
 });
+
+function parseMindMapAttribute(element) {
+  return normalizeMindMapData(element.getAttribute("data-mindmap") || "");
+}
