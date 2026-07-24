@@ -1,4 +1,4 @@
-import { buildMindMapFallbackSvg, getStaticMindMapDimensions } from "../core/mindmap-data.mjs";
+import { buildMindMapStaticSvg, getStaticMindMapDimensions } from "../core/mindmap-data.mjs";
 
 export async function loadLocalImageResource(source) {
   const { invoke } = await import("@tauri-apps/api/core");
@@ -218,28 +218,32 @@ async function prepareMindMapsForPrint(root) {
     const content = map.querySelector(".mindmap-diagram__content");
     if (!content) return;
 
-    const rect = content.getBoundingClientRect?.() || { width: 800, height: 480 };
-    const dimensions = getStaticMindMapDimensions(
-      { width: rect.width || 800, height: rect.height || 480 },
-      600,
-      760,
-    );
-    const data = map.dataset.mindmap || "";
-    const svg = buildMindMapFallbackSvg(data);
-    const encoded = encodeURIComponent(svg)
-      .replaceAll("'", "%27")
-      .replaceAll('"', "%22");
-    const image = document.createElement("img");
-    image.src = `data:image/svg+xml;charset=utf-8,${encoded}`;
-    image.setAttribute("width", String(dimensions.targetWidth));
-    image.setAttribute("height", String(dimensions.targetHeight));
-    image.style.width = `${dimensions.targetWidth}px`;
-    image.style.maxWidth = "100%";
-    image.style.height = "auto";
-    image.style.margin = "0 auto";
-    image.style.display = "block";
-    content.innerHTML = "";
-    content.appendChild(image);
+    try {
+      const staticMap = buildMindMapStaticSvg(map.dataset.mindmap || "");
+      const dimensions = getStaticMindMapDimensions(
+        { width: staticMap.width, height: staticMap.height },
+        600,
+        760,
+      );
+      const encoded = encodeURIComponent(staticMap.svg)
+        .replaceAll("'", "%27")
+        .replaceAll('"', "%22");
+      const image = document.createElement("img");
+      image.src = `data:image/svg+xml;charset=utf-8,${encoded}`;
+      image.setAttribute("width", String(dimensions.targetWidth));
+      image.setAttribute("height", String(dimensions.targetHeight));
+      image.style.width = `${dimensions.targetWidth}px`;
+      image.style.maxWidth = "100%";
+      image.style.height = "auto";
+      image.style.margin = "0 auto";
+      image.style.display = "block";
+      content.innerHTML = "";
+      content.appendChild(image);
+    } catch (error) {
+      console.warn("Failed to export mind map", error);
+      const message = error instanceof Error ? error.message : "Mind map export failed";
+      content.innerHTML = `<div class="mindmap-diagram__error">${escapeHtml(message)}</div>`;
+    }
   });
 }
 

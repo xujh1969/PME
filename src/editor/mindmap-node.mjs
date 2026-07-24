@@ -78,65 +78,108 @@ export const MindMap = Node.create({
       wrapper.appendChild(viewport);
 
       let mind = null;
-      let updateTimer = 0;
+      let lastRenderedData = wrapper.dataset.mindmap;
 
       const removeListeners = () => {
         content.removeEventListener("input", syncData);
         content.removeEventListener("pointerup", syncData);
         content.removeEventListener("keyup", syncData);
+        if (mind?.bus?.removeListener) {
+          mind.bus.removeListener("operation", syncData);
+        }
+      };
+
+      const destroyMind = () => {
+        removeListeners();
+        if (typeof mind?.destroy === "function") {
+          mind.destroy();
+        }
+        mind = null;
       };
 
       const clearContent = () => {
-        window.clearTimeout(updateTimer);
-        updateTimer = 0;
-        removeListeners();
-        mind = null;
+        destroyMind();
         content.innerHTML = "";
       };
 
       const syncData = () => {
         if (!mind || !editor.isEditable) return;
-        window.clearTimeout(updateTimer);
-        updateTimer = window.setTimeout(() => {
+
+        try {
           const pos = typeof getPos === "function" ? getPos() : null;
           if (typeof pos !== "number") return;
           const data = mind.getData ? mind.getData() : null;
           if (!data) return;
-          wrapper.dataset.mindmap = serializeMindMapData(data);
+          const serialized = serializeMindMapData(data);
+          wrapper.dataset.mindmap = serialized;
+          if (lastRenderedData === serialized) return;
+          lastRenderedData = serialized;
           editor.commands.updateMindMap({ pos, data });
-        }, 250);
+        } catch (error) {
+          console.warn("Failed to synchronize mind map data", error);
+        }
+      };
+
+      const showError = (error) => {
+        const message = error instanceof Error ? error.message : String(error || "Mind map initialization failed");
+        content.innerHTML = `<div class="mindmap-diagram__error">${escapeHtml(message)}</div>`;
       };
 
       const render = (attrs) => {
         const normalized = normalizeMindMapData(attrs.raw || attrs.data);
-        wrapper.dataset.mindmap = normalized.raw || serializeMindMapData(normalized.data);
+        const serialized = normalized.raw || serializeMindMapData(normalized.data);
+        wrapper.dataset.mindmap = serialized;
+        lastRenderedData = serialized;
         clearContent();
         if (normalized.error) {
-          content.innerHTML = `<div class="mindmap-diagram__error">${escapeHtml(normalized.error)}</div>`;
+          showError(normalized.error);
           return;
         }
-        mind = new MindElixir({
-          el: content,
-          direction: MindElixir.RIGHT,
-          draggable: true,
-          contextMenu: true,
-          toolBar: true,
-          nodeMenu: true,
-          keypress: true,
-        });
-        mind.init(normalized.data);
-        content.addEventListener("input", syncData);
-        content.addEventListener("pointerup", syncData);
-        content.addEventListener("keyup", syncData);
+
+        try {
+          mind = new MindElixir({
+            el: content,
+            direction: MindElixir.RIGHT,
+            draggable: true,
+            contextMenu: true,
+            toolBar: true,
+            nodeMenu: true,
+            keypress: true,
+          });
+          mind.init(normalized.data);
+          if (mind.bus?.addListener) {
+            mind.bus.addListener("operation", syncData);
+          }
+          content.addEventListener("input", syncData);
+          content.addEventListener("pointerup", syncData);
+          content.addEventListener("keyup", syncData);
+        } catch (error) {
+          destroyMind();
+          showError(error);
+        }
       };
 
       render(node.attrs);
 
       return {
         dom: wrapper,
-        stopEvent: (event) => Boolean(event.target.closest?.(".mindmap-diagram")),
+        stopEvent: (event) => {
+          if (
+            event.target === wrapper
+            || event.target === viewport
+            || event.target === content
+            || event.target.matches?.(".map-container")
+          ) {
+            return false;
+          }
+          return Boolean(event.target.closest?.(".mindmap-diagram__content"));
+        },
         update: (updatedNode) => {
           if (updatedNode.type.name !== this.name) return false;
+          const normalized = normalizeMindMapData(updatedNode.attrs.raw || updatedNode.attrs.data);
+          const serialized = normalized.raw || serializeMindMapData(normalized.data);
+          wrapper.dataset.mindmap = serialized;
+          if (lastRenderedData === serialized) return true;
           render(updatedNode.attrs);
           return true;
         },

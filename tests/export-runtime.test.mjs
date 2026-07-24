@@ -104,6 +104,16 @@ test("prepares mindmaps for static export before printable HTML is returned", ()
   assert.equal(runtimeSource.includes("prepareMindMapsForPrint"), true);
   assert.equal(runtimeSource.includes('querySelectorAll(".mindmap-diagram")'), true);
   assert.equal(runtimeSource.includes("getStaticMindMapDimensions"), true);
+  assert.equal(runtimeSource.includes("buildMindMapStaticSvg"), true);
+  assert.equal(runtimeSource.includes("staticMap.width"), true);
+  assert.equal(runtimeSource.includes("staticMap.height"), true);
+  assert.equal(runtimeSource.includes("getBoundingClientRect"), false);
+});
+
+test("isolates mindmap export failures and emits an escaped placeholder", () => {
+  assert.equal(runtimeSource.includes('console.warn("Failed to export mind map"'), true);
+  assert.equal(runtimeSource.includes("mindmap-diagram__error"), true);
+  assert.equal(runtimeSource.includes("escapeHtml(message)"), true);
 });
 
 test("exports static mindmaps with centered borderless styles", () => {
