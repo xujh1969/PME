@@ -1,0 +1,218 @@
+﻿# Review package: d4422e8c87836c5899e8ef4cc71e690bb799e285..470f7b786079d94cb65b07840681099524ba1966
+
+## Commits
+470f7b7 feat: add mindmap insert entry
+
+## Files changed
+ src/app.mjs                          |  4 ++++
+ src/editor/editor-command-runner.mjs |  2 ++
+ src/editor/editor-extensions.mjs     |  3 ++-
+ tests/editor-command-runner.test.mjs | 12 ++++++++++++
+ 4 files changed, 20 insertions(+), 1 deletion(-)
+
+## Diff
+diff --git a/src/app.mjs b/src/app.mjs
+index e4dd220..cd9a5ee 100644
+--- a/src/app.mjs
++++ b/src/app.mjs
+@@ -124,20 +124,21 @@ import {
+   removeWorkspacePath,
+   replaceWorkspacePath,
+ } from "./core/workspace.mjs";
+ import { insertParagraphAroundSelection } from "./editor/paragraph-actions.mjs";
+ import { runEditorCommand as runEditorCommandWithContext } from "./editor/editor-command-runner.mjs";
+ import { getClipboardHtmlImageUrl, getImageIntrinsicWidth, getVideoIntrinsicWidth } from "./editor/image-input.mjs";
+ import { createEditorExtensions } from "./editor/editor-extensions.mjs";
+ import { headingCollapsePlugin } from "./editor/heading-collapse.mjs";
+ import { AlignedTableCell, AlignedTableHeader, AssetImage, ParagraphWithIndent } from "./editor/custom-nodes.mjs";
+ import { MermaidDiagram } from "./editor/mermaid-node.mjs";
++import { MindMap } from "./editor/mindmap-node.mjs";
+ import {
+   SmartCodeBlockLowlight,
+ } from "./editor/code-block-actions.mjs";
+ import { openImageInsertModal } from "./ui/image-insert-modal.mjs";
+ import { openVideoInsertModal } from "./ui/video-insert-modal.mjs";
+ import { openMarkdownLinkModal } from "./ui/markdown-link-modal.mjs";
+ import { openCodeLanguageModal } from "./ui/code-language-modal.mjs";
+ import { runAppCommand } from "./ui/app-command-runner.mjs";
+ import { bindPointerBlockDrag } from "./editor/block-drag-data.mjs";
+ import { resolveLocalMarkdownLink } from "./editor/document-link.mjs";
+@@ -518,20 +519,21 @@ function renderShell() {
+             </svg>
+           </button>
+           ${toolButton("markdown-link", "FileInput", "插入 Markdown 文件")}
+           ${toolButton("formula", "Sigma", "块级公式")}
+           <button class="icon-button" data-command="inline-formula" title="行内公式" aria-label="行内公式">
+             <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
+               <path d="M413.866667 189.44c36.650667 0 75.264 6.656 115.797333 19.968l-23.338667 85.418667-10.453333-3.413334c-23.893333-7.424-43.562667-11.178667-59.136-11.178666-13.610667 0-23.722667 4.309333-30.421333 12.928-4.437333 5.546667-9.002667 20.138667-13.738667 43.733333l-6.656 31.274667h84.565333l-18.346666 87.466666H367.616L293.418667 810.666667H173.824l74.197333-354.986667H181.333333l18.346667-87.509333h66.645333l9.6-45.44 2.304-10.794667c6.912-31.317333 13.525333-52.864 19.754667-64.597333 9.472-17.792 23.552-31.872 42.325333-42.282667 18.730667-10.410667 43.264-15.658667 73.514667-15.658667zM555.392 512l64.426667 95.957333L683.008 512h75.093333l-99.882666 145.066667L768 810.666667h-78.208l-71.253333-103.253334L547.114667 810.666667H469.333333l109.781334-155.861334L479.616 512h75.818667z"/>
+             </svg>
+           </button>
+           ${toolButton("mermaid", "Workflow", "Mermaid")}
++          ${toolButton("mindmap", "Workflow", "思维导图")}
+           ${toolButton("emoji", "Smile", "表情")}
+           <button class="icon-button" data-command="details" title="折叠块" aria-label="折叠块">
+             <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
+               <path d="M867.1 141.17H156.08c-17.67 0-32 14.33-32 32s14.33 32 32 32H867.1c17.67 0 32-14.33 32-32s-14.33-32-32-32zM867.92 367.52H403.2c-17.67 0-32 14.33-32 32s14.33 32 32 32h464.73c17.67 0 32-14.33 32-32s-14.33-32-32.01-32zM867.92 573.87H403.2c-17.67 0-32 14.33-32 32s14.33 32 32 32h464.73c17.67 0 32-14.33 32-32s-14.33-32-32.01-32zM867.92 800.22H156.9c-17.67 0-32 14.33-32 32s14.33 32 32 32h711.02c17.67 0 32-14.33 32-32 0-17.68-14.32-32-32-32zM137.47 637.87V367.52l174.54 148.15z"/>
+             </svg>
+           </button>
+         </div>
+         <button class="icon-button ai-magic-button" data-action="open-ai-assistant" title="AI 助手" aria-label="AI 助手">
+           ${icon("Wand2")}
+         </button>
+@@ -688,20 +690,21 @@ function renderAppMenu() {
+     ]],
+     ["插入", [
+       menuItem("link", "链接"),
+       menuItem("image", "图片"),
+       menuItem("video", "视频"),
+       menuItem("markdown-link", "Markdown 文件"),
+       menuItem("table", "表格"),
+       menuItem("formula", "块级公式"),
+       menuItem("inline-formula", "行内公式"),
+       menuItem("mermaid", "Mermaid"),
++      menuItem("mindmap", "思维导图"),
+       menuItem("code-block", "代码块"),
+       menuItem("details", "折叠详情块"),
+       menuItem("horizontal-rule", "分割线"),
+       menuItem("task-list", "任务列表"),
+     ]],
+     ["视图", [
+       menuItem("toggle-sidebar", "显示侧边栏", null, state.showSidebar),
+       menuItem("toggle-outline", "显示大纲", null, state.showOutline),
+       menuItem("toggle-file-tree", "显示文件列表", null, state.showFileTree),
+       menuSeparator(),
+@@ -2639,20 +2642,21 @@ function mountEditor() {
+       customOrderedList: CustomOrderedList,
+       customListItem: CustomListItem,
+       delayedHeading: DelayedHeading,
+       smartCodeBlockLowlight: SmartCodeBlockLowlight,
+       lowlight,
+       alignedTableHeader: AlignedTableHeader,
+       alignedTableCell: AlignedTableCell,
+       footnote: Footnote,
+       tableOfContents: TableOfContents,
+       mermaidDiagram: MermaidDiagram,
++      mindMap: MindMap,
+       assetImage: AssetImage,
+       bubbleMenuElement: document.querySelector("#bubble-menu") || createBubbleMenuElement(),
+       onBlockDragStart: () => { isBlockDragInProgress = true; },
+       onBlockDragEnd: () => { isBlockDragInProgress = false; },
+       onBlockDragNodeChange: (pos) => { blockDragNodePos = pos; },
+     }),
+     content: getCurrentDocument(),
+     onUpdate: ({ editor: currentEditor, transaction }) => {
+       const prevDoc = state.documents[state.selectedPath];
+       const prevContent = prevDoc ? JSON.stringify(prevDoc) : "";
+diff --git a/src/editor/editor-command-runner.mjs b/src/editor/editor-command-runner.mjs
+index 13382d6..5a5e947 100644
+--- a/src/editor/editor-command-runner.mjs
++++ b/src/editor/editor-command-runner.mjs
+@@ -132,20 +132,22 @@ export function runEditorCommand(command, context) {
+   } else if (command === "video") {
+     context.openVideoInsertPanel?.();
+   } else if (command === "markdown-link") {
+     context.insertMarkdownLink?.();
+   } else if (command === "formula") {
+     chain.insertBlockMath({ latex: "E = mc^2" }).run();
+   } else if (command === "inline-formula") {
+     chain.insertInlineMath({ latex: "x = y" }).run();
+   } else if (command === "mermaid") {
+     chain.insertMermaidDiagram({ code: "graph TD\n  A-->B" }).run();
++  } else if (command === "mindmap") {
++    chain.insertMindMap().run();
+   } else if (command === "heading-up") {
+     const currentLevel = editor.getAttributes("heading").level;
+     if (currentLevel && currentLevel < 6) {
+       chain.setHeading({ level: currentLevel + 1 }).run();
+     }
+   } else if (command === "heading-down") {
+     const currentLevel = editor.getAttributes("heading").level;
+     if (currentLevel && currentLevel > 1) {
+       chain.setHeading({ level: currentLevel - 1 }).run();
+     }
+diff --git a/src/editor/editor-extensions.mjs b/src/editor/editor-extensions.mjs
+index b5fd22b..eb5db3d 100644
+--- a/src/editor/editor-extensions.mjs
++++ b/src/editor/editor-extensions.mjs
+@@ -90,20 +90,21 @@ export function createEditorExtensions(options) {
+         element.setAttribute("tabindex", "0");
+         element.setAttribute("draggable", "false");
+         element.setAttribute("aria-label", "拖动段落");
+         element.setAttribute("title", "拖动段落");
+         element.style.visibility = "hidden";
+         return element;
+       },
+     }),
+     Typography,
+     options.mermaidDiagram,
++    options.mindMap,
+     options.assetImage,
+     Callout,
+     Video,
+     Placeholder.configure({ placeholder: "开始输入..." }),
+     BubbleMenu.configure({
+       element: options.bubbleMenuElement,
+       shouldShow: ({ editor }) => {
+         if (document.querySelector(".text-modal, .ai-modal")) {
+           return false;
+         }
+@@ -116,21 +117,21 @@ export function createEditorExtensions(options) {
+         }
+         if (selection.from === selection.to) {
+           return false;
+         }
+         const docContent = editor.state.doc.content;
+         if (!docContent || docContent.size <= 2) {
+           return false;
+         }
+         if (selection instanceof NodeSelection) {
+           const node = selection.node;
+-          const blockList = ["video", "image", "blockMath", "mermaidDiagram", "codeBlock"];
++          const blockList = ["video", "image", "blockMath", "mermaidDiagram", "mindMap", "codeBlock"];
+           if (blockList.includes(node.type.name)) {
+             return false;
+           }
+         }
+         const fromNode = editor.state.doc.nodeAt(selection.from);
+         if (fromNode?.type?.name === "inlineCode" || fromNode?.type?.name === "inlineMath") {
+           return false;
+         }
+         return true;
+       },
+diff --git a/tests/editor-command-runner.test.mjs b/tests/editor-command-runner.test.mjs
+index 53975fb..4d7f5e3 100644
+--- a/tests/editor-command-runner.test.mjs
++++ b/tests/editor-command-runner.test.mjs
+@@ -57,20 +57,32 @@ test("runs basic TipTap chain commands", () => {
+     ["run"],
+     ["focus"],
+     ["setTextAlign", "center"],
+     ["run"],
+     ["focus"],
+     ["toggleBold"],
+     ["run"],
+   ]);
+ });
+ 
++test("runs the mindmap insert command", () => {
++  const editor = createEditorStub();
++
++  runEditorCommand("mindmap", { editor });
++
++  assert.deepEqual(editor.calls, [
++    ["focus"],
++    ["insertMindMap"],
++    ["run"],
++  ]);
++});
++
+ test("delegates link creation when the current selection is not a link", () => {
+   const editor = createEditorStub();
+   const calls = [];
+ 
+   runEditorCommand("link", {
+     editor,
+     setLinkMark: () => calls.push("link"),
+   });
+ 
+   assert.deepEqual(calls, ["link"]);

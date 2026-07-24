@@ -12,6 +12,7 @@ PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 Ti
 - **Markdown 支持**：支持标题、列表、任务列表、引用、分割线、链接、图片、表格、公式、代码块
 - **代码高亮**：支持多种编程语言语法高亮（基于 lowlight）
 - **Mermaid 图表**：支持 Mermaid 流程图、时序图等多种图表类型，支持 AI 助手生成图表代码（流式输出），支持主题适配和缩放拖拽
+- **思维导图**：支持可视化思维导图编辑，基于 MindElixir 实现，支持拖拽、上下文菜单、工具栏操作，支持导出为静态 SVG
 - **KaTeX 公式**：支持 LaTeX 数学公式渲染，支持 `$...$`、`$$...$$`、`\(...\)`、`\[...\]` 四种格式
 - **图片处理**：支持拖入、粘贴、网络 URL 插入和百分比缩放
 - **视频插入**：支持插入本地视频文件并播放
@@ -82,7 +83,7 @@ PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 Ti
 - **图标库**：Lucide
 - **代码高亮**：lowlight
 - **数学公式**：KaTeX
-- **图表渲染**：Mermaid
+- **图表渲染**：Mermaid、MindElixir（思维导图）
 - **PDF 生成**：html2pdf.js
 
 ## 快速开始
@@ -134,12 +135,14 @@ PME_Trae/
 │   │   ├── ordered-list-extension.mjs  # 自定义有序列表扩展
 │   │   ├── workspace-session.mjs       # Workspace 会话管理
 │   │   ├── pdf-export.mjs    # PDF 导出逻辑
+│   │   ├── mindmap-data.mjs  # 思维导图数据处理与静态 SVG 生成
 │   │   ├── source-mode.mjs   # 源码模式切换
 │   │   └── shortcuts.mjs     # 快捷键定义
 │   ├── editor/               # 编辑器相关
 │   │   ├── editor-extensions.mjs       # TipTap 扩展配置
 │   │   ├── document-link.mjs          # 文档链接处理
 │   │   ├── mermaid-node.mjs           # Mermaid 图表节点
+│   │   ├── mindmap-node.mjs           # 思维导图节点
 │   │   ├── heading-collapse.mjs       # 标题折叠插件
 │   │   ├── callout-extension.mjs      # 警告框扩展
 │   │   └── video-extension.mjs        # 视频扩展

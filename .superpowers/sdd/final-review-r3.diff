@@ -1,0 +1,2971 @@
+﻿# Final review package: bfe6fed10354d39310552c341b9342369fd248ed..e2734399b9ef84c1e967beb1d9c5370e96f28111
+
+## Commits
+e273439 docs: record second mindmap final fixes
+a7601ca fix: staticize html mindmaps and flush edits
+b30a068 docs: record mindmap final fixes
+6e51cea fix: complete mindmap static export and lifecycle
+5cb738d docs: record mindmap export chrome fix
+01a9419 fix: remove exported mindmap image chrome
+80162c3 feat: export mindmaps as static images
+470f7b7 feat: add mindmap insert entry
+d4422e8 fix: harden mindmap node lifecycle
+4b2c87b feat: add mindmap editor node
+d19eb61 feat: persist mindmaps in markdown
+48ab154 feat: add mindmap data helpers
+736ff84 docs: plan mind elixir mindmap implementation
+
+## Files changed
+ .superpowers/sdd/final-fix-report-2.md             |  47 +
+ .superpowers/sdd/final-fix-report.md               |  46 +
+ .superpowers/sdd/task-5-report.md                  |  65 ++
+ .../plans/2026-07-24-mind-elixir-mindmap.md        | 979 +++++++++++++++++++++
+ package-lock.json                                  |   7 +
+ package.json                                       |   1 +
+ src/app.mjs                                        |   9 +-
+ src/core/html-package.mjs                          |  31 +
+ src/core/markdown.mjs                              |  19 +
+ src/core/mindmap-data.mjs                          | 404 +++++++++
+ src/core/pdf-export.mjs                            |  31 +
+ src/editor/editor-command-runner.mjs               |   2 +
+ src/editor/editor-extensions.mjs                   |   3 +-
+ src/editor/mindmap-node.mjs                        | 214 +++++
+ src/export/export-runtime.mjs                      |  44 +-
+ src/styles/editor.css                              |  26 +
+ tests/editor-command-runner.test.mjs               |  12 +
+ tests/export-runtime.test.mjs                      |  97 +-
+ tests/markdown.test.mjs                            |  29 +
+ tests/mindmap-data.test.mjs                        | 153 ++++
+ tests/mindmap-node.test.mjs                        |  72 ++
+ 21 files changed, 2286 insertions(+), 5 deletions(-)
+
+## Diff
+diff --git a/.superpowers/sdd/final-fix-report-2.md b/.superpowers/sdd/final-fix-report-2.md
+new file mode 100644
+index 0000000..8369cdb
+--- /dev/null
++++ b/.superpowers/sdd/final-fix-report-2.md
+@@ -0,0 +1,47 @@
++# Mind Elixir Final Fix Report 2
++
++## Status
++
++Complete. All remaining Critical and Important final re-review findings were addressed.
++
++## Files Changed
++
++- `src/app.mjs`
++- `src/core/mindmap-data.mjs`
++- `src/editor/mindmap-node.mjs`
++- `src/export/export-runtime.mjs`
++- `tests/export-runtime.test.mjs`
++- `tests/mindmap-data.test.mjs`
++- `tests/mindmap-node.test.mjs`
++
++## Tests Run
++
++- `npm test -- tests/mindmap-data.test.mjs tests/mindmap-node.test.mjs tests/export-runtime.test.mjs`
++  - Passed: 29 tests, 0 failed.
++- `npm test -- --test-name-pattern=mindmap tests/markdown.test.mjs`
++  - Passed: 2 tests, 0 failed.
++- `npm test -- tests/markdown.test.mjs`
++  - Mindmap cases passed; the full file reported 21 passed and 4 unrelated existing failures covering heading defaults, blockquote shape, and image path expectations.
++- `npm run build`
++  - Passed: Vite transformed 4,209 modules and completed the production build.
++  - Vite emitted its existing large-chunk size warning.
++- `git diff --check`
++  - Passed with no whitespace errors; Git emitted line-ending conversion warnings.
++
++## Commit
++
++`a7601cad75bb207dd7cbc095b9ebbb0b16a2c77f` - `fix: staticize html mindmaps and flush edits`
++
++## Self-Review
++
++- HTML package generation now uses the same cloned static export path as PDF, with regular image inlining disabled so ZIP asset rewriting still works.
++- Static conversion replaces Mind Elixir custom content with a single SVG-backed `img`; no Mind Elixir runtime is added to packaged HTML.
++- Active Mind Elixir topic and summary editors are committed through their synchronous blur handler before save synchronization, source switching, rerendering, and editor destruction.
++- Normalization matches Mind Elixir's serializer rule by removing non-string runtime `parent` references while preserving summary and other string `parent` fields.
++- NodeView event handling contains keyboard and internal-control events while allowing only atom-selection pointer events from designated backgrounds to reach TipTap.
++- Changes are limited to the four reviewed behaviors and their regression tests.
++
++## Concerns
++
++- The full Markdown test file has four pre-existing failures outside the mindmap path; both focused mindmap serialization tests pass.
++- The production build retains the existing Vite large-chunk warning.
+diff --git a/.superpowers/sdd/final-fix-report.md b/.superpowers/sdd/final-fix-report.md
+new file mode 100644
+index 0000000..4c1c2db
+--- /dev/null
++++ b/.superpowers/sdd/final-fix-report.md
+@@ -0,0 +1,46 @@
++# Mind Elixir Final Fix Report
++
++## Status
++
++Complete. All Critical and Important final-review findings were addressed within the mindmap feature scope.
++
++## Files Changed
++
++- `src/core/mindmap-data.mjs`
++- `src/editor/mindmap-node.mjs`
++- `src/export/export-runtime.mjs`
++- `tests/mindmap-data.test.mjs`
++- `tests/mindmap-node.test.mjs`
++- `tests/export-runtime.test.mjs`
++
++## Tests Run
++
++- `npm test -- tests/mindmap-data.test.mjs tests/mindmap-node.test.mjs tests/export-runtime.test.mjs`
++  - Passed: 25 tests, 0 failures.
++- `npm run build`
++  - Passed: Vite transformed 4,209 modules and built successfully.
++  - Retained the existing warning for chunks larger than 500 kB.
++- `npm test -- tests/markdown.test.mjs`
++  - Mindmap parse/serialize and invalid-data round-trip tests passed.
++  - Overall: 21 passed, 4 unrelated baseline failures in heading/blockquote document shapes and image path expectations.
++- `git diff --check`
++  - Passed with no whitespace errors.
++
++## Commit
++
++`6e51cea246dc9ee32426ce5d7653334837c3cbe6` - `fix: complete mindmap static export and lifecycle`
++
++## Self-Review
++
++- Static PDF/HTML export now renders every tree node and connector from Mind Elixir data, applies node and branch styles, calculates SVG bounds from the rendered layout, and then applies the existing 600 by 760 shrink-only constraints.
++- Normalization preserves JSON-safe top-level and node fields while removing runtime `parent` references.
++- NodeView edits synchronize immediately from Mind Elixir operations and DOM edit events; self-originated equivalent updates reuse the current instance.
++- NodeView cleanup removes listeners and calls Mind Elixir `destroy()` when available.
++- Wrapper, viewport, content, and Mind Elixir canvas backgrounds can select the TipTap atom while internal controls and nodes retain their interactions.
++- Initialization and per-map export conversion are isolated with escaped error placeholders; export failures use `console.warn` and do not abort the document.
++- No non-goals were added.
++
++## Concerns
++
++- The optional full Markdown suite has four pre-existing failures unrelated to mindmaps; the two mindmap-specific Markdown tests pass.
++- The build continues to report the repository's existing large-chunk warning.
+diff --git a/.superpowers/sdd/task-5-report.md b/.superpowers/sdd/task-5-report.md
+new file mode 100644
+index 0000000..c309b76
+--- /dev/null
++++ b/.superpowers/sdd/task-5-report.md
+@@ -0,0 +1,65 @@
++# Task 5 Report
++
++## Status
++
++Complete. Mind maps are replaced with static fallback SVG images before printable HTML is returned. PDF and packaged HTML exports include centered, borderless mind map styles.
++
++## Files Changed
++
++- `src/export/export-runtime.mjs`
++- `src/core/pdf-export.mjs`
++- `src/core/html-package.mjs`
++- `tests/export-runtime.test.mjs`
++
++## Tests Run
++
++- `npm test -- tests/export-runtime.test.mjs`
++  - RED: 7 passed, 2 failed as expected before implementation; the failures were the missing mind map export preparation and export CSS assertions.
++  - GREEN: 9 passed, 0 failed.
++- `npm run build`
++  - Passed: Vite built 4,209 modules successfully.
++  - Output included the existing Vite warning for chunks over 500 kB.
++- `git diff --check`
++  - Passed with no whitespace errors.
++
++## Commit
++
++`80162c3fc3071fe3bfe9b2c20afc053adb451ff2` - `feat: export mindmaps as static images`
++
++## Self-Review
++
++- Static image replacement runs after Mermaid preparation and before printable image inlining.
++- Dimensions use `getStaticMindMapDimensions` with PDF-equivalent 600 by 760 limits, preventing enlargement.
++- Both export templates center images and remove viewport borders.
++- No Mind Elixir runtime scripts were added to the HTML export.
++- The commit contains only the four Task 5 source and test files specified by the brief.
++
++## Concerns
++
++- This first version intentionally uses `buildMindMapFallbackSvg`; it does not use Mind Elixir's native export API.
++
++## Reviewer Fix: Remove Exported Mindmap Image Chrome
++
++### Files Changed
++
++- `src/core/pdf-export.mjs`
++- `src/core/html-package.mjs`
++- `tests/export-runtime.test.mjs`
++
++### Tests Run
++
++- `npm test -- tests/export-runtime.test.mjs`
++  - Passed: 9 tests, 0 failures.
++- `npm run build`
++  - Passed: Vite transformed 4,209 modules and built successfully.
++  - Output retained the existing warning for chunks larger than 500 kB.
++
++### Commit
++
++`01a9419` - `fix: remove exported mindmap image chrome`
++
++### Self-Review
++
++- Added `border: 0 !important;` and `border-radius: 0 !important;` to the mindmap image rule in both static export templates.
++- Extended the shared export-style test to require both declarations for PDF and HTML templates.
++- Scope is limited to the reviewer finding; no unrelated export behavior changed.
+diff --git a/docs/superpowers/plans/2026-07-24-mind-elixir-mindmap.md b/docs/superpowers/plans/2026-07-24-mind-elixir-mindmap.md
+new file mode 100644
+index 0000000..288940a
+--- /dev/null
++++ b/docs/superpowers/plans/2026-07-24-mind-elixir-mindmap.md
+@@ -0,0 +1,979 @@
++# Mind Elixir Mindmap Implementation Plan
++
++> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
++
++**Goal:** Add Mind Elixir powered interactive mind map blocks to PME, with Markdown persistence and static PDF/HTML export.
++
++**Architecture:** Implement mind maps as a TipTap atom node parallel to the existing Mermaid node. Store data in fenced `mindmap` Markdown code blocks, render interactively in the editor with Mind Elixir, and replace interactive DOM with static images for PDF/HTML export using the same width/height fit logic as Mermaid.
++
++**Tech Stack:** TipTap custom node, Mind Elixir, Vite, Markdown fenced code parsing, DOM-to-static export helpers, Node test runner.
++
++## Global Constraints
++
++- Markdown storage format is fenced code block language `mindmap`.
++- HTML export must be static image only, with no Mind Elixir runtime script.
++- PDF and HTML exported mind maps must be centered, borderless, and only shrink, not enlarge.
++- PDF export must constrain mind map static images by maximum width and maximum height, like Mermaid export.
++- First version does not implement XMind import/export, interactive HTML export, full-screen editor, or automatic heading/list-to-mindmap conversion.
++
++---
++
++## File Structure
++
++- `package.json` / `package-lock.json`: add `mind-elixir`.
++- `src/core/mindmap-data.mjs`: pure helpers for default data, normalization, stable serialization, static image dimension calculation, and fallback SVG generation.
++- `src/editor/mindmap-node.mjs`: TipTap `mindMap` atom node and Mind Elixir NodeView.
++- `src/core/markdown.mjs`: parse and serialize fenced `mindmap` blocks.
++- `src/editor/editor-command-runner.mjs`: run the new insert command.
++- `src/editor/editor-extensions.mjs`: include mind maps where atom block behavior applies.
++- `src/app.mjs`: import/register node, add menu/toolbar entry, handle selection/double-click behavior only where needed.
++- `src/export/export-runtime.mjs`: prepare `.mindmap-diagram` blocks for print/static export.
++- `src/core/pdf-export.mjs`: exported static mind map CSS.
++- `src/core/html-package.mjs`: exported static mind map CSS.
++- `src/styles/editor.css`: editor canvas styling.
++- `tests/mindmap-data.test.mjs`: pure data helper tests.
++- `tests/markdown.test.mjs`: parse/serialize tests.
++- `tests/mindmap-node.test.mjs`: structural node tests.
++- `tests/export-runtime.test.mjs`: export sizing/static-style tests.
++- Existing command/design tests: update string assertions for the new entry where applicable.
++
++---
++
++### Task 1: Dependency and Mind Map Data Helpers
++
++**Files:**
++- Modify: `package.json`
++- Modify: `package-lock.json`
++- Create: `src/core/mindmap-data.mjs`
++- Create: `tests/mindmap-data.test.mjs`
++
++**Interfaces:**
++- Produces: `createDefaultMindMapData(): object`
++- Produces: `normalizeMindMapData(value: unknown): { data: object | null, raw: string, error: string }`
++- Produces: `serializeMindMapData(data: object | string): string`
++- Produces: `getStaticMindMapDimensions(size: { width: number, height: number }, maxWidth: number, maxHeight?: number): { sourceWidth: number, sourceHeight: number, targetWidth: number, targetHeight: number }`
++- Produces: `buildMindMapFallbackSvg(data: object | string): string`
++
++- [ ] **Step 1: Install dependency**
++
++Run:
++
++```powershell
++npm install mind-elixir
++```
++
++Expected: `package.json` and `package-lock.json` include `mind-elixir`.
++
++- [ ] **Step 2: Write failing data helper tests**
++
++Create `tests/mindmap-data.test.mjs`:
++
++```js
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import {
++  buildMindMapFallbackSvg,
++  createDefaultMindMapData,
++  getStaticMindMapDimensions,
++  normalizeMindMapData,
++  serializeMindMapData,
++} from "../src/core/mindmap-data.mjs";
++
++test("creates default Mind Elixir data with a root and children", () => {
++  const data = createDefaultMindMapData();
++
++  assert.equal(data.nodeData.id, "root");
++  assert.equal(data.nodeData.topic, "中心主题");
++  assert.equal(data.nodeData.children.length, 2);
++});
++
++test("normalizes valid mindmap JSON", () => {
++  const result = normalizeMindMapData('{"nodeData":{"id":"root","topic":"A","children":[]}}');
++
++  assert.equal(result.error, "");
++  assert.equal(result.raw, "");
++  assert.equal(result.data.nodeData.topic, "A");
++});
++
++test("preserves invalid mindmap JSON as raw text", () => {
++  const result = normalizeMindMapData("{not-json");
++
++  assert.equal(result.data, null);
++  assert.equal(result.raw, "{not-json");
++  assert.match(result.error, /Invalid mind map JSON/);
++});
++
++test("serializes mindmap data with stable indentation", () => {
++  const markdown = serializeMindMapData({ nodeData: { id: "root", topic: "A", children: [] } });
++
++  assert.equal(markdown, '{\n  "nodeData": {\n    "id": "root",\n    "topic": "A",\n    "children": []\n  }\n}');
++});
++
++test("constrains static mindmap dimensions by width and height", () => {
++  assert.deepEqual(getStaticMindMapDimensions({ width: 600, height: 2400 }, 600, 760), {
++    sourceWidth: 600,
++    sourceHeight: 2400,
++    targetWidth: 190,
++    targetHeight: 760,
++  });
++});
++
++test("builds a fallback SVG containing the root topic", () => {
++  const svg = buildMindMapFallbackSvg({ nodeData: { id: "root", topic: "Root", children: [] } });
++
++  assert.equal(svg.includes("<svg"), true);
++  assert.equal(svg.includes("Root"), true);
++});
++```
++
++- [ ] **Step 3: Run tests to verify failure**
++
++Run:
++
++```powershell
++npm test -- tests/mindmap-data.test.mjs
++```
++
++Expected: FAIL because `src/core/mindmap-data.mjs` does not exist.
++
++- [ ] **Step 4: Implement data helpers**
++
++Create `src/core/mindmap-data.mjs` with:
++
++```js
++export function createDefaultMindMapData() {
++  return {
++    nodeData: {
++      id: "root",
++      topic: "中心主题",
++      children: [
++        { id: "topic-1", topic: "主题 1", children: [] },
++        { id: "topic-2", topic: "主题 2", children: [] },
++      ],
++    },
++  };
++}
++
++export function normalizeMindMapData(value) {
++  if (typeof value === "object" && value !== null) {
++    return { data: ensureMindMapShape(value), raw: "", error: "" };
++  }
++
++  const raw = String(value ?? "").trim();
++  if (!raw) {
++    return { data: createDefaultMindMapData(), raw: "", error: "" };
++  }
++
++  try {
++    return { data: ensureMindMapShape(JSON.parse(raw)), raw: "", error: "" };
++  } catch {
++    return { data: null, raw, error: "Invalid mind map JSON" };
++  }
++}
++
++export function serializeMindMapData(data) {
++  if (typeof data === "string") {
++    return data.trim();
++  }
++  return JSON.stringify(ensureMindMapShape(data), null, 2);
++}
++
++export function getStaticMindMapDimensions(size, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
++  const sourceWidth = positiveNumber(size?.width) || 800;
++  const sourceHeight = positiveNumber(size?.height) || 480;
++  const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight);
++  return {
++    sourceWidth,
++    sourceHeight,
++    targetWidth: Math.round(sourceWidth * scale),
++    targetHeight: Math.round(sourceHeight * scale),
++  };
++}
++
++export function buildMindMapFallbackSvg(data) {
++  const normalized = normalizeMindMapData(data);
++  const topic = normalized.data?.nodeData?.topic || "思维导图";
++  return [
++    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">',
++    '<rect width="800" height="480" fill="#ffffff"/>',
++    '<rect x="300" y="205" width="200" height="70" rx="10" fill="#f8f8f8" stroke="#d6d3d1"/>',
++    `<text x="400" y="247" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="20" fill="#0c0a09">${escapeXml(topic)}</text>`,
++    "</svg>",
++  ].join("");
++}
++
++function ensureMindMapShape(value) {
++  const nodeData = value?.nodeData || value;
++  return {
++    ...value,
++    nodeData: ensureMindMapNode(nodeData, "root"),
++  };
++}
++
++function ensureMindMapNode(node, fallbackId) {
++  return {
++    id: String(node?.id || fallbackId),
++    topic: String(node?.topic || "中心主题"),
++    children: Array.isArray(node?.children)
++      ? node.children.map((child, index) => ensureMindMapNode(child, `${fallbackId}-${index + 1}`))
++      : [],
++  };
++}
++
++function positiveNumber(value) {
++  const number = Number(value);
++  return Number.isFinite(number) && number > 0 ? number : 0;
++}
++
++function escapeXml(value) {
++  return String(value)
++    .replaceAll("&", "&amp;")
++    .replaceAll("<", "&lt;")
++    .replaceAll(">", "&gt;")
++    .replaceAll('"', "&quot;");
++}
++```
++
++- [ ] **Step 5: Verify tests pass**
++
++Run:
++
++```powershell
++npm test -- tests/mindmap-data.test.mjs
++```
++
++Expected: PASS.
++
++- [ ] **Step 6: Commit**
++
++Run:
++
++```powershell
++git add package.json package-lock.json src/core/mindmap-data.mjs tests/mindmap-data.test.mjs
++git commit -m "feat: add mindmap data helpers"
++```
++
++Expected: commit succeeds.
++
++---
++
++### Task 2: Markdown Parse and Serialize Support
++
++**Files:**
++- Modify: `src/core/markdown.mjs`
++- Modify: `tests/markdown.test.mjs`
++
++**Interfaces:**
++- Consumes: `serializeMindMapData(data)`
++- Produces: Markdown parser maps fenced `mindmap` blocks to `{ type: "mindMap", attrs: { data, raw, error } }`
++- Produces: serializer emits fenced `mindmap` blocks from `mindMap` nodes
++
++- [ ] **Step 1: Add failing Markdown tests**
++
++Append to `tests/markdown.test.mjs`:
++
++```js
++test("parses and serializes mindmap diagrams", () => {
++  const markdown = [
++    "```mindmap",
++    "{",
++    '  "nodeData": {',
++    '    "id": "root",',
++    '    "topic": "Plan",',
++    '    "children": []',
++    "  }",
++    "}",
++    "```",
++  ].join("\n");
++
++  const doc = parseMarkdown(markdown);
++
++  assert.equal(doc.content[0].type, "mindMap");
++  assert.equal(doc.content[0].attrs.data.nodeData.topic, "Plan");
++  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
++});
++
++test("preserves invalid mindmap JSON during markdown round trip", () => {
++  const markdown = "```mindmap\n{not-json\n```";
++  const doc = parseMarkdown(markdown);
++
++  assert.equal(doc.content[0].type, "mindMap");
++  assert.equal(doc.content[0].attrs.raw, "{not-json");
++  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
++});
++```
++
++- [ ] **Step 2: Run tests to verify failure**
++
++Run:
++
++```powershell
++npm test -- tests/markdown.test.mjs
++```
++
++Expected: the new mindmap tests fail because `mindmap` currently parses as `codeBlock`.
++
++- [ ] **Step 3: Implement Markdown support**
++
++Modify `src/core/markdown.mjs`:
++
++```js
++import { normalizeMindMapData, serializeMindMapData } from "./mindmap-data.mjs";
++```
++
++In the fenced code block branch, after the Mermaid check, add:
++
++```js
++      if (language.toLowerCase() === "mindmap") {
++        const normalized = normalizeMindMapData(codeLines.join("\n"));
++        content.push({
++          type: "mindMap",
++          attrs: normalized,
++        });
++        index += 1;
++        continue;
++      }
++```
++
++In `serializeNode`, after the Mermaid branch, add:
++
++```js
++  if (node.type === "mindMap") {
++    return [
++      "```mindmap",
++      node.attrs?.raw || serializeMindMapData(node.attrs?.data),
++      "```",
++    ].join("\n");
++  }
++```
++
++- [ ] **Step 4: Verify Markdown tests**
++
++Run:
++
++```powershell
++npm test -- tests/markdown.test.mjs
++```
++
++Expected: mindmap tests pass. Existing unrelated tests may still reflect current repo baseline; inspect output and ensure no new failure is caused by mindmap changes.
++
++- [ ] **Step 5: Commit**
++
++Run:
++
++```powershell
++git add src/core/markdown.mjs tests/markdown.test.mjs
++git commit -m "feat: persist mindmaps in markdown"
++```
++
++Expected: commit succeeds.
++
++---
++
++### Task 3: TipTap MindMap Node and Editor Styling
++
++**Files:**
++- Create: `src/editor/mindmap-node.mjs`
++- Modify: `src/styles/editor.css`
++- Create: `tests/mindmap-node.test.mjs`
++
++**Interfaces:**
++- Consumes: `createDefaultMindMapData`, `normalizeMindMapData`, `serializeMindMapData`
++- Produces: `export const MindMap`
++- Produces commands: `insertMindMap({ data })`, `updateMindMap({ data, pos })`, `deleteMindMap({ pos })`
++
++- [ ] **Step 1: Write failing structural test**
++
++Create `tests/mindmap-node.test.mjs`:
++
++```js
++import test from "node:test";
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++
++const source = readFileSync(new URL("../src/editor/mindmap-node.mjs", import.meta.url), "utf8");
++
++test("defines the MindMap TipTap node outside the app entry", () => {
++  assert.equal(source.includes("export const MindMap"), true);
++  assert.equal(source.includes('name: "mindMap"'), true);
++  assert.equal(source.includes("insertMindMap"), true);
++  assert.equal(source.includes("updateMindMap"), true);
++  assert.equal(source.includes("deleteMindMap"), true);
++  assert.equal(source.includes("MindElixir"), true);
++});
++
++test("renders mindmap export markers for PDF and HTML static conversion", () => {
++  assert.equal(source.includes("mindmap-diagram"), true);
++  assert.equal(source.includes("mindmap-diagram__viewport"), true);
++  assert.equal(source.includes("mindmap-diagram__content"), true);
++  assert.equal(source.includes("data-mindmap"), true);
++});
++```
++
++- [ ] **Step 2: Run test to verify failure**
++
++Run:
++
++```powershell
++npm test -- tests/mindmap-node.test.mjs
++```
++
++Expected: FAIL because the node file does not exist.
++
++- [ ] **Step 3: Implement the node**
++
++Create `src/editor/mindmap-node.mjs`:
++
++```js
++import { Node } from "@tiptap/core";
++import MindElixir from "mind-elixir";
++import "mind-elixir/style";
++import {
++  createDefaultMindMapData,
++  normalizeMindMapData,
++  serializeMindMapData,
++} from "../core/mindmap-data.mjs";
++import { escapeHtml } from "../core/html-utils.mjs";
++
++export const MindMap = Node.create({
++  name: "mindMap",
++  group: "block",
++  atom: true,
++
++  addAttributes() {
++    return {
++      data: {
++        default: createDefaultMindMapData(),
++        parseHTML: (element) => normalizeMindMapData(element.getAttribute("data-mindmap") || "").data,
++        renderHTML: (attributes) => ({ "data-mindmap": serializeMindMapData(attributes.data) }),
++      },
++      raw: {
++        default: "",
++      },
++      error: {
++        default: "",
++      },
++    };
++  },
++
++  parseHTML() {
++    return [{ tag: 'div[data-type="mindmap-diagram"]' }];
++  },
++
++  renderHTML({ HTMLAttributes }) {
++    return ["div", { ...HTMLAttributes, "data-type": "mindmap-diagram" }];
++  },
++
++  addCommands() {
++    return {
++      insertMindMap: (options = {}) => ({ commands }) => (
++        commands.insertContent({
++          type: this.name,
++          attrs: normalizeMindMapData(options.data || createDefaultMindMapData()),
++        })
++      ),
++      updateMindMap: (options) => ({ tr }) => {
++        tr.setNodeMarkup(options.pos, this.type, normalizeMindMapData(options.data));
++        return true;
++      },
++      deleteMindMap: (options) => ({ tr, editor }) => {
++        const node = editor.state.doc.nodeAt(options.pos);
++        if (!node || node.type.name !== this.name) return false;
++        tr.delete(options.pos, options.pos + node.nodeSize);
++        return true;
++      },
++    };
++  },
++
++  addNodeView() {
++    return ({ node, editor, getPos }) => {
++      const wrapper = document.createElement("div");
++      const viewport = document.createElement("div");
++      const content = document.createElement("div");
++      wrapper.className = "mindmap-diagram";
++      wrapper.dataset.type = "mindmap-diagram";
++      viewport.className = "mindmap-diagram__viewport";
++      content.className = "mindmap-diagram__content";
++      wrapper.dataset.mindmap = node.attrs.raw || serializeMindMapData(node.attrs.data);
++      viewport.appendChild(content);
++      wrapper.appendChild(viewport);
++
++      let mind = null;
++      let updateTimer = 0;
++
++      const syncData = () => {
++        if (!mind || !editor.isEditable) return;
++        window.clearTimeout(updateTimer);
++        updateTimer = window.setTimeout(() => {
++          const pos = typeof getPos === "function" ? getPos() : null;
++          if (typeof pos !== "number") return;
++          const data = mind.getData ? mind.getData() : null;
++          if (!data) return;
++          wrapper.dataset.mindmap = serializeMindMapData(data);
++          editor.commands.updateMindMap({ pos, data });
++        }, 250);
++      };
++
++      const render = (attrs) => {
++        const normalized = normalizeMindMapData(attrs.raw || attrs.data);
++        wrapper.dataset.mindmap = normalized.raw || serializeMindMapData(normalized.data);
++        content.innerHTML = "";
++        if (normalized.error) {
++          content.innerHTML = `<div class="mindmap-diagram__error">${escapeHtml(normalized.error)}</div>`;
++          return;
++        }
++        mind = new MindElixir({
++          el: content,
++          direction: MindElixir.RIGHT,
++          draggable: true,
++          contextMenu: true,
++          toolBar: true,
++          nodeMenu: true,
++          keypress: true,
++        });
++        mind.init(normalized.data);
++        content.addEventListener("input", syncData);
++        content.addEventListener("pointerup", syncData);
++        content.addEventListener("keyup", syncData);
++      };
++
++      render(node.attrs);
++
++      return {
++        dom: wrapper,
++        stopEvent: (event) => Boolean(event.target.closest?.(".mindmap-diagram")),
++        update: (updatedNode) => {
++          if (updatedNode.type.name !== this.name) return false;
++          render(updatedNode.attrs);
++          return true;
++        },
++        destroy: () => {
++          window.clearTimeout(updateTimer);
++          content.innerHTML = "";
++        },
++      };
++    };
++  },
++});
++```
++
++- [ ] **Step 4: Add editor styles**
++
++Append near the Mermaid styles in `src/styles/editor.css`:
++
++```css
++.ProseMirror .mindmap-diagram {
++  position: relative;
++  width: calc(100% + 96px);
++  margin: 18px -48px;
++  user-select: none;
++}
++
++.ProseMirror .mindmap-diagram__viewport {
++  min-height: 360px;
++  overflow: hidden;
++  border: 1px solid var(--color-hairline);
++  border-radius: var(--radius-lg);
++  background: var(--color-surface-soft);
++}
++
++.ProseMirror .mindmap-diagram__content {
++  width: 100%;
++  height: 520px;
++}
++
++.ProseMirror .mindmap-diagram__error {
++  padding: var(--space-md);
++  color: var(--color-error);
++  font-family: var(--font-mono);
++}
++```
++
++- [ ] **Step 5: Verify structural test**
++
++Run:
++
++```powershell
++npm test -- tests/mindmap-node.test.mjs
++```
++
++Expected: PASS.
++
++- [ ] **Step 6: Commit**
++
++Run:
++
++```powershell
++git add src/editor/mindmap-node.mjs src/styles/editor.css tests/mindmap-node.test.mjs
++git commit -m "feat: add mindmap editor node"
++```
++
++Expected: commit succeeds.
++
++---
++
++### Task 4: Register Node and Add Insert Entry
++
++**Files:**
++- Modify: `src/app.mjs`
++- Modify: `src/editor/editor-command-runner.mjs`
++- Modify: `src/editor/editor-extensions.mjs`
++- Modify: existing command/menu tests as needed
++
++**Interfaces:**
++- Consumes: `MindMap`
++- Consumes: command `insertMindMap`
++- Produces: menu/toolbar command id `mindmap`
++
++- [ ] **Step 1: Add failing registration tests**
++
++Add to `tests/editor-command-runner.test.mjs` or a new focused source assertion:
++
++```js
++test("runs the mindmap insert command", () => {
++  const calls = [];
++  const chain = {
++    focus: () => chain,
++    insertMindMap: () => {
++      calls.push("mindmap");
++      return chain;
++    },
++    run: () => calls.push("run"),
++  };
++
++  runEditorCommand("mindmap", { editor: { chain: () => chain } });
++
++  assert.deepEqual(calls, ["mindmap", "run"]);
++});
++```
++
++If the local test harness for `runEditorCommand` differs, adapt only the setup to match existing tests in that file.
++
++- [ ] **Step 2: Run test to verify failure**
++
++Run:
++
++```powershell
++npm test -- tests/editor-command-runner.test.mjs
++```
++
++Expected: FAIL because `mindmap` is not handled.
++
++- [ ] **Step 3: Wire command runner**
++
++In `src/editor/editor-command-runner.mjs`, add alongside the Mermaid command:
++
++```js
++  } else if (command === "mindmap") {
++    chain.insertMindMap().run();
++```
++
++- [ ] **Step 4: Register extension**
++
++In `src/app.mjs`, import:
++
++```js
++import { MindMap } from "./editor/mindmap-node.mjs";
++```
++
++In the editor extension options where `mermaidDiagram: MermaidDiagram` is registered, add:
++
++```js
++      mindMap: MindMap,
++```
++
++In `src/editor/editor-extensions.mjs`, include `"mindMap"` in atom block lists that currently include `"mermaidDiagram"`.
++
++- [ ] **Step 5: Add UI entry**
++
++In `src/app.mjs`, add toolbar/menu item next to Mermaid:
++
++```js
++${toolButton("mindmap", "Workflow", "思维导图")}
++```
++
++and insert menu item:
++
++```js
++menuItem("mindmap", "思维导图"),
++```
++
++Use the exact local helpers and surrounding syntax already present in `src/app.mjs`.
++
++- [ ] **Step 6: Verify command and build**
++
++Run:
++
++```powershell
++npm test -- tests/editor-command-runner.test.mjs
++npm run build
++```
++
++Expected: command test and build pass.
++
++- [ ] **Step 7: Commit**
++
++Run:
++
++```powershell
++git add src/app.mjs src/editor/editor-command-runner.mjs src/editor/editor-extensions.mjs tests/editor-command-runner.test.mjs
++git commit -m "feat: add mindmap insert entry"
++```
++
++Expected: commit succeeds.
++
++---
++
++### Task 5: Static PDF and HTML Export
++
++**Files:**
++- Modify: `src/export/export-runtime.mjs`
++- Modify: `src/core/pdf-export.mjs`
++- Modify: `src/core/html-package.mjs`
++- Modify: `tests/export-runtime.test.mjs`
++
++**Interfaces:**
++- Consumes: `getStaticMindMapDimensions`, `buildMindMapFallbackSvg`
++- Produces: `prepareMindMapsForPrint(root)` called by `getPrintableDocumentHtml`
++- Produces: shared static exported `.mindmap-diagram` CSS in PDF and HTML templates
++
++- [ ] **Step 1: Add failing export tests**
++
++Append to `tests/export-runtime.test.mjs`:
++
++```js
++test("prepares mindmaps for static export before printable HTML is returned", () => {
++  assert.equal(runtimeSource.includes("prepareMindMapsForPrint"), true);
++  assert.equal(runtimeSource.includes('querySelectorAll(".mindmap-diagram")'), true);
++  assert.equal(runtimeSource.includes("getStaticMindMapDimensions"), true);
++});
++
++test("exports static mindmaps with centered borderless styles", () => {
++  for (const source of [pdfExportSource, htmlPackageSource]) {
++    const viewportRule = source.match(/\.mindmap-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
++    const contentRule = source.match(/\.mindmap-diagram__content\s*\{[^}]+\}/)?.[0] || "";
++    const imageRule = source.match(/\.mindmap-diagram img\s*\{[^}]+\}/)?.[0] || "";
++
++    assert.equal(viewportRule.includes("border: 0 !important;"), true);
++    assert.equal(contentRule.includes("justify-content: center !important;"), true);
++    assert.equal(imageRule.includes("margin: 0 auto !important;"), true);
++    assert.equal(imageRule.includes("max-width: 100% !important;"), true);
++  }
++});
++```
++
++- [ ] **Step 2: Run test to verify failure**
++
++Run:
++
++```powershell
++npm test -- tests/export-runtime.test.mjs
++```
++
++Expected: FAIL because mind map export logic and CSS do not exist.
++
++- [ ] **Step 3: Implement static export preparation**
++
++In `src/export/export-runtime.mjs`, import:
++
++```js
++import { buildMindMapFallbackSvg, getStaticMindMapDimensions } from "../core/mindmap-data.mjs";
++```
++
++Call after Mermaid preparation:
++
++```js
++  await prepareMindMapsForPrint(clone);
++```
++
++Add:
++
++```js
++async function prepareMindMapsForPrint(root) {
++  const maps = root.querySelectorAll(".mindmap-diagram");
++  maps.forEach((map) => {
++    const content = map.querySelector(".mindmap-diagram__content");
++    if (!content) return;
++
++    const rect = content.getBoundingClientRect?.() || { width: 800, height: 480 };
++    const dimensions = getStaticMindMapDimensions(
++      { width: rect.width || 800, height: rect.height || 480 },
++      600,
++      760,
++    );
++    const data = map.dataset.mindmap || "";
++    const svg = buildMindMapFallbackSvg(data);
++    const encoded = encodeURIComponent(svg)
++      .replaceAll("'", "%27")
++      .replaceAll('"', "%22");
++    const image = document.createElement("img");
++    image.src = `data:image/svg+xml;charset=utf-8,${encoded}`;
++    image.setAttribute("width", String(dimensions.targetWidth));
++    image.setAttribute("height", String(dimensions.targetHeight));
++    image.style.width = `${dimensions.targetWidth}px`;
++    image.style.maxWidth = "100%";
++    image.style.height = "auto";
++    image.style.margin = "0 auto";
++    image.style.display = "block";
++    content.innerHTML = "";
++    content.appendChild(image);
++  });
++}
++```
++
++This first implementation uses the fallback SVG to guarantee static export. A later refinement can call Mind Elixir's native export API.
++
++- [ ] **Step 4: Add PDF and HTML static styles**
++
++Add matching CSS blocks to both `src/core/pdf-export.mjs` and `src/core/html-package.mjs`:
++
++```css
++    .mindmap-diagram {
++      width: 100%;
++      margin: 16px 0;
++      overflow: visible;
++    }
++
++    .mindmap-diagram__viewport {
++      height: auto !important;
++      overflow: visible !important;
++      border: 0 !important;
++      border-radius: 0;
++      padding: 10px 0;
++    }
++
++    .mindmap-diagram__content {
++      width: 100% !important;
++      min-width: 0 !important;
++      display: flex !important;
++      justify-content: center !important;
++      align-items: flex-start !important;
++    }
++
++    .mindmap-diagram img {
++      display: block !important;
++      max-width: 100% !important;
++      height: auto !important;
++      margin: 0 auto !important;
++    }
++```
++
++- [ ] **Step 5: Verify export tests**
++
++Run:
++
++```powershell
++npm test -- tests/export-runtime.test.mjs
++```
++
++Expected: PASS.
++
++- [ ] **Step 6: Build**
++
++Run:
++
++```powershell
++npm run build
++```
++
++Expected: PASS.
++
++- [ ] **Step 7: Commit**
++
++Run:
++
++```powershell
++git add src/export/export-runtime.mjs src/core/pdf-export.mjs src/core/html-package.mjs tests/export-runtime.test.mjs
++git commit -m "feat: export mindmaps as static images"
++```
++
++Expected: commit succeeds.
++
++---
++
++### Task 6: Verification and Polish
++
++**Files:**
++- Modify only files touched by earlier tasks if verification exposes small issues.
++
++**Interfaces:**
++- Consumes all earlier tasks.
++- Produces final verified feature.
++
++- [ ] **Step 1: Run targeted tests**
++
++Run:
++
++```powershell
++npm test -- tests/mindmap-data.test.mjs tests/mindmap-node.test.mjs tests/export-runtime.test.mjs
++```
++
++Expected: PASS.
++
++- [ ] **Step 2: Run Markdown tests**
++
++Run:
++
++```powershell
++npm test -- tests/markdown.test.mjs
++```
++
++Expected: mindmap-specific tests pass. If existing baseline tests fail, record them separately and do not change unrelated behavior.
++
++- [ ] **Step 3: Build**
++
++Run:
++
++```powershell
++npm run build
++```
++
++Expected: PASS.
++
++- [ ] **Step 4: Manual smoke test in app**
++
++Run:
++
++```powershell
++npm run dev
++```
++
++Expected: Vite dev server starts. In the app/browser:
++
++- Insert a思维导图 block.
++- Edit the root text and add a child node.
++- Save/source view shows a ` ```mindmap ` block.
++- Reopen or reparse restores the diagram.
++- Export PDF shows static centered image.
++- Export HTML ZIP contains no Mind Elixir runtime and displays static image.
++
++- [ ] **Step 5: Check git diff**
++
++Run:
++
++```powershell
++git status --short
++git diff --stat
++```
++
++Expected: only intended files have changes since the last task commit.
++
++- [ ] **Step 6: Final commit if polish changes were needed**
++
++If Step 4 required fixes:
++
++```powershell
++git add <changed-files>
++git commit -m "fix: polish mindmap integration"
++```
++
++Expected: commit succeeds. If no changes were needed, skip this step.
++
++---
++
++## Self-Review
++
++- Spec coverage: insertion, Markdown persistence, interactive editor rendering, static PDF/HTML export, sizing constraints, tests, and non-goals are covered.
++- Completeness scan: no unfinished sections are present.
++- Type consistency: the plan consistently uses `mindMap` for the TipTap node, `mindmap` for Markdown fence language and command id, and `.mindmap-diagram` for DOM/export selectors.
+diff --git a/package-lock.json b/package-lock.json
+index 378b385..332f6c8 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -37,20 +37,21 @@
+         "@tiptap/extension-text-style": "^3.27.3",
+         "@tiptap/extension-typography": "^3.27.3",
+         "@tiptap/extension-underline": "^3.27.3",
+         "@tiptap/starter-kit": "^3.27.3",
+         "fflate": "^0.8.3",
+         "html2pdf.js": "^0.10.3",
+         "katex": "^0.17.0",
+         "lowlight": "^3.3.0",
+         "lucide": "^1.23.0",
+         "mermaid": "^11.16.0",
++        "mind-elixir": "^5.14.0",
+         "vite": "^8.1.3"
+       },
+       "devDependencies": {
+         "@tauri-apps/cli": "^2.11.4"
+       }
+     },
+     "node_modules/@antfu/install-pkg": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/@antfu/install-pkg/-/install-pkg-1.1.0.tgz",
+       "integrity": "sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==",
+@@ -3013,20 +3014,26 @@
+         "https://github.com/sponsors/katex"
+       ],
+       "license": "MIT",
+       "dependencies": {
+         "commander": "^8.3.0"
+       },
+       "bin": {
+         "katex": "cli.js"
+       }
+     },
++    "node_modules/mind-elixir": {
++      "version": "5.14.0",
++      "resolved": "https://registry.npmjs.org/mind-elixir/-/mind-elixir-5.14.0.tgz",
++      "integrity": "sha512-V1PHE6TcVvbWMku8Jgo00LV6/vFLC0StAVccPqRT3GmaQsj93SFMviRoDHEjv0M0Yn8n10gktxNWCDUWdgRY0Q==",
++      "license": "MIT"
++    },
+     "node_modules/nanoid": {
+       "version": "3.3.15",
+       "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.15.tgz",
+       "integrity": "sha512-y7Wygv/7mEOvxTuEQDB8StXdMRBWf1kR/tlhAzBRUFkB2jfcLOAxO/SHmOO2zgz1pVgK29/kyupn059/bCHdjA==",
+       "funding": [
+         {
+           "type": "github",
+           "url": "https://github.com/sponsors/ai"
+         }
+       ],
+diff --git a/package.json b/package.json
+index f36dcb6..f578b38 100644
+--- a/package.json
++++ b/package.json
+@@ -42,16 +42,17 @@
+     "@tiptap/extension-text-style": "^3.27.3",
+     "@tiptap/extension-typography": "^3.27.3",
+     "@tiptap/extension-underline": "^3.27.3",
+     "@tiptap/starter-kit": "^3.27.3",
+     "fflate": "^0.8.3",
+     "html2pdf.js": "^0.10.3",
+     "katex": "^0.17.0",
+     "lowlight": "^3.3.0",
+     "lucide": "^1.23.0",
+     "mermaid": "^11.16.0",
++    "mind-elixir": "^5.14.0",
+     "vite": "^8.1.3"
+   },
+   "devDependencies": {
+     "@tauri-apps/cli": "^2.11.4"
+   }
+ }
+diff --git a/src/app.mjs b/src/app.mjs
+index e4dd220..d1644c5 100644
+--- a/src/app.mjs
++++ b/src/app.mjs
+@@ -124,20 +124,21 @@ import {
+   removeWorkspacePath,
+   replaceWorkspacePath,
+ } from "./core/workspace.mjs";
+ import { insertParagraphAroundSelection } from "./editor/paragraph-actions.mjs";
+ import { runEditorCommand as runEditorCommandWithContext } from "./editor/editor-command-runner.mjs";
+ import { getClipboardHtmlImageUrl, getImageIntrinsicWidth, getVideoIntrinsicWidth } from "./editor/image-input.mjs";
+ import { createEditorExtensions } from "./editor/editor-extensions.mjs";
+ import { headingCollapsePlugin } from "./editor/heading-collapse.mjs";
+ import { AlignedTableCell, AlignedTableHeader, AssetImage, ParagraphWithIndent } from "./editor/custom-nodes.mjs";
+ import { MermaidDiagram } from "./editor/mermaid-node.mjs";
++import { flushMindMapEdits, MindMap } from "./editor/mindmap-node.mjs";
+ import {
+   SmartCodeBlockLowlight,
+ } from "./editor/code-block-actions.mjs";
+ import { openImageInsertModal } from "./ui/image-insert-modal.mjs";
+ import { openVideoInsertModal } from "./ui/video-insert-modal.mjs";
+ import { openMarkdownLinkModal } from "./ui/markdown-link-modal.mjs";
+ import { openCodeLanguageModal } from "./ui/code-language-modal.mjs";
+ import { runAppCommand } from "./ui/app-command-runner.mjs";
+ import { bindPointerBlockDrag } from "./editor/block-drag-data.mjs";
+ import { resolveLocalMarkdownLink } from "./editor/document-link.mjs";
+@@ -518,20 +519,21 @@ function renderShell() {
+             </svg>
+           </button>
+           ${toolButton("markdown-link", "FileInput", "插入 Markdown 文件")}
+           ${toolButton("formula", "Sigma", "块级公式")}
+           <button class="icon-button" data-command="inline-formula" title="行内公式" aria-label="行内公式">
+             <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
+               <path d="M413.866667 189.44c36.650667 0 75.264 6.656 115.797333 19.968l-23.338667 85.418667-10.453333-3.413334c-23.893333-7.424-43.562667-11.178667-59.136-11.178666-13.610667 0-23.722667 4.309333-30.421333 12.928-4.437333 5.546667-9.002667 20.138667-13.738667 43.733333l-6.656 31.274667h84.565333l-18.346666 87.466666H367.616L293.418667 810.666667H173.824l74.197333-354.986667H181.333333l18.346667-87.509333h66.645333l9.6-45.44 2.304-10.794667c6.912-31.317333 13.525333-52.864 19.754667-64.597333 9.472-17.792 23.552-31.872 42.325333-42.282667 18.730667-10.410667 43.264-15.658667 73.514667-15.658667zM555.392 512l64.426667 95.957333L683.008 512h75.093333l-99.882666 145.066667L768 810.666667h-78.208l-71.253333-103.253334L547.114667 810.666667H469.333333l109.781334-155.861334L479.616 512h75.818667z"/>
+             </svg>
+           </button>
+           ${toolButton("mermaid", "Workflow", "Mermaid")}
++          ${toolButton("mindmap", "Workflow", "思维导图")}
+           ${toolButton("emoji", "Smile", "表情")}
+           <button class="icon-button" data-command="details" title="折叠块" aria-label="折叠块">
+             <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
+               <path d="M867.1 141.17H156.08c-17.67 0-32 14.33-32 32s14.33 32 32 32H867.1c17.67 0 32-14.33 32-32s-14.33-32-32-32zM867.92 367.52H403.2c-17.67 0-32 14.33-32 32s14.33 32 32 32h464.73c17.67 0 32-14.33 32-32s-14.33-32-32.01-32zM867.92 573.87H403.2c-17.67 0-32 14.33-32 32s14.33 32 32 32h464.73c17.67 0 32-14.33 32-32s-14.33-32-32.01-32zM867.92 800.22H156.9c-17.67 0-32 14.33-32 32s14.33 32 32 32h711.02c17.67 0 32-14.33 32-32 0-17.68-14.32-32-32-32zM137.47 637.87V367.52l174.54 148.15z"/>
+             </svg>
+           </button>
+         </div>
+         <button class="icon-button ai-magic-button" data-action="open-ai-assistant" title="AI 助手" aria-label="AI 助手">
+           ${icon("Wand2")}
+         </button>
+@@ -688,20 +690,21 @@ function renderAppMenu() {
+     ]],
+     ["插入", [
+       menuItem("link", "链接"),
+       menuItem("image", "图片"),
+       menuItem("video", "视频"),
+       menuItem("markdown-link", "Markdown 文件"),
+       menuItem("table", "表格"),
+       menuItem("formula", "块级公式"),
+       menuItem("inline-formula", "行内公式"),
+       menuItem("mermaid", "Mermaid"),
++      menuItem("mindmap", "思维导图"),
+       menuItem("code-block", "代码块"),
+       menuItem("details", "折叠详情块"),
+       menuItem("horizontal-rule", "分割线"),
+       menuItem("task-list", "任务列表"),
+     ]],
+     ["视图", [
+       menuItem("toggle-sidebar", "显示侧边栏", null, state.showSidebar),
+       menuItem("toggle-outline", "显示大纲", null, state.showOutline),
+       menuItem("toggle-file-tree", "显示文件列表", null, state.showFileTree),
+       menuSeparator(),
+@@ -1478,20 +1481,21 @@ async function toggleSourceView() {
+     });
+     state.documents[state.selectedPath] = isTauriRuntime()
+       ? await hydrateLocalImagePreviews(parsed, loadLocalImageResource, { basePath: fullBasePath })
+       : parsed;
+     state.editorMode = "visual";
+     render();
+     return;
+   }
+ 
+   if (editor) {
++    flushMindMapEdits(editor.view.dom);
+     state.documents[state.selectedPath] = editor.getJSON();
+   }
+   const currentDoc = getCurrentDocument();
+   const serialized = serializeMarkdown(currentDoc, {
+     basePath: fullBasePath,
+   });
+   state.sourceDrafts[state.selectedPath] = serialized;
+   state.editorMode = "source";
+   render();
+ }
+@@ -2272,20 +2276,21 @@ function syncSelectedDocumentToState() {
+   if (!state.selectedPath) {
+     return;
+   }
+ 
+   if (state.editorMode === "source") {
+     state.files[state.selectedPath] = getSourceText(state.selectedPath);
+     state.documents[state.selectedPath] = hydrateImagePreviews(parseMarkdown(state.files[state.selectedPath]), state.files, {
+       basePath: state.selectedPath,
+     });
+   } else if (editor) {
++    flushMindMapEdits(editor.view.dom);
+     state.documents[state.selectedPath] = editor.getJSON();
+     state.files[state.selectedPath] = serializeMarkdown(getCurrentDocument(), {
+       basePath: state.selectedPath,
+     });
+   }
+ }
+ 
+ async function openWorkspace(projectName, paths, files, workspaceAdapter = null, assetIndex = {}, selectedPath = "") {
+   Object.assign(state, createOpenedWorkspaceSession({
+     projectName,
+@@ -2639,20 +2644,21 @@ function mountEditor() {
+       customOrderedList: CustomOrderedList,
+       customListItem: CustomListItem,
+       delayedHeading: DelayedHeading,
+       smartCodeBlockLowlight: SmartCodeBlockLowlight,
+       lowlight,
+       alignedTableHeader: AlignedTableHeader,
+       alignedTableCell: AlignedTableCell,
+       footnote: Footnote,
+       tableOfContents: TableOfContents,
+       mermaidDiagram: MermaidDiagram,
++      mindMap: MindMap,
+       assetImage: AssetImage,
+       bubbleMenuElement: document.querySelector("#bubble-menu") || createBubbleMenuElement(),
+       onBlockDragStart: () => { isBlockDragInProgress = true; },
+       onBlockDragEnd: () => { isBlockDragInProgress = false; },
+       onBlockDragNodeChange: (pos) => { blockDragNodePos = pos; },
+     }),
+     content: getCurrentDocument(),
+     onUpdate: ({ editor: currentEditor, transaction }) => {
+       const prevDoc = state.documents[state.selectedPath];
+       const prevContent = prevDoc ? JSON.stringify(prevDoc) : "";
+@@ -3923,21 +3929,21 @@ async function packageCurrentDocumentAsHtml() {
+     });
+     for (const pos of collapsedHeadings) {
+       const node = editor.state.doc.nodeAt(pos);
+       if (node && node.type.name === "heading") {
+         const tr = editor.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, collapsed: false });
+         editor.view.dispatch(tr);
+       }
+     }
+   }
+ 
+-  const documentHtml = editor?.view?.dom?.innerHTML || "";
++  const documentHtml = await getPrintableDocumentHtml(doc, { inlineImages: false });
+ 
+   if (editor) {
+     for (const pos of collapsedHeadings) {
+       const node = editor.state.doc.nodeAt(pos);
+       if (node && node.type.name === "heading") {
+         const tr = editor.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, collapsed: true });
+         editor.view.dispatch(tr);
+       }
+     }
+   }
+@@ -4374,20 +4380,21 @@ async function insertImageAsset(asset, options = {}) {
+   editor.chain().focus().setImage({
+     src: asset.previewUrl || asset.src,
+     alt: asset.alt || (asset.assetPath ? fileName(asset.assetPath).replace(/\.[^.]+$/, "") : "image"),
+     ...(asset.assetPath ? { assetSrc: asset.assetPath } : {}),
+     ...(width ? { width, scale, originalWidth } : {}),
+   }).run();
+ }
+ 
+ function destroyEditor() {
+   if (editor) {
++    flushMindMapEdits(editor.view.dom);
+     editor.destroy();
+     editor = null;
+   }
+   lastSelectionBlockPos = null;
+ }
+ 
+ function refreshEditorMetadata() {
+   const activeTab = document.querySelector('.tab--active [data-tab="' + cssEscape(state.selectedPath) + '"] .tab__label');
+   if (activeTab) {
+     const tab = state.openTabs.find((item) => item.path === state.selectedPath);
+diff --git a/src/core/html-package.mjs b/src/core/html-package.mjs
+index fb0924c..db00f5b 100644
+--- a/src/core/html-package.mjs
++++ b/src/core/html-package.mjs
+@@ -302,20 +302,51 @@ function buildHtmlExportHtml({ title, documentHtml }) {
+       height: auto !important;
+     }
+ 
+     .mermaid-diagram img {
+       display: block !important;
+       max-width: 100% !important;
+       height: auto !important;
+       margin: 0 auto !important;
+     }
+ 
++    .mindmap-diagram {
++      width: 100%;
++      margin: 16px 0;
++      overflow: visible;
++    }
++
++    .mindmap-diagram__viewport {
++      height: auto !important;
++      overflow: visible !important;
++      border: 0 !important;
++      border-radius: 0;
++      padding: 10px 0;
++    }
++
++    .mindmap-diagram__content {
++      width: 100% !important;
++      min-width: 0 !important;
++      display: flex !important;
++      justify-content: center !important;
++      align-items: flex-start !important;
++    }
++
++    .mindmap-diagram img {
++      display: block !important;
++      border: 0 !important;
++      border-radius: 0 !important;
++      max-width: 100% !important;
++      height: auto !important;
++      margin: 0 auto !important;
++    }
++
+     .callout {
+       margin: 1em 0;
+       padding: 1em;
+       border-radius: var(--radius-sm);
+       border-left: 4px solid;
+       background: var(--color-canvas-soft);
+     }
+ 
+     .callout__title {
+       font-weight: 600;
+diff --git a/src/core/markdown.mjs b/src/core/markdown.mjs
+index bbabb1f..5de61f7 100644
+--- a/src/core/markdown.mjs
++++ b/src/core/markdown.mjs
+@@ -1,10 +1,12 @@
++import { normalizeMindMapData, serializeMindMapData } from "./mindmap-data.mjs";
++
+ export function parseMarkdown(markdown) {
+   const lines = markdown.replaceAll("\r\n", "\n").split("\n");
+   const footnotes = collectFootnoteDefinitions(lines);
+   const content = [];
+   let index = 0;
+ 
+   while (index < lines.length) {
+     const line = lines[index];
+ 
+     if (isFootnoteDefinition(line)) {
+@@ -98,20 +100,29 @@ export function parseMarkdown(markdown) {
+         index += 1;
+       }
+       if (language.toLowerCase() === "mermaid") {
+         content.push({
+           type: "mermaidDiagram",
+           attrs: { code: codeLines.join("\n") },
+         });
+         index += 1;
+         continue;
+       }
++      if (language.toLowerCase() === "mindmap") {
++        const normalized = normalizeMindMapData(codeLines.join("\n"));
++        content.push({
++          type: "mindMap",
++          attrs: normalized,
++        });
++        index += 1;
++        continue;
++      }
+       const codeText = codeLines.join("\n");
+       content.push({
+         type: "codeBlock",
+         attrs: { language },
+         content: codeText ? [{ type: "text", text: codeText }] : [],
+       });
+       index += 1;
+       continue;
+     }
+ 
+@@ -323,20 +334,28 @@ function serializeNode(node, options) {
+   }
+ 
+   if (node.type === "mermaidDiagram") {
+     return [
+       "```mermaid",
+       node.attrs?.code || "",
+       "```",
+     ].join("\n");
+   }
+ 
++  if (node.type === "mindMap") {
++    return [
++      "```mindmap",
++      node.attrs?.raw || serializeMindMapData(node.attrs?.data),
++      "```",
++    ].join("\n");
++  }
++
+   if (node.type === "blockquote") {
+     return `> ${plainText(node, options)}`;
+   }
+ 
+   if (node.type === "codeBlock") {
+     return [
+       `\`\`\`${node.attrs.language || ""}`,
+       plainText(node, options),
+       "```",
+     ].join("\n");
+diff --git a/src/core/mindmap-data.mjs b/src/core/mindmap-data.mjs
+new file mode 100644
+index 0000000..24dddc7
+--- /dev/null
++++ b/src/core/mindmap-data.mjs
+@@ -0,0 +1,404 @@
++const STATIC_PADDING = 32;
++const STATIC_HORIZONTAL_GAP = 72;
++const STATIC_VERTICAL_GAP = 24;
++const STATIC_BRANCH_COLORS = ["#2563eb", "#dc2626", "#059669", "#7c3aed", "#d97706", "#0891b2"];
++
++export function createDefaultMindMapData() {
++  return {
++    nodeData: {
++      id: "root",
++      topic: "中心主题",
++      children: [
++        { id: "topic-1", topic: "主题 1", children: [] },
++        { id: "topic-2", topic: "主题 2", children: [] },
++      ],
++    },
++  };
++}
++
++export function normalizeMindMapData(value) {
++  if (typeof value === "object" && value !== null) {
++    return { data: ensureMindMapShape(value), raw: "", error: "" };
++  }
++
++  const raw = String(value ?? "").trim();
++  if (!raw) {
++    return { data: createDefaultMindMapData(), raw: "", error: "" };
++  }
++
++  try {
++    return { data: ensureMindMapShape(JSON.parse(raw)), raw: "", error: "" };
++  } catch {
++    return { data: null, raw, error: "Invalid mind map JSON" };
++  }
++}
++
++export function serializeMindMapData(data) {
++  if (typeof data === "string") {
++    return data.trim();
++  }
++  return JSON.stringify(ensureMindMapShape(data), null, 2);
++}
++
++export function getStaticMindMapDimensions(size, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
++  const sourceWidth = positiveNumber(size?.width) || 800;
++  const sourceHeight = positiveNumber(size?.height) || 480;
++  const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight);
++  return {
++    sourceWidth,
++    sourceHeight,
++    targetWidth: Math.round(sourceWidth * scale),
++    targetHeight: Math.round(sourceHeight * scale),
++  };
++}
++
++export function buildMindMapStaticSvg(data) {
++  const normalized = normalizeMindMapData(data);
++  if (!normalized.data?.nodeData) {
++    throw new Error(normalized.error || "Invalid mind map data");
++  }
++
++  const layout = layoutMindMap(normalized.data);
++  const naturalWidth = Math.ceil(layout.bounds.maxX - layout.bounds.minX + STATIC_PADDING * 2);
++  const naturalHeight = Math.ceil(layout.bounds.maxY - layout.bounds.minY + STATIC_PADDING * 2);
++  const width = Math.max(240, naturalWidth);
++  const height = Math.max(120, naturalHeight);
++  const offsetX = STATIC_PADDING - layout.bounds.minX + (width - naturalWidth) / 2;
++  const offsetY = STATIC_PADDING - layout.bounds.minY + (height - naturalHeight) / 2;
++  const connectors = layout.nodes
++    .filter((item) => item.parent)
++    .map((item) => renderConnector(item, offsetX, offsetY))
++    .join("");
++  const nodes = layout.nodes
++    .map((item) => renderStaticNode(item, offsetX, offsetY))
++    .join("");
++
++  return {
++    width,
++    height,
++    svg: [
++      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
++      `<rect width="${width}" height="${height}" fill="#ffffff"/>`,
++      connectors,
++      nodes,
++      "</svg>",
++    ].join(""),
++  };
++}
++
++export function buildMindMapFallbackSvg(data) {
++  return buildMindMapStaticSvg(data).svg;
++}
++
++function ensureMindMapShape(value) {
++  const hasWrapper = isObject(value) && Object.prototype.hasOwnProperty.call(value, "nodeData");
++  const nodeData = hasWrapper ? value.nodeData : value;
++  const cleanValue = hasWrapper ? cloneSerializable(value) : {};
++
++  return {
++    ...(isObject(cleanValue) ? cleanValue : {}),
++    nodeData: ensureMindMapNode(nodeData, "root"),
++  };
++}
++
++function ensureMindMapNode(node, fallbackId) {
++  const cleanNode = cloneSerializable(isObject(node) ? node : {});
++  const children = Array.isArray(node?.children) ? node.children : [];
++
++  return {
++    ...(isObject(cleanNode) ? cleanNode : {}),
++    id: String(node?.id || fallbackId),
++    topic: String(node?.topic || "中心主题"),
++    children: children.map((child, index) => ensureMindMapNode(child, `${fallbackId}-${index + 1}`)),
++  };
++}
++
++function cloneSerializable(value, seen = new WeakSet()) {
++  if (value === null || typeof value === "string" || typeof value === "boolean") {
++    return value;
++  }
++  if (typeof value === "number") {
++    return Number.isFinite(value) ? value : null;
++  }
++  if (typeof value !== "object") {
++    return undefined;
++  }
++  if (seen.has(value)) {
++    return undefined;
++  }
++
++  seen.add(value);
++  if (Array.isArray(value)) {
++    const result = value.map((item) => {
++      const cloned = cloneSerializable(item, seen);
++      return cloned === undefined ? null : cloned;
++    });
++    seen.delete(value);
++    return result;
++  }
++
++  const result = {};
++  for (const [key, item] of Object.entries(value)) {
++    if (key === "parent" && typeof item !== "string") continue;
++    const cloned = cloneSerializable(item, seen);
++    if (cloned !== undefined) {
++      result[key] = cloned;
++    }
++  }
++  seen.delete(value);
++  return result;
++}
++
++function layoutMindMap(data) {
++  const root = createLayoutNode(data.nodeData, true, 0);
++  const rootChildren = Array.isArray(data.nodeData.children) ? data.nodeData.children : [];
++  const mapDirection = Number(data.direction);
++  const sides = { left: [], right: [] };
++
++  rootChildren.forEach((child, index) => {
++    const direction = getBranchDirection(child, mapDirection, index);
++    const branch = layoutBranch(child, direction, 1);
++    setBranchColor(branch, child.branchColor || STATIC_BRANCH_COLORS[index % STATIC_BRANCH_COLORS.length]);
++    sides[direction === -1 ? "left" : "right"].push(branch);
++  });
++
++  const leftHeight = getLayoutGroupHeight(sides.left);
++  const rightHeight = getLayoutGroupHeight(sides.right);
++  const groupHeight = Math.max(root.height, leftHeight, rightHeight);
++  root.y = (groupHeight - root.height) / 2;
++  const nodes = [root];
++
++  placeRootBranches(sides.left, -1, root, groupHeight, nodes);
++  placeRootBranches(sides.right, 1, root, groupHeight, nodes);
++
++  return { nodes, bounds: getBounds(nodes) };
++}
++
++function layoutBranch(node, direction, depth) {
++  const root = createLayoutNode(node, false, depth);
++  const childLayouts = (Array.isArray(node.children) ? node.children : [])
++    .map((child) => layoutBranch(child, direction, depth + 1));
++  const nodes = [root];
++  let cursorY = 0;
++
++  childLayouts.forEach((childLayout) => {
++    const childRoot = childLayout.root;
++    const targetX = direction === 1
++      ? root.width + STATIC_HORIZONTAL_GAP
++      : -STATIC_HORIZONTAL_GAP - childRoot.width;
++    const shiftX = targetX - childRoot.x;
++    const shiftY = cursorY - childLayout.bounds.minY;
++    shiftLayout(childLayout, shiftX, shiftY);
++    childRoot.parent = root;
++    nodes.push(...childLayout.nodes);
++    cursorY += childLayout.bounds.maxY - childLayout.bounds.minY + STATIC_VERTICAL_GAP;
++  });
++
++  if (childLayouts.length) {
++    const first = childLayouts[0].root;
++    const last = childLayouts.at(-1).root;
++    root.y = ((first.y + first.height / 2) + (last.y + last.height / 2)) / 2 - root.height / 2;
++  }
++
++  return { root, nodes, bounds: getBounds(nodes) };
++}
++
++function placeRootBranches(branches, direction, root, groupHeight, nodes) {
++  const branchesHeight = getLayoutGroupHeight(branches);
++  let cursorY = (groupHeight - branchesHeight) / 2;
++
++  branches.forEach((branch) => {
++    const targetX = direction === 1
++      ? root.x + root.width + STATIC_HORIZONTAL_GAP
++      : root.x - STATIC_HORIZONTAL_GAP - branch.root.width;
++    const shiftX = targetX - branch.root.x;
++    const shiftY = cursorY - branch.bounds.minY;
++    shiftLayout(branch, shiftX, shiftY);
++    branch.root.parent = root;
++    nodes.push(...branch.nodes);
++    cursorY += branch.bounds.maxY - branch.bounds.minY + STATIC_VERTICAL_GAP;
++  });
++}
++
++function createLayoutNode(node, isRoot, depth) {
++  const style = isObject(node.style) ? node.style : {};
++  const fontSize = clamp(positiveNumber(String(style.fontSize || "").replace("px", "")) || (isRoot ? 18 : 15), 10, 36);
++  const requestedWidth = positiveNumber(String(style.width || "").replace("px", ""));
++  const preferredWidth = requestedWidth ? clamp(requestedWidth, 60, 360) : 0;
++  const label = getNodeLabel(node);
++  const maxTextWidth = preferredWidth || (isRoot ? 180 : 150);
++  const lines = wrapLabel(label, maxTextWidth, fontSize);
++  const textWidth = Math.max(...lines.map((line) => estimateTextWidth(line, fontSize)), 40);
++  const width = Math.ceil(Math.max(preferredWidth, textWidth + 28));
++  const lineHeight = Math.ceil(fontSize * 1.35);
++  const height = Math.ceil(lines.length * lineHeight + 20);
++
++  return {
++    node,
++    isRoot,
++    depth,
++    x: 0,
++    y: 0,
++    width,
++    height,
++    fontSize,
++    lineHeight,
++    lines,
++    parent: null,
++    branchColor: "",
++  };
++}
++
++function getBranchDirection(node, mapDirection, index) {
++  if (Number(node.direction) === 0) return -1;
++  if (Number(node.direction) === 1) return 1;
++  if (mapDirection === 0) return -1;
++  if (mapDirection === 2) return index % 2 === 0 ? 1 : -1;
++  return 1;
++}
++
++function setBranchColor(layout, color) {
++  layout.nodes.forEach((item) => {
++    item.branchColor = item.node.branchColor || color;
++  });
++}
++
++function getLayoutGroupHeight(layouts) {
++  if (!layouts.length) return 0;
++  return layouts.reduce((total, layout) => total + layout.bounds.maxY - layout.bounds.minY, 0)
++    + STATIC_VERTICAL_GAP * (layouts.length - 1);
++}
++
++function shiftLayout(layout, x, y) {
++  layout.nodes.forEach((item) => {
++    item.x += x;
++    item.y += y;
++  });
++  layout.bounds = getBounds(layout.nodes);
++}
++
++function getBounds(nodes) {
++  return nodes.reduce((bounds, node) => ({
++    minX: Math.min(bounds.minX, node.x),
++    minY: Math.min(bounds.minY, node.y),
++    maxX: Math.max(bounds.maxX, node.x + node.width),
++    maxY: Math.max(bounds.maxY, node.y + node.height),
++  }), {
++    minX: Number.POSITIVE_INFINITY,
++    minY: Number.POSITIVE_INFINITY,
++    maxX: Number.NEGATIVE_INFINITY,
++    maxY: Number.NEGATIVE_INFINITY,
++  });
++}
++
++function renderConnector(item, offsetX, offsetY) {
++  const parent = item.parent;
++  const onRight = item.x >= parent.x;
++  const startX = (onRight ? parent.x + parent.width : parent.x) + offsetX;
++  const endX = (onRight ? item.x : item.x + item.width) + offsetX;
++  const startY = parent.y + parent.height / 2 + offsetY;
++  const endY = item.y + item.height / 2 + offsetY;
++  const controlX = startX + (endX - startX) / 2;
++  const color = item.branchColor || "#64748b";
++
++  return `<path d="M ${round(startX)} ${round(startY)} C ${round(controlX)} ${round(startY)}, ${round(controlX)} ${round(endY)}, ${round(endX)} ${round(endY)}" fill="none" stroke="${escapeXml(color)}" stroke-width="2"/>`;
++}
++
++function renderStaticNode(item, offsetX, offsetY) {
++  const style = isObject(item.node.style) ? item.node.style : {};
++  const x = round(item.x + offsetX);
++  const y = round(item.y + offsetY);
++  const fill = style.background || style.backgroundColor || (item.isRoot ? "#1f2937" : "#ffffff");
++  const color = style.color || (item.isRoot ? "#ffffff" : "#111827");
++  const stroke = getBorderColor(style.border) || item.branchColor || "#d1d5db";
++  const fontFamily = style.fontFamily || "Microsoft YaHei, Arial, sans-serif";
++  const fontWeight = style.fontWeight || (item.isRoot ? "600" : "400");
++  const textDecoration = style.textDecoration || "none";
++  const textStartY = y + 10 + item.fontSize;
++  const tspans = item.lines.map((line, index) => (
++    `<tspan x="${round(x + item.width / 2)}" y="${round(textStartY + index * item.lineHeight)}">${escapeXml(line)}</tspan>`
++  )).join("");
++
++  return [
++    `<g data-node-id="${escapeXml(item.node.id)}">`,
++    `<rect x="${x}" y="${y}" width="${item.width}" height="${item.height}" rx="${item.isRoot ? 10 : 6}" fill="${escapeXml(fill)}" stroke="${escapeXml(stroke)}"/>`,
++    `<text text-anchor="middle" font-family="${escapeXml(fontFamily)}" font-size="${item.fontSize}" font-weight="${escapeXml(fontWeight)}" text-decoration="${escapeXml(textDecoration)}" fill="${escapeXml(color)}">${tspans}</text>`,
++    "</g>",
++  ].join("");
++}
++
++function getNodeLabel(node) {
++  const icons = Array.isArray(node.icons) ? node.icons.join(" ") : "";
++  const tags = Array.isArray(node.tags)
++    ? node.tags.map((tag) => typeof tag === "string" ? tag : tag?.text || "").filter(Boolean)
++    : [];
++  return [icons, String(node.topic || ""), tags.length ? `[${tags.join(", ")}]` : ""]
++    .filter(Boolean)
++    .join(" ");
++}
++
++function wrapLabel(label, maxWidth, fontSize) {
++  const maxUnits = Math.max(4, Math.floor(maxWidth / (fontSize * 0.72)));
++  const lines = [];
++
++  String(label || "").split(/\r?\n/).forEach((paragraph) => {
++    if (!paragraph) {
++      lines.push("");
++      return;
++    }
++    let line = "";
++    let units = 0;
++    for (const character of paragraph) {
++      const characterUnits = character.codePointAt(0) > 255 ? 2 : 1;
++      if (line && units + characterUnits > maxUnits) {
++        lines.push(line);
++        line = "";
++        units = 0;
++      }
++      line += character;
++      units += characterUnits;
++    }
++    lines.push(line);
++  });
++
++  return lines.length ? lines : [""];
++}
++
++function estimateTextWidth(text, fontSize) {
++  let units = 0;
++  for (const character of text) {
++    units += character.codePointAt(0) > 255 ? 1 : 0.58;
++  }
++  return units * fontSize;
++}
++
++function getBorderColor(border) {
++  if (!border) return "";
++  const match = String(border).match(/(#[\da-f]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\)|[a-z]+)\s*$/i);
++  return match?.[1] || "";
++}
++
++function positiveNumber(value) {
++  const number = Number(value);
++  return Number.isFinite(number) && number > 0 ? number : 0;
++}
++
++function clamp(value, min, max) {
++  return Math.min(max, Math.max(min, value));
++}
++
++function round(value) {
++  return Math.round(value * 10) / 10;
++}
++
++function isObject(value) {
++  return typeof value === "object" && value !== null && !Array.isArray(value);
++}
++
++function escapeXml(value) {
++  return String(value)
++    .replaceAll("&", "&amp;")
++    .replaceAll("<", "&lt;")
++    .replaceAll(">", "&gt;")
++    .replaceAll('"', "&quot;");
++}
+diff --git a/src/core/pdf-export.mjs b/src/core/pdf-export.mjs
+index 87068e4..2046178 100644
+--- a/src/core/pdf-export.mjs
++++ b/src/core/pdf-export.mjs
+@@ -326,20 +326,51 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
+       max-width: 100% !important;
+       height: auto !important;
+     }
+     
+     .mermaid-diagram img {
+       display: block !important;
+       max-width: 100% !important;
+       height: auto !important;
+       margin: 0 auto !important;
+     }
++
++    .mindmap-diagram {
++      width: 100%;
++      margin: 16px 0;
++      overflow: visible;
++    }
++
++    .mindmap-diagram__viewport {
++      height: auto !important;
++      overflow: visible !important;
++      border: 0 !important;
++      border-radius: 0;
++      padding: 10px 0;
++    }
++
++    .mindmap-diagram__content {
++      width: 100% !important;
++      min-width: 0 !important;
++      display: flex !important;
++      justify-content: center !important;
++      align-items: flex-start !important;
++    }
++
++    .mindmap-diagram img {
++      display: block !important;
++      border: 0 !important;
++      border-radius: 0 !important;
++      max-width: 100% !important;
++      height: auto !important;
++      margin: 0 auto !important;
++    }
+     
+     ${katexCss}
+     .katex-display { overflow: visible; }
+     .katex { font-family: KaTeX_Main, ${fonts.english}; }
+     .tiptap-mathematics-render { display: inline; }
+     .tiptap-mathematics-render[data-type="block-math"] { 
+       display: block; 
+       margin: 18px 0;
+       text-align: center;
+       overflow-x: auto;
+diff --git a/src/editor/editor-command-runner.mjs b/src/editor/editor-command-runner.mjs
+index 13382d6..5a5e947 100644
+--- a/src/editor/editor-command-runner.mjs
++++ b/src/editor/editor-command-runner.mjs
+@@ -132,20 +132,22 @@ export function runEditorCommand(command, context) {
+   } else if (command === "video") {
+     context.openVideoInsertPanel?.();
+   } else if (command === "markdown-link") {
+     context.insertMarkdownLink?.();
+   } else if (command === "formula") {
+     chain.insertBlockMath({ latex: "E = mc^2" }).run();
+   } else if (command === "inline-formula") {
+     chain.insertInlineMath({ latex: "x = y" }).run();
+   } else if (command === "mermaid") {
+     chain.insertMermaidDiagram({ code: "graph TD\n  A-->B" }).run();
++  } else if (command === "mindmap") {
++    chain.insertMindMap().run();
+   } else if (command === "heading-up") {
+     const currentLevel = editor.getAttributes("heading").level;
+     if (currentLevel && currentLevel < 6) {
+       chain.setHeading({ level: currentLevel + 1 }).run();
+     }
+   } else if (command === "heading-down") {
+     const currentLevel = editor.getAttributes("heading").level;
+     if (currentLevel && currentLevel > 1) {
+       chain.setHeading({ level: currentLevel - 1 }).run();
+     }
+diff --git a/src/editor/editor-extensions.mjs b/src/editor/editor-extensions.mjs
+index b5fd22b..eb5db3d 100644
+--- a/src/editor/editor-extensions.mjs
++++ b/src/editor/editor-extensions.mjs
+@@ -90,20 +90,21 @@ export function createEditorExtensions(options) {
+         element.setAttribute("tabindex", "0");
+         element.setAttribute("draggable", "false");
+         element.setAttribute("aria-label", "拖动段落");
+         element.setAttribute("title", "拖动段落");
+         element.style.visibility = "hidden";
+         return element;
+       },
+     }),
+     Typography,
+     options.mermaidDiagram,
++    options.mindMap,
+     options.assetImage,
+     Callout,
+     Video,
+     Placeholder.configure({ placeholder: "开始输入..." }),
+     BubbleMenu.configure({
+       element: options.bubbleMenuElement,
+       shouldShow: ({ editor }) => {
+         if (document.querySelector(".text-modal, .ai-modal")) {
+           return false;
+         }
+@@ -116,21 +117,21 @@ export function createEditorExtensions(options) {
+         }
+         if (selection.from === selection.to) {
+           return false;
+         }
+         const docContent = editor.state.doc.content;
+         if (!docContent || docContent.size <= 2) {
+           return false;
+         }
+         if (selection instanceof NodeSelection) {
+           const node = selection.node;
+-          const blockList = ["video", "image", "blockMath", "mermaidDiagram", "codeBlock"];
++          const blockList = ["video", "image", "blockMath", "mermaidDiagram", "mindMap", "codeBlock"];
+           if (blockList.includes(node.type.name)) {
+             return false;
+           }
+         }
+         const fromNode = editor.state.doc.nodeAt(selection.from);
+         if (fromNode?.type?.name === "inlineCode" || fromNode?.type?.name === "inlineMath") {
+           return false;
+         }
+         return true;
+       },
+diff --git a/src/editor/mindmap-node.mjs b/src/editor/mindmap-node.mjs
+new file mode 100644
+index 0000000..874d633
+--- /dev/null
++++ b/src/editor/mindmap-node.mjs
+@@ -0,0 +1,214 @@
++import { Node } from "@tiptap/core";
++import MindElixir from "mind-elixir";
++import "mind-elixir/style";
++import {
++  createDefaultMindMapData,
++  normalizeMindMapData,
++  serializeMindMapData,
++} from "../core/mindmap-data.mjs";
++import { escapeHtml } from "../core/html-utils.mjs";
++
++const MINDMAP_ATOM_SELECTION_EVENTS = new Set(["pointerdown", "mousedown", "click"]);
++
++export function flushMindMapEdits(root) {
++  root?.querySelectorAll?.("#input-box").forEach((input) => {
++    if (typeof input.blur === "function") {
++      input.blur();
++    }
++  });
++}
++
++export const MindMap = Node.create({
++  name: "mindMap",
++  group: "block",
++  atom: true,
++
++  addAttributes() {
++    return {
++      data: {
++        default: createDefaultMindMapData(),
++        parseHTML: (element) => parseMindMapAttribute(element).data,
++        renderHTML: (attributes) => ({
++          "data-mindmap": attributes.raw || serializeMindMapData(attributes.data),
++        }),
++      },
++      raw: {
++        default: "",
++        parseHTML: (element) => parseMindMapAttribute(element).raw,
++      },
++      error: {
++        default: "",
++        parseHTML: (element) => parseMindMapAttribute(element).error,
++      },
++    };
++  },
++
++  parseHTML() {
++    return [{ tag: 'div[data-type="mindmap-diagram"]' }];
++  },
++
++  renderHTML({ HTMLAttributes }) {
++    return ["div", { ...HTMLAttributes, "data-type": "mindmap-diagram" }];
++  },
++
++  addCommands() {
++    return {
++      insertMindMap: (options = {}) => ({ commands }) => (
++        commands.insertContent({
++          type: this.name,
++          attrs: normalizeMindMapData(options.data || createDefaultMindMapData()),
++        })
++      ),
++      updateMindMap: (options = {}) => ({ tr, editor }) => {
++        const node = editor.state.doc.nodeAt(options.pos);
++        if (!node || node.type.name !== this.name) return false;
++        tr.setNodeMarkup(options.pos, this.type, normalizeMindMapData(options.data));
++        return true;
++      },
++      deleteMindMap: (options) => ({ tr, editor }) => {
++        const node = editor.state.doc.nodeAt(options.pos);
++        if (!node || node.type.name !== this.name) return false;
++        tr.delete(options.pos, options.pos + node.nodeSize);
++        return true;
++      },
++    };
++  },
++
++  addNodeView() {
++    return ({ node, editor, getPos }) => {
++      const wrapper = document.createElement("div");
++      const viewport = document.createElement("div");
++      const content = document.createElement("div");
++      wrapper.className = "mindmap-diagram";
++      wrapper.dataset.type = "mindmap-diagram";
++      viewport.className = "mindmap-diagram__viewport";
++      content.className = "mindmap-diagram__content";
++      wrapper.dataset.mindmap = node.attrs.raw || serializeMindMapData(node.attrs.data);
++      viewport.appendChild(content);
++      wrapper.appendChild(viewport);
++
++      let mind = null;
++      let lastRenderedData = wrapper.dataset.mindmap;
++
++      const removeListeners = () => {
++        content.removeEventListener("input", syncData);
++        content.removeEventListener("pointerup", syncData);
++        content.removeEventListener("keyup", syncData);
++        if (mind?.bus?.removeListener) {
++          mind.bus.removeListener("operation", syncData);
++        }
++      };
++
++      const destroyMind = () => {
++        flushMindMapEdits(content);
++        removeListeners();
++        if (typeof mind?.destroy === "function") {
++          mind.destroy();
++        }
++        mind = null;
++      };
++
++      const clearContent = () => {
++        destroyMind();
++        content.innerHTML = "";
++      };
++
++      const syncData = () => {
++        if (!mind || !editor.isEditable) return;
++
++        try {
++          const pos = typeof getPos === "function" ? getPos() : null;
++          if (typeof pos !== "number") return;
++          const data = mind.getData ? mind.getData() : null;
++          if (!data) return;
++          const serialized = serializeMindMapData(data);
++          wrapper.dataset.mindmap = serialized;
++          if (lastRenderedData === serialized) return;
++          lastRenderedData = serialized;
++          editor.commands.updateMindMap({ pos, data });
++        } catch (error) {
++          console.warn("Failed to synchronize mind map data", error);
++        }
++      };
++
++      const showError = (error) => {
++        const message = error instanceof Error ? error.message : String(error || "Mind map initialization failed");
++        content.innerHTML = `<div class="mindmap-diagram__error">${escapeHtml(message)}</div>`;
++      };
++
++      const render = (attrs) => {
++        flushMindMapEdits(content);
++        const normalized = normalizeMindMapData(attrs.raw || attrs.data);
++        const serialized = normalized.raw || serializeMindMapData(normalized.data);
++        wrapper.dataset.mindmap = serialized;
++        lastRenderedData = serialized;
++        clearContent();
++        if (normalized.error) {
++          showError(normalized.error);
++          return;
++        }
++
++        try {
++          mind = new MindElixir({
++            el: content,
++            direction: MindElixir.RIGHT,
++            draggable: true,
++            contextMenu: true,
++            toolBar: true,
++            nodeMenu: true,
++            keypress: true,
++          });
++          mind.init(normalized.data);
++          if (mind.bus?.addListener) {
++            mind.bus.addListener("operation", syncData);
++          }
++          content.addEventListener("input", syncData);
++          content.addEventListener("pointerup", syncData);
++          content.addEventListener("keyup", syncData);
++        } catch (error) {
++          destroyMind();
++          showError(error);
++        }
++      };
++
++      render(node.attrs);
++
++      return {
++        dom: wrapper,
++        stopEvent: (event) => {
++          if (event.target.closest?.(".mindmap-diagram") !== wrapper) {
++            return false;
++          }
++          if (!MINDMAP_ATOM_SELECTION_EVENTS.has(event.type)) {
++            return true;
++          }
++          if (
++            event.target === wrapper
++            || event.target === viewport
++            || event.target === content
++            || event.target.matches?.(".map-container")
++          ) {
++            return false;
++          }
++          return true;
++        },
++        update: (updatedNode) => {
++          if (updatedNode.type.name !== this.name) return false;
++          const normalized = normalizeMindMapData(updatedNode.attrs.raw || updatedNode.attrs.data);
++          const serialized = normalized.raw || serializeMindMapData(normalized.data);
++          wrapper.dataset.mindmap = serialized;
++          if (lastRenderedData === serialized) return true;
++          render(updatedNode.attrs);
++          return true;
++        },
++        destroy: () => {
++          clearContent();
++        },
++      };
++    };
++  },
++});
++
++function parseMindMapAttribute(element) {
++  return normalizeMindMapData(element.getAttribute("data-mindmap") || "");
++}
+diff --git a/src/export/export-runtime.mjs b/src/export/export-runtime.mjs
+index e554635..db61faf 100644
+--- a/src/export/export-runtime.mjs
++++ b/src/export/export-runtime.mjs
+@@ -1,10 +1,12 @@
++import { buildMindMapStaticSvg, getStaticMindMapDimensions } from "../core/mindmap-data.mjs";
++
+ export async function loadLocalImageResource(source) {
+   const { invoke } = await import("@tauri-apps/api/core");
+   const result = await invoke("read_binary_file_path", { filePath: source });
+   
+   let mimeType = result.mimeType || "application/octet-stream";
+   if (mimeType === "application/octet-stream") {
+     const ext = source.split(".").pop().toLowerCase();
+     const mimeTypes = {
+       mp4: "video/mp4",
+       webm: "video/webm",
+@@ -84,34 +86,37 @@ export function printPdfHtml(html, onPrintError) {
+ }
+ 
+ export function waitForNextFrame() {
+   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+ }
+ 
+ export function waitForMilliseconds(milliseconds) {
+   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+ }
+ 
+-export async function getPrintableDocumentHtml(doc) {
++export async function getPrintableDocumentHtml(doc, { inlineImages = true } = {}) {
+   const documentElement = document.querySelector("#tiptapEditor .ProseMirror");
+   if (!documentElement) {
+     return "";
+   }
+ 
+   const clone = documentElement.cloneNode(true);
+   clone.querySelectorAll(".mermaid-diagram__controls").forEach((element) => element.remove());
+   clone.querySelectorAll(".ProseMirror-selectednode").forEach((element) => {
+     element.classList.remove("ProseMirror-selectednode");
+   });
+   await prepareMermaidDiagramsForPrint(clone);
++  await prepareMindMapsForPrint(clone);
+   cleanupMathElementsForPrint(clone);
+-  await inlinePrintableImages(clone);
++  if (inlineImages) {
++    await inlinePrintableImages(clone);
++  }
+   if (doc) {
+     renderTableOfContentsForPrint(clone, doc);
+   }
+   return clone.innerHTML;
+ }
+ 
+ async function prepareMermaidDiagramsForPrint(root) {
+   const diagrams = root.querySelectorAll(".mermaid-diagram");
+   const promises = [];
+ 
+@@ -202,20 +207,55 @@ async function prepareMermaidDiagramsForPrint(root) {
+           resolve();
+         }
+       });
+       promises.push(promise);
+     }
+   });
+ 
+   await Promise.all(promises);
+ }
+ 
++export async function prepareMindMapsForPrint(root) {
++  const maps = root.querySelectorAll(".mindmap-diagram");
++  maps.forEach((map) => {
++    const content = map.querySelector(".mindmap-diagram__content");
++    if (!content) return;
++
++    try {
++      const staticMap = buildMindMapStaticSvg(map.dataset.mindmap || "");
++      const dimensions = getStaticMindMapDimensions(
++        { width: staticMap.width, height: staticMap.height },
++        600,
++        760,
++      );
++      const encoded = encodeURIComponent(staticMap.svg)
++        .replaceAll("'", "%27")
++        .replaceAll('"', "%22");
++      const image = document.createElement("img");
++      image.src = `data:image/svg+xml;charset=utf-8,${encoded}`;
++      image.setAttribute("width", String(dimensions.targetWidth));
++      image.setAttribute("height", String(dimensions.targetHeight));
++      image.style.width = `${dimensions.targetWidth}px`;
++      image.style.maxWidth = "100%";
++      image.style.height = "auto";
++      image.style.margin = "0 auto";
++      image.style.display = "block";
++      content.innerHTML = "";
++      content.appendChild(image);
++    } catch (error) {
++      console.warn("Failed to export mind map", error);
++      const message = error instanceof Error ? error.message : "Mind map export failed";
++      content.innerHTML = `<div class="mindmap-diagram__error">${escapeHtml(message)}</div>`;
++    }
++  });
++}
++
+ export function getSvgPrintDimensions(svg, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
+   const viewBox = parseSvgViewBox(svg.getAttribute("viewBox"));
+   const sourceWidth = getSvgLength(svg.getAttribute("width")) || getSvgLength(svg.style.width) || viewBox?.width || 800;
+   const sourceHeight = getSvgLength(svg.getAttribute("height")) || getSvgLength(svg.style.height) || viewBox?.height || 600;
+   const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight);
+ 
+   return {
+     sourceWidth,
+     sourceHeight,
+     targetWidth: Math.round(sourceWidth * scale),
+diff --git a/src/styles/editor.css b/src/styles/editor.css
+index 4ef90bc..75cb31e 100644
+--- a/src/styles/editor.css
++++ b/src/styles/editor.css
+@@ -655,20 +655,46 @@
+ }
+ 
+ .ProseMirror .mermaid-diagram__error-message {
+   font-size: 13px;
+   line-height: 1.5;
+   color: var(--color-error);
+   word-break: break-word;
+   white-space: pre-wrap;
+ }
+ 
++.ProseMirror .mindmap-diagram {
++  position: relative;
++  width: calc(100% + 96px);
++  margin: 18px -48px;
++  user-select: none;
++}
++
++.ProseMirror .mindmap-diagram__viewport {
++  min-height: 360px;
++  overflow: hidden;
++  border: 1px solid var(--color-hairline);
++  border-radius: var(--radius-lg);
++  background: var(--color-surface-soft);
++}
++
++.ProseMirror .mindmap-diagram__content {
++  width: 100%;
++  height: 520px;
++}
++
++.ProseMirror .mindmap-diagram__error {
++  padding: var(--space-md);
++  color: var(--color-error);
++  font-family: var(--font-mono);
++}
++
+ .drop-overlay {
+   position: absolute;
+   inset: 38px 0 28px 0;
+   display: none;
+   place-items: center;
+   background: color-mix(in srgb, var(--color-surface) 84%, transparent);
+   border: 2px dashed var(--color-primary);
+   color: var(--color-primary);
+   pointer-events: none;
+ }
+diff --git a/tests/editor-command-runner.test.mjs b/tests/editor-command-runner.test.mjs
+index 53975fb..4d7f5e3 100644
+--- a/tests/editor-command-runner.test.mjs
++++ b/tests/editor-command-runner.test.mjs
+@@ -57,20 +57,32 @@ test("runs basic TipTap chain commands", () => {
+     ["run"],
+     ["focus"],
+     ["setTextAlign", "center"],
+     ["run"],
+     ["focus"],
+     ["toggleBold"],
+     ["run"],
+   ]);
+ });
+ 
++test("runs the mindmap insert command", () => {
++  const editor = createEditorStub();
++
++  runEditorCommand("mindmap", { editor });
++
++  assert.deepEqual(editor.calls, [
++    ["focus"],
++    ["insertMindMap"],
++    ["run"],
++  ]);
++});
++
+ test("delegates link creation when the current selection is not a link", () => {
+   const editor = createEditorStub();
+   const calls = [];
+ 
+   runEditorCommand("link", {
+     editor,
+     setLinkMark: () => calls.push("link"),
+   });
+ 
+   assert.deepEqual(calls, ["link"]);
+diff --git a/tests/export-runtime.test.mjs b/tests/export-runtime.test.mjs
+index e900645..8abd62d 100644
+--- a/tests/export-runtime.test.mjs
++++ b/tests/export-runtime.test.mjs
+@@ -1,14 +1,17 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+ import { readFileSync } from "node:fs";
+-import { getSvgPrintDimensions } from "../src/export/export-runtime.mjs";
++import {
++  getSvgPrintDimensions,
++  prepareMindMapsForPrint,
++} from "../src/export/export-runtime.mjs";
+ 
+ const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
+ const runtimeSource = readFileSync(new URL("../src/export/export-runtime.mjs", import.meta.url), "utf8");
+ const modalSource = readFileSync(new URL("../src/ui/pdf-export-modal.mjs", import.meta.url), "utf8");
+ const pdfExportSource = readFileSync(new URL("../src/core/pdf-export.mjs", import.meta.url), "utf8");
+ const htmlPackageSource = readFileSync(new URL("../src/core/html-package.mjs", import.meta.url), "utf8");
+ 
+ test("owns environment-specific export helpers outside the app entry", () => {
+   assert.equal(runtimeSource.includes("export async function loadLocalImageResource"), true);
+   assert.equal(runtimeSource.includes("export function downloadBlob"), true);
+@@ -92,10 +95,102 @@ test("centers exported Mermaid diagrams without viewport borders", () => {
+ test("does not force PDF Mermaid containers to avoid page breaks", () => {
+   const diagramRule = pdfExportSource.match(/\.mermaid-diagram\s*\{[^}]+\}/)?.[0] || "";
+   const viewportRule = pdfExportSource.match(/\.mermaid-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
+   const contentRule = pdfExportSource.match(/\.mermaid-diagram__content\s*\{[^}]+\}/)?.[0] || "";
+ 
+   assert.equal(diagramRule.includes("break-inside: avoid !important;"), false);
+   assert.equal(diagramRule.includes("page-break-inside: avoid !important;"), false);
+   assert.equal(viewportRule.includes("break-inside: avoid !important;"), false);
+   assert.equal(contentRule.includes("break-inside: avoid !important;"), false);
+ });
++
++test("prepares mindmaps for static export before printable HTML is returned", () => {
++  assert.equal(runtimeSource.includes("prepareMindMapsForPrint"), true);
++  assert.equal(runtimeSource.includes('querySelectorAll(".mindmap-diagram")'), true);
++  assert.equal(runtimeSource.includes("getStaticMindMapDimensions"), true);
++  assert.equal(runtimeSource.includes("buildMindMapStaticSvg"), true);
++  assert.equal(runtimeSource.includes("staticMap.width"), true);
++  assert.equal(runtimeSource.includes("staticMap.height"), true);
++  assert.equal(runtimeSource.includes("getBoundingClientRect"), false);
++});
++
++test("routes packaged HTML through the staticized clone without inlining package assets", () => {
++  assert.equal(
++    appSource.includes("await getPrintableDocumentHtml(doc, { inlineImages: false })"),
++    true,
++  );
++  assert.equal(
++    appSource.includes('const documentHtml = editor?.view?.dom?.innerHTML || "";'),
++    false,
++  );
++  assert.equal(runtimeSource.includes("if (inlineImages)"), true);
++});
++
++test("replaces Mind Elixir custom DOM with a static image", async () => {
++  const previousDocument = globalThis.document;
++  const content = {
++    innerHTML: "<me-nodes><me-tpc>Interactive</me-tpc></me-nodes>",
++    children: [],
++    appendChild(child) {
++      this.children.push(child);
++    },
++  };
++  const map = {
++    dataset: {
++      mindmap: JSON.stringify({
++        nodeData: { id: "root", topic: "Static", children: [] },
++      }),
++    },
++    querySelector(selector) {
++      return selector === ".mindmap-diagram__content" ? content : null;
++    },
++  };
++  globalThis.document = {
++    createElement(tagName) {
++      return {
++        tagName: tagName.toUpperCase(),
++        style: {},
++        attributes: {},
++        setAttribute(name, value) {
++          this.attributes[name] = String(value);
++        },
++      };
++    },
++  };
++
++  try {
++    await prepareMindMapsForPrint({
++      querySelectorAll(selector) {
++        return selector === ".mindmap-diagram" ? [map] : [];
++      },
++    });
++  } finally {
++    globalThis.document = previousDocument;
++  }
++
++  assert.equal(content.innerHTML, "");
++  assert.equal(content.children.length, 1);
++  assert.equal(content.children[0].tagName, "IMG");
++  assert.match(content.children[0].src, /^data:image\/svg\+xml/);
++  assert.equal(content.children[0].src.includes("<me-"), false);
++});
++
++test("isolates mindmap export failures and emits an escaped placeholder", () => {
++  assert.equal(runtimeSource.includes('console.warn("Failed to export mind map"'), true);
++  assert.equal(runtimeSource.includes("mindmap-diagram__error"), true);
++  assert.equal(runtimeSource.includes("escapeHtml(message)"), true);
++});
++
++test("exports static mindmaps with centered borderless styles", () => {
++  for (const source of [pdfExportSource, htmlPackageSource]) {
++    const viewportRule = source.match(/\.mindmap-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
++    const contentRule = source.match(/\.mindmap-diagram__content\s*\{[^}]+\}/)?.[0] || "";
++    const imageRule = source.match(/\.mindmap-diagram img\s*\{[^}]+\}/)?.[0] || "";
++
++    assert.equal(viewportRule.includes("border: 0 !important;"), true);
++    assert.equal(contentRule.includes("justify-content: center !important;"), true);
++    assert.equal(imageRule.includes("margin: 0 auto !important;"), true);
++    assert.equal(imageRule.includes("max-width: 100% !important;"), true);
++    assert.equal(imageRule.includes("border: 0 !important;"), true);
++    assert.equal(imageRule.includes("border-radius: 0 !important;"), true);
++  }
++});
+diff --git a/tests/markdown.test.mjs b/tests/markdown.test.mjs
+index eed1362..2dc63e1 100644
+--- a/tests/markdown.test.mjs
++++ b/tests/markdown.test.mjs
+@@ -322,20 +322,49 @@ test("parses and serializes mermaid diagrams", () => {
+         type: "mermaidDiagram",
+         attrs: { code: "graph TD\n  A-->B" },
+       },
+     ],
+   };
+ 
+   assert.deepEqual(parseMarkdown(markdown), doc);
+   assert.equal(serializeMarkdown(doc), `${markdown}\n`);
+ });
+ 
++test("parses and serializes mindmap diagrams", () => {
++  const markdown = [
++    "```mindmap",
++    "{",
++    '  "nodeData": {',
++    '    "id": "root",',
++    '    "topic": "Plan",',
++    '    "children": []',
++    "  }",
++    "}",
++    "```",
++  ].join("\n");
++
++  const doc = parseMarkdown(markdown);
++
++  assert.equal(doc.content[0].type, "mindMap");
++  assert.equal(doc.content[0].attrs.data.nodeData.topic, "Plan");
++  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
++});
++
++test("preserves invalid mindmap JSON during markdown round trip", () => {
++  const markdown = "```mindmap\n{not-json\n```";
++  const doc = parseMarkdown(markdown);
++
++  assert.equal(doc.content[0].type, "mindMap");
++  assert.equal(doc.content[0].attrs.raw, "{not-json");
++  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
++});
++
+ test("parses single-line double-dollar math as block math", () => {
+   assert.deepEqual(parseMarkdown("$$E=mc^2$$"), {
+     type: "doc",
+     content: [
+       {
+         type: "blockMath",
+         attrs: { latex: "E=mc^2" },
+       },
+     ],
+   });
+diff --git a/tests/mindmap-data.test.mjs b/tests/mindmap-data.test.mjs
+new file mode 100644
+index 0000000..3f1d355
+--- /dev/null
++++ b/tests/mindmap-data.test.mjs
+@@ -0,0 +1,153 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import {
++  buildMindMapFallbackSvg,
++  buildMindMapStaticSvg,
++  createDefaultMindMapData,
++  getStaticMindMapDimensions,
++  normalizeMindMapData,
++  serializeMindMapData,
++} from "../src/core/mindmap-data.mjs";
++
++test("creates default Mind Elixir data with a root and children", () => {
++  const data = createDefaultMindMapData();
++
++  assert.equal(data.nodeData.id, "root");
++  assert.equal(data.nodeData.topic, "中心主题");
++  assert.equal(data.nodeData.children.length, 2);
++});
++
++test("normalizes valid mindmap JSON", () => {
++  const result = normalizeMindMapData('{"nodeData":{"id":"root","topic":"A","children":[]}}');
++
++  assert.equal(result.error, "");
++  assert.equal(result.raw, "");
++  assert.equal(result.data.nodeData.topic, "A");
++});
++
++test("preserves serializable Mind Elixir fields while removing parent references", () => {
++  const result = normalizeMindMapData({
++    direction: 2,
++    meta: { owner: "PME" },
++    summaries: [
++      { id: "summary-1", parent: "root", start: 0, end: 0, label: "Summary" },
++    ],
++    nodeData: {
++      id: "root",
++      topic: "Root",
++      style: { color: "#123456", fontWeight: "700" },
++      tags: ["plan"],
++      icons: ["star"],
++      hyperLink: "https://example.com",
++      expanded: false,
++      direction: 1,
++      image: { url: "image.png", width: 80, height: 40 },
++      branchColor: "#ff0000",
++      note: "note",
++      metadata: { priority: 1 },
++      parent: { id: "runtime-parent" },
++      children: [
++        {
++          id: "child",
++          topic: "Child",
++          style: { background: "#eeeeee" },
++          parent: { id: "root" },
++        },
++      ],
++    },
++  });
++
++  assert.equal(result.data.direction, 2);
++  assert.deepEqual(result.data.meta, { owner: "PME" });
++  assert.deepEqual(result.data.nodeData.style, { color: "#123456", fontWeight: "700" });
++  assert.deepEqual(result.data.nodeData.tags, ["plan"]);
++  assert.deepEqual(result.data.nodeData.icons, ["star"]);
++  assert.equal(result.data.nodeData.hyperLink, "https://example.com");
++  assert.equal(result.data.nodeData.expanded, false);
++  assert.equal(result.data.nodeData.direction, 1);
++  assert.deepEqual(result.data.nodeData.image, { url: "image.png", width: 80, height: 40 });
++  assert.equal(result.data.nodeData.branchColor, "#ff0000");
++  assert.equal(result.data.nodeData.note, "note");
++  assert.deepEqual(result.data.nodeData.metadata, { priority: 1 });
++  assert.equal(result.data.summaries[0].parent, "root");
++  assert.equal("parent" in result.data.nodeData, false);
++  assert.equal("parent" in result.data.nodeData.children[0], false);
++  assert.deepEqual(result.data.nodeData.children[0].style, { background: "#eeeeee" });
++});
++
++test("preserves serializable string parent fields outside summaries", () => {
++  const result = normalizeMindMapData({
++    nodeData: {
++      id: "root",
++      topic: "Root",
++      parent: "serialized-parent",
++      children: [],
++    },
++  });
++
++  assert.equal(result.data.nodeData.parent, "serialized-parent");
++});
++
++test("preserves invalid mindmap JSON as raw text", () => {
++  const result = normalizeMindMapData("{not-json");
++
++  assert.equal(result.data, null);
++  assert.equal(result.raw, "{not-json");
++  assert.match(result.error, /Invalid mind map JSON/);
++});
++
++test("serializes mindmap data with stable indentation", () => {
++  const markdown = serializeMindMapData({ nodeData: { id: "root", topic: "A", children: [] } });
++
++  assert.equal(markdown, '{\n  "nodeData": {\n    "id": "root",\n    "topic": "A",\n    "children": []\n  }\n}');
++});
++
++test("constrains static mindmap dimensions by width and height", () => {
++  assert.deepEqual(getStaticMindMapDimensions({ width: 600, height: 2400 }, 600, 760), {
++    sourceWidth: 600,
++    sourceHeight: 2400,
++    targetWidth: 190,
++    targetHeight: 760,
++  });
++});
++
++test("builds a fallback SVG containing the root topic", () => {
++  const svg = buildMindMapFallbackSvg({ nodeData: { id: "root", topic: "Root", children: [] } });
++
++  assert.equal(svg.includes("<svg"), true);
++  assert.equal(svg.includes("Root"), true);
++});
++
++test("builds a full static SVG with child topics, connectors, styles, and calculated bounds", () => {
++  const simple = buildMindMapStaticSvg({
++    nodeData: { id: "root", topic: "Root", children: [] },
++  });
++  const tree = buildMindMapStaticSvg({
++    nodeData: {
++      id: "root",
++      topic: "Root",
++      children: [
++        {
++          id: "child-1",
++          topic: "Child & One",
++          branchColor: "#ff0000",
++          style: { background: "#ffeeee", color: "#550000" },
++          children: [
++            { id: "grandchild", topic: "Grandchild", children: [] },
++          ],
++        },
++        { id: "child-2", topic: "Child Two", children: [] },
++      ],
++    },
++  });
++
++  assert.equal(tree.svg.includes("Child &amp; One"), true);
++  assert.equal(tree.svg.includes("Grandchild"), true);
++  assert.equal(tree.svg.includes('stroke="#ff0000"'), true);
++  assert.equal(tree.svg.includes('fill="#ffeeee"'), true);
++  assert.equal((tree.svg.match(/<path /g) || []).length, 3);
++  assert.match(tree.svg, new RegExp(`<svg[^>]+width="${tree.width}"[^>]+height="${tree.height}"`));
++  assert.equal(tree.width > simple.width, true);
++  assert.equal(tree.height > simple.height, true);
++});
+diff --git a/tests/mindmap-node.test.mjs b/tests/mindmap-node.test.mjs
+new file mode 100644
+index 0000000..4ddaf67
+--- /dev/null
++++ b/tests/mindmap-node.test.mjs
+@@ -0,0 +1,72 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++
++const source = readFileSync(new URL("../src/editor/mindmap-node.mjs", import.meta.url), "utf8");
++const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
++
++test("defines the MindMap TipTap node outside the app entry", () => {
++  assert.equal(source.includes("export const MindMap"), true);
++  assert.equal(source.includes('name: "mindMap"'), true);
++  assert.equal(source.includes("insertMindMap"), true);
++  assert.equal(source.includes("updateMindMap"), true);
++  assert.equal(source.includes("deleteMindMap"), true);
++  assert.equal(source.includes("MindElixir"), true);
++});
++
++test("renders mindmap export markers for PDF and HTML static conversion", () => {
++  assert.equal(source.includes("mindmap-diagram"), true);
++  assert.equal(source.includes("mindmap-diagram__viewport"), true);
++  assert.equal(source.includes("mindmap-diagram__content"), true);
++  assert.equal(source.includes("data-mindmap"), true);
++});
++
++test("cleans up node view listeners before rerendering or destroying", () => {
++  assert.equal(source.includes('content.removeEventListener("input", syncData)'), true);
++  assert.equal(source.includes('content.removeEventListener("pointerup", syncData)'), true);
++  assert.equal(source.includes('content.removeEventListener("keyup", syncData)'), true);
++  assert.equal(source.includes('mind.bus.removeListener("operation", syncData)'), true);
++  assert.equal(source.includes("mind.destroy()"), true);
++});
++
++test("preserves malformed persisted mindmap data and guards replacements", () => {
++  assert.equal(source.includes('raw: {\n        default: "",\n        parseHTML:'), true);
++  assert.equal(source.includes('error: {\n        default: "",\n        parseHTML:'), true);
++  assert.equal(source.includes('attributes.raw || serializeMindMapData(attributes.data)'), true);
++  assert.equal(source.includes("editor.state.doc.nodeAt(options.pos)"), true);
++});
++
++test("synchronizes operations immediately and does not blindly rerender self-originated updates", () => {
++  assert.equal(source.includes('mind.bus.addListener("operation", syncData)'), true);
++  assert.equal(source.includes("window.setTimeout"), false);
++  assert.equal(source.includes("lastRenderedData === serialized"), true);
++});
++
++test("flushes active Mind Elixir editors before save, source switch, rerender, and destruction", () => {
++  assert.equal(source.includes("export function flushMindMapEdits"), true);
++  assert.equal(source.includes('querySelectorAll?.("#input-box")'), true);
++  assert.equal(source.includes("input.blur()"), true);
++  assert.match(source, /const destroyMind = \(\) => \{\s+flushMindMapEdits\(content\);\s+removeListeners\(\);/);
++  assert.match(source, /const render = \(attrs\) => \{\s+flushMindMapEdits\(content\);/);
++  assert.match(appSource, /function syncSelectedDocumentToState\(\)[\s\S]+?flushMindMapEdits\(editor\.view\.dom\);[\s\S]+?editor\.getJSON\(\)/);
++  assert.match(appSource, /async function toggleSourceView\(\)[\s\S]+?flushMindMapEdits\(editor\.view\.dom\);[\s\S]+?editor\.getJSON\(\)/);
++  assert.match(appSource, /function destroyEditor\(\)[\s\S]+?flushMindMapEdits\(editor\.view\.dom\);[\s\S]+?editor\.destroy\(\)/);
++});
++
++test("allows only mindmap pointer backgrounds to reach TipTap atom selection", () => {
++  assert.equal(source.includes("MINDMAP_ATOM_SELECTION_EVENTS.has(event.type)"), true);
++  assert.equal(source.includes("if (!MINDMAP_ATOM_SELECTION_EVENTS.has(event.type))"), true);
++  assert.equal(source.includes("event.target === wrapper"), true);
++  assert.equal(source.includes("event.target === viewport"), true);
++  assert.equal(source.includes("event.target === content"), true);
++  assert.equal(source.includes('event.target.matches?.(".map-container")'), true);
++  assert.match(source, /if \(!MINDMAP_ATOM_SELECTION_EVENTS\.has\(event\.type\)\) \{\s+return true;\s+\}/);
++});
++
++test("shows escaped initialization errors without leaking a partial instance", () => {
++  assert.equal(source.includes("try {"), true);
++  assert.equal(source.includes("mind.init(normalized.data)"), true);
++  assert.equal(source.includes("mindmap-diagram__error"), true);
++  assert.equal(source.includes("escapeHtml(message)"), true);
++  assert.equal(source.includes("destroyMind()"), true);
++});

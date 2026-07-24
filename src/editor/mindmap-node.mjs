@@ -79,12 +79,17 @@ export const MindMap = Node.create({
       const wrapper = document.createElement("div");
       const viewport = document.createElement("div");
       const content = document.createElement("div");
+      const dragToggle = document.createElement("button");
       wrapper.className = "mindmap-diagram";
       wrapper.dataset.type = "mindmap-diagram";
       viewport.className = "mindmap-diagram__viewport";
       content.className = "mindmap-diagram__content";
+      dragToggle.className = "mindmap-diagram__drag-toggle";
+      dragToggle.title = "拖拽模式";
+      dragToggle.innerHTML = '<span aria-hidden="true">🖐️</span>';
       wrapper.dataset.mindmap = node.attrs.raw || serializeMindMapData(node.attrs.data);
       viewport.appendChild(content);
+      wrapper.appendChild(dragToggle);
       wrapper.appendChild(viewport);
       const stopMindMapKeydown = (event) => {
         event.stopPropagation();
@@ -93,6 +98,39 @@ export const MindMap = Node.create({
 
       let mind = null;
       let lastRenderedData = wrapper.dataset.mindmap;
+      let isDragMode = false;
+
+      const toggleDragMode = () => {
+        isDragMode = !isDragMode;
+        dragToggle.classList.toggle("is-active", isDragMode);
+        wrapper.classList.toggle("is-drag-mode", isDragMode);
+        if (mind && typeof mind.init === "function") {
+          const currentData = mind.getData();
+          if (currentData) {
+            mind.destroy();
+            mind = new MindElixir({
+              el: content,
+              direction: MindElixir.RIGHT,
+              draggable: true,
+              contextMenu: true,
+              toolBar: true,
+              nodeMenu: true,
+              keypress: true,
+              theme: document.documentElement.getAttribute("data-theme") === "dark" ? MindElixir.DARK_THEME : MindElixir.THEME,
+              overflowHidden: !isDragMode,
+            });
+            mind.init(currentData);
+            if (mind.bus?.addListener) {
+              mind.bus.addListener("operation", syncData);
+            }
+          }
+        }
+      };
+
+      dragToggle.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleDragMode();
+      });
 
       const removeListeners = () => {
         content.removeEventListener("input", syncData);
@@ -153,6 +191,9 @@ export const MindMap = Node.create({
         }
 
         try {
+          const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
+          const theme = currentTheme === "dark" ? MindElixir.DARK_THEME : MindElixir.THEME;
+
           mind = new MindElixir({
             el: content,
             direction: MindElixir.RIGHT,
@@ -161,6 +202,8 @@ export const MindMap = Node.create({
             toolBar: true,
             nodeMenu: true,
             keypress: true,
+            theme,
+            overflowHidden: !isDragMode,
           });
           mind.init(normalized.data);
           if (mind.bus?.addListener) {
@@ -176,6 +219,15 @@ export const MindMap = Node.create({
       };
 
       render(node.attrs);
+
+      const handleThemeChange = () => {
+        if (!mind || typeof mind.changeTheme !== "function") return;
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
+        const theme = currentTheme === "dark" ? MindElixir.DARK_THEME : MindElixir.THEME;
+        mind.changeTheme(theme);
+      };
+
+      document.addEventListener("themeChange", handleThemeChange);
 
       return {
         dom: wrapper,
@@ -206,6 +258,7 @@ export const MindMap = Node.create({
           return true;
         },
         destroy: () => {
+          document.removeEventListener("themeChange", handleThemeChange);
           wrapper.removeEventListener("keydown", stopMindMapKeydown);
           clearContent();
         },
@@ -216,4 +269,12 @@ export const MindMap = Node.create({
 
 function parseMindMapAttribute(element) {
   return normalizeMindMapData(element.getAttribute("data-mindmap") || "");
+}
+
+export async function updateMindMapTheme() {
+  try {
+    document.dispatchEvent(new Event("themeChange"));
+  } catch (error) {
+    console.error("Failed to update mind map theme:", error);
+  }
 }

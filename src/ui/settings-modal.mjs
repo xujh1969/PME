@@ -12,6 +12,7 @@ import {
 import { testConnection } from "../core/ai-service.mjs";
 import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
 import { updateMermaidTheme } from "../editor/mermaid-node.mjs";
+import { updateMindMapTheme } from "../editor/mindmap-node.mjs";
 
 const THEMES = [
   { value: "light", label: "浅色主题" },
@@ -235,6 +236,7 @@ export function openSettingsModal() {
     const applyThemeChange = async () => {
       setTheme(themeSelect.value);
       await updateMermaidTheme();
+      await updateMindMapTheme();
     };
 
     const applyFonts = () => {

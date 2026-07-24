@@ -8,11 +8,13 @@ export function createDefaultMindMapData() {
     nodeData: {
       id: "root",
       topic: "中心主题",
+      root: true,
       children: [
-        { id: "topic-1", topic: "主题 1", children: [] },
-        { id: "topic-2", topic: "主题 2", children: [] },
+        { id: "topic-1", topic: "主题 1", direction: 1, children: [] },
+        { id: "topic-2", topic: "主题 2", direction: 1, children: [] },
       ],
     },
+    direction: 1,
   };
 }
 

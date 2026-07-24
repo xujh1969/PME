@@ -1,0 +1,247 @@
+﻿# Review package: 736ff84536e4af95d99980ce4078537af2aa3980..48ab15478fe2f3d2719053f4f3b076a0529f2418
+
+## Commits
+48ab154 feat: add mindmap data helpers
+
+## Files changed
+ package-lock.json           |  7 ++++
+ package.json                |  1 +
+ src/core/mindmap-data.mjs   | 91 +++++++++++++++++++++++++++++++++++++++++++++
+ tests/mindmap-data.test.mjs | 56 ++++++++++++++++++++++++++++
+ 4 files changed, 155 insertions(+)
+
+## Diff
+diff --git a/package-lock.json b/package-lock.json
+index 378b385..332f6c8 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -37,20 +37,21 @@
+         "@tiptap/extension-text-style": "^3.27.3",
+         "@tiptap/extension-typography": "^3.27.3",
+         "@tiptap/extension-underline": "^3.27.3",
+         "@tiptap/starter-kit": "^3.27.3",
+         "fflate": "^0.8.3",
+         "html2pdf.js": "^0.10.3",
+         "katex": "^0.17.0",
+         "lowlight": "^3.3.0",
+         "lucide": "^1.23.0",
+         "mermaid": "^11.16.0",
++        "mind-elixir": "^5.14.0",
+         "vite": "^8.1.3"
+       },
+       "devDependencies": {
+         "@tauri-apps/cli": "^2.11.4"
+       }
+     },
+     "node_modules/@antfu/install-pkg": {
+       "version": "1.1.0",
+       "resolved": "https://registry.npmjs.org/@antfu/install-pkg/-/install-pkg-1.1.0.tgz",
+       "integrity": "sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==",
+@@ -3013,20 +3014,26 @@
+         "https://github.com/sponsors/katex"
+       ],
+       "license": "MIT",
+       "dependencies": {
+         "commander": "^8.3.0"
+       },
+       "bin": {
+         "katex": "cli.js"
+       }
+     },
++    "node_modules/mind-elixir": {
++      "version": "5.14.0",
++      "resolved": "https://registry.npmjs.org/mind-elixir/-/mind-elixir-5.14.0.tgz",
++      "integrity": "sha512-V1PHE6TcVvbWMku8Jgo00LV6/vFLC0StAVccPqRT3GmaQsj93SFMviRoDHEjv0M0Yn8n10gktxNWCDUWdgRY0Q==",
++      "license": "MIT"
++    },
+     "node_modules/nanoid": {
+       "version": "3.3.15",
+       "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.15.tgz",
+       "integrity": "sha512-y7Wygv/7mEOvxTuEQDB8StXdMRBWf1kR/tlhAzBRUFkB2jfcLOAxO/SHmOO2zgz1pVgK29/kyupn059/bCHdjA==",
+       "funding": [
+         {
+           "type": "github",
+           "url": "https://github.com/sponsors/ai"
+         }
+       ],
+diff --git a/package.json b/package.json
+index f36dcb6..f578b38 100644
+--- a/package.json
++++ b/package.json
+@@ -42,16 +42,17 @@
+     "@tiptap/extension-text-style": "^3.27.3",
+     "@tiptap/extension-typography": "^3.27.3",
+     "@tiptap/extension-underline": "^3.27.3",
+     "@tiptap/starter-kit": "^3.27.3",
+     "fflate": "^0.8.3",
+     "html2pdf.js": "^0.10.3",
+     "katex": "^0.17.0",
+     "lowlight": "^3.3.0",
+     "lucide": "^1.23.0",
+     "mermaid": "^11.16.0",
++    "mind-elixir": "^5.14.0",
+     "vite": "^8.1.3"
+   },
+   "devDependencies": {
+     "@tauri-apps/cli": "^2.11.4"
+   }
+ }
+diff --git a/src/core/mindmap-data.mjs b/src/core/mindmap-data.mjs
+new file mode 100644
+index 0000000..48c374a
+--- /dev/null
++++ b/src/core/mindmap-data.mjs
+@@ -0,0 +1,91 @@
++export function createDefaultMindMapData() {
++  return {
++    nodeData: {
++      id: "root",
++      topic: "中心主题",
++      children: [
++        { id: "topic-1", topic: "主题 1", children: [] },
++        { id: "topic-2", topic: "主题 2", children: [] },
++      ],
++    },
++  };
++}
++
++export function normalizeMindMapData(value) {
++  if (typeof value === "object" && value !== null) {
++    return { data: ensureMindMapShape(value), raw: "", error: "" };
++  }
++
++  const raw = String(value ?? "").trim();
++  if (!raw) {
++    return { data: createDefaultMindMapData(), raw: "", error: "" };
++  }
++
++  try {
++    return { data: ensureMindMapShape(JSON.parse(raw)), raw: "", error: "" };
++  } catch {
++    return { data: null, raw, error: "Invalid mind map JSON" };
++  }
++}
++
++export function serializeMindMapData(data) {
++  if (typeof data === "string") {
++    return data.trim();
++  }
++  return JSON.stringify(ensureMindMapShape(data), null, 2);
++}
++
++export function getStaticMindMapDimensions(size, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
++  const sourceWidth = positiveNumber(size?.width) || 800;
++  const sourceHeight = positiveNumber(size?.height) || 480;
++  const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight);
++  return {
++    sourceWidth,
++    sourceHeight,
++    targetWidth: Math.round(sourceWidth * scale),
++    targetHeight: Math.round(sourceHeight * scale),
++  };
++}
++
++export function buildMindMapFallbackSvg(data) {
++  const normalized = normalizeMindMapData(data);
++  const topic = normalized.data?.nodeData?.topic || "思维导图";
++  return [
++    '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">',
++    '<rect width="800" height="480" fill="#ffffff"/>',
++    '<rect x="300" y="205" width="200" height="70" rx="10" fill="#f8f8f8" stroke="#d6d3d1"/>',
++    `<text x="400" y="247" text-anchor="middle" font-family="Microsoft YaHei, sans-serif" font-size="20" fill="#0c0a09">${escapeXml(topic)}</text>`,
++    "</svg>",
++  ].join("");
++}
++
++function ensureMindMapShape(value) {
++  const nodeData = value?.nodeData || value;
++  return {
++    ...value,
++    nodeData: ensureMindMapNode(nodeData, "root"),
++  };
++}
++
++function ensureMindMapNode(node, fallbackId) {
++  return {
++    id: String(node?.id || fallbackId),
++    topic: String(node?.topic || "中心主题"),
++    children: Array.isArray(node?.children)
++      ? node.children.map((child, index) => ensureMindMapNode(child, `${fallbackId}-${index + 1}`))
++      : [],
++  };
++}
++
++function positiveNumber(value) {
++  const number = Number(value);
++  return Number.isFinite(number) && number > 0 ? number : 0;
++}
++
++function escapeXml(value) {
++  return String(value)
++    .replaceAll("&", "&amp;")
++    .replaceAll("<", "&lt;")
++    .replaceAll(">", "&gt;")
++    .replaceAll('"', "&quot;");
++}
+diff --git a/tests/mindmap-data.test.mjs b/tests/mindmap-data.test.mjs
+new file mode 100644
+index 0000000..d55ab68
+--- /dev/null
++++ b/tests/mindmap-data.test.mjs
+@@ -0,0 +1,56 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++
++import {
++  buildMindMapFallbackSvg,
++  createDefaultMindMapData,
++  getStaticMindMapDimensions,
++  normalizeMindMapData,
++  serializeMindMapData,
++} from "../src/core/mindmap-data.mjs";
++
++test("creates default Mind Elixir data with a root and children", () => {
++  const data = createDefaultMindMapData();
++
++  assert.equal(data.nodeData.id, "root");
++  assert.equal(data.nodeData.topic, "中心主题");
++  assert.equal(data.nodeData.children.length, 2);
++});
++
++test("normalizes valid mindmap JSON", () => {
++  const result = normalizeMindMapData('{"nodeData":{"id":"root","topic":"A","children":[]}}');
++
++  assert.equal(result.error, "");
++  assert.equal(result.raw, "");
++  assert.equal(result.data.nodeData.topic, "A");
++});
++
++test("preserves invalid mindmap JSON as raw text", () => {
++  const result = normalizeMindMapData("{not-json");
++
++  assert.equal(result.data, null);
++  assert.equal(result.raw, "{not-json");
++  assert.match(result.error, /Invalid mind map JSON/);
++});
++
++test("serializes mindmap data with stable indentation", () => {
++  const markdown = serializeMindMapData({ nodeData: { id: "root", topic: "A", children: [] } });
++
++  assert.equal(markdown, '{\n  "nodeData": {\n    "id": "root",\n    "topic": "A",\n    "children": []\n  }\n}');
++});
++
++test("constrains static mindmap dimensions by width and height", () => {
++  assert.deepEqual(getStaticMindMapDimensions({ width: 600, height: 2400 }, 600, 760), {
++    sourceWidth: 600,
++    sourceHeight: 2400,
++    targetWidth: 190,
++    targetHeight: 760,
++  });
++});
++
++test("builds a fallback SVG containing the root topic", () => {
++  const svg = buildMindMapFallbackSvg({ nodeData: { id: "root", topic: "Root", children: [] } });
++
++  assert.equal(svg.includes("<svg"), true);
++  assert.equal(svg.includes("Root"), true);
++});

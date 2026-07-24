@@ -1,0 +1,141 @@
+﻿# Review package: 48ab15478fe2f3d2719053f4f3b076a0529f2418..d19eb6146d54811d607d5b4abed9570cb17fd831
+
+## Commits
+d19eb61 feat: persist mindmaps in markdown
+
+## Files changed
+ src/core/markdown.mjs   | 19 +++++++++++++++++++
+ tests/markdown.test.mjs | 29 +++++++++++++++++++++++++++++
+ 2 files changed, 48 insertions(+)
+
+## Diff
+diff --git a/src/core/markdown.mjs b/src/core/markdown.mjs
+index bbabb1f..5de61f7 100644
+--- a/src/core/markdown.mjs
++++ b/src/core/markdown.mjs
+@@ -1,10 +1,12 @@
++import { normalizeMindMapData, serializeMindMapData } from "./mindmap-data.mjs";
++
+ export function parseMarkdown(markdown) {
+   const lines = markdown.replaceAll("\r\n", "\n").split("\n");
+   const footnotes = collectFootnoteDefinitions(lines);
+   const content = [];
+   let index = 0;
+ 
+   while (index < lines.length) {
+     const line = lines[index];
+ 
+     if (isFootnoteDefinition(line)) {
+@@ -98,20 +100,29 @@ export function parseMarkdown(markdown) {
+         index += 1;
+       }
+       if (language.toLowerCase() === "mermaid") {
+         content.push({
+           type: "mermaidDiagram",
+           attrs: { code: codeLines.join("\n") },
+         });
+         index += 1;
+         continue;
+       }
++      if (language.toLowerCase() === "mindmap") {
++        const normalized = normalizeMindMapData(codeLines.join("\n"));
++        content.push({
++          type: "mindMap",
++          attrs: normalized,
++        });
++        index += 1;
++        continue;
++      }
+       const codeText = codeLines.join("\n");
+       content.push({
+         type: "codeBlock",
+         attrs: { language },
+         content: codeText ? [{ type: "text", text: codeText }] : [],
+       });
+       index += 1;
+       continue;
+     }
+ 
+@@ -323,20 +334,28 @@ function serializeNode(node, options) {
+   }
+ 
+   if (node.type === "mermaidDiagram") {
+     return [
+       "```mermaid",
+       node.attrs?.code || "",
+       "```",
+     ].join("\n");
+   }
+ 
++  if (node.type === "mindMap") {
++    return [
++      "```mindmap",
++      node.attrs?.raw || serializeMindMapData(node.attrs?.data),
++      "```",
++    ].join("\n");
++  }
++
+   if (node.type === "blockquote") {
+     return `> ${plainText(node, options)}`;
+   }
+ 
+   if (node.type === "codeBlock") {
+     return [
+       `\`\`\`${node.attrs.language || ""}`,
+       plainText(node, options),
+       "```",
+     ].join("\n");
+diff --git a/tests/markdown.test.mjs b/tests/markdown.test.mjs
+index eed1362..2dc63e1 100644
+--- a/tests/markdown.test.mjs
++++ b/tests/markdown.test.mjs
+@@ -322,20 +322,49 @@ test("parses and serializes mermaid diagrams", () => {
+         type: "mermaidDiagram",
+         attrs: { code: "graph TD\n  A-->B" },
+       },
+     ],
+   };
+ 
+   assert.deepEqual(parseMarkdown(markdown), doc);
+   assert.equal(serializeMarkdown(doc), `${markdown}\n`);
+ });
+ 
++test("parses and serializes mindmap diagrams", () => {
++  const markdown = [
++    "```mindmap",
++    "{",
++    '  "nodeData": {',
++    '    "id": "root",',
++    '    "topic": "Plan",',
++    '    "children": []',
++    "  }",
++    "}",
++    "```",
++  ].join("\n");
++
++  const doc = parseMarkdown(markdown);
++
++  assert.equal(doc.content[0].type, "mindMap");
++  assert.equal(doc.content[0].attrs.data.nodeData.topic, "Plan");
++  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
++});
++
++test("preserves invalid mindmap JSON during markdown round trip", () => {
++  const markdown = "```mindmap\n{not-json\n```";
++  const doc = parseMarkdown(markdown);
++
++  assert.equal(doc.content[0].type, "mindMap");
++  assert.equal(doc.content[0].attrs.raw, "{not-json");
++  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
++});
++
+ test("parses single-line double-dollar math as block math", () => {
+   assert.deepEqual(parseMarkdown("$$E=mc^2$$"), {
+     type: "doc",
+     content: [
+       {
+         type: "blockMath",
+         attrs: { latex: "E=mc^2" },
+       },
+     ],
+   });

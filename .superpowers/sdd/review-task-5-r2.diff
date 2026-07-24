@@ -1,0 +1,326 @@
+﻿# Review package: 470f7b786079d94cb65b07840681099524ba1966..5cb738dd64f4ed12930adb82098b5eff1e7b49b7
+
+## Commits
+5cb738d docs: record mindmap export chrome fix
+01a9419 fix: remove exported mindmap image chrome
+80162c3 feat: export mindmaps as static images
+
+## Files changed
+ .superpowers/sdd/task-5-report.md | 65 +++++++++++++++++++++++++++++++++++++++
+ src/core/html-package.mjs         | 31 +++++++++++++++++++
+ src/core/pdf-export.mjs           | 31 +++++++++++++++++++
+ src/export/export-runtime.mjs     | 34 ++++++++++++++++++++
+ tests/export-runtime.test.mjs     | 21 +++++++++++++
+ 5 files changed, 182 insertions(+)
+
+## Diff
+diff --git a/.superpowers/sdd/task-5-report.md b/.superpowers/sdd/task-5-report.md
+new file mode 100644
+index 0000000..c309b76
+--- /dev/null
++++ b/.superpowers/sdd/task-5-report.md
+@@ -0,0 +1,65 @@
++# Task 5 Report
++
++## Status
++
++Complete. Mind maps are replaced with static fallback SVG images before printable HTML is returned. PDF and packaged HTML exports include centered, borderless mind map styles.
++
++## Files Changed
++
++- `src/export/export-runtime.mjs`
++- `src/core/pdf-export.mjs`
++- `src/core/html-package.mjs`
++- `tests/export-runtime.test.mjs`
++
++## Tests Run
++
++- `npm test -- tests/export-runtime.test.mjs`
++  - RED: 7 passed, 2 failed as expected before implementation; the failures were the missing mind map export preparation and export CSS assertions.
++  - GREEN: 9 passed, 0 failed.
++- `npm run build`
++  - Passed: Vite built 4,209 modules successfully.
++  - Output included the existing Vite warning for chunks over 500 kB.
++- `git diff --check`
++  - Passed with no whitespace errors.
++
++## Commit
++
++`80162c3fc3071fe3bfe9b2c20afc053adb451ff2` - `feat: export mindmaps as static images`
++
++## Self-Review
++
++- Static image replacement runs after Mermaid preparation and before printable image inlining.
++- Dimensions use `getStaticMindMapDimensions` with PDF-equivalent 600 by 760 limits, preventing enlargement.
++- Both export templates center images and remove viewport borders.
++- No Mind Elixir runtime scripts were added to the HTML export.
++- The commit contains only the four Task 5 source and test files specified by the brief.
++
++## Concerns
++
++- This first version intentionally uses `buildMindMapFallbackSvg`; it does not use Mind Elixir's native export API.
++
++## Reviewer Fix: Remove Exported Mindmap Image Chrome
++
++### Files Changed
++
++- `src/core/pdf-export.mjs`
++- `src/core/html-package.mjs`
++- `tests/export-runtime.test.mjs`
++
++### Tests Run
++
++- `npm test -- tests/export-runtime.test.mjs`
++  - Passed: 9 tests, 0 failures.
++- `npm run build`
++  - Passed: Vite transformed 4,209 modules and built successfully.
++  - Output retained the existing warning for chunks larger than 500 kB.
++
++### Commit
++
++`01a9419` - `fix: remove exported mindmap image chrome`
++
++### Self-Review
++
++- Added `border: 0 !important;` and `border-radius: 0 !important;` to the mindmap image rule in both static export templates.
++- Extended the shared export-style test to require both declarations for PDF and HTML templates.
++- Scope is limited to the reviewer finding; no unrelated export behavior changed.
+diff --git a/src/core/html-package.mjs b/src/core/html-package.mjs
+index fb0924c..db00f5b 100644
+--- a/src/core/html-package.mjs
++++ b/src/core/html-package.mjs
+@@ -302,20 +302,51 @@ function buildHtmlExportHtml({ title, documentHtml }) {
+       height: auto !important;
+     }
+ 
+     .mermaid-diagram img {
+       display: block !important;
+       max-width: 100% !important;
+       height: auto !important;
+       margin: 0 auto !important;
+     }
+ 
++    .mindmap-diagram {
++      width: 100%;
++      margin: 16px 0;
++      overflow: visible;
++    }
++
++    .mindmap-diagram__viewport {
++      height: auto !important;
++      overflow: visible !important;
++      border: 0 !important;
++      border-radius: 0;
++      padding: 10px 0;
++    }
++
++    .mindmap-diagram__content {
++      width: 100% !important;
++      min-width: 0 !important;
++      display: flex !important;
++      justify-content: center !important;
++      align-items: flex-start !important;
++    }
++
++    .mindmap-diagram img {
++      display: block !important;
++      border: 0 !important;
++      border-radius: 0 !important;
++      max-width: 100% !important;
++      height: auto !important;
++      margin: 0 auto !important;
++    }
++
+     .callout {
+       margin: 1em 0;
+       padding: 1em;
+       border-radius: var(--radius-sm);
+       border-left: 4px solid;
+       background: var(--color-canvas-soft);
+     }
+ 
+     .callout__title {
+       font-weight: 600;
+diff --git a/src/core/pdf-export.mjs b/src/core/pdf-export.mjs
+index 87068e4..2046178 100644
+--- a/src/core/pdf-export.mjs
++++ b/src/core/pdf-export.mjs
+@@ -326,20 +326,51 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
+       max-width: 100% !important;
+       height: auto !important;
+     }
+     
+     .mermaid-diagram img {
+       display: block !important;
+       max-width: 100% !important;
+       height: auto !important;
+       margin: 0 auto !important;
+     }
++
++    .mindmap-diagram {
++      width: 100%;
++      margin: 16px 0;
++      overflow: visible;
++    }
++
++    .mindmap-diagram__viewport {
++      height: auto !important;
++      overflow: visible !important;
++      border: 0 !important;
++      border-radius: 0;
++      padding: 10px 0;
++    }
++
++    .mindmap-diagram__content {
++      width: 100% !important;
++      min-width: 0 !important;
++      display: flex !important;
++      justify-content: center !important;
++      align-items: flex-start !important;
++    }
++
++    .mindmap-diagram img {
++      display: block !important;
++      border: 0 !important;
++      border-radius: 0 !important;
++      max-width: 100% !important;
++      height: auto !important;
++      margin: 0 auto !important;
++    }
+     
+     ${katexCss}
+     .katex-display { overflow: visible; }
+     .katex { font-family: KaTeX_Main, ${fonts.english}; }
+     .tiptap-mathematics-render { display: inline; }
+     .tiptap-mathematics-render[data-type="block-math"] { 
+       display: block; 
+       margin: 18px 0;
+       text-align: center;
+       overflow-x: auto;
+diff --git a/src/export/export-runtime.mjs b/src/export/export-runtime.mjs
+index e554635..1e0fce5 100644
+--- a/src/export/export-runtime.mjs
++++ b/src/export/export-runtime.mjs
+@@ -1,10 +1,12 @@
++import { buildMindMapFallbackSvg, getStaticMindMapDimensions } from "../core/mindmap-data.mjs";
++
+ export async function loadLocalImageResource(source) {
+   const { invoke } = await import("@tauri-apps/api/core");
+   const result = await invoke("read_binary_file_path", { filePath: source });
+   
+   let mimeType = result.mimeType || "application/octet-stream";
+   if (mimeType === "application/octet-stream") {
+     const ext = source.split(".").pop().toLowerCase();
+     const mimeTypes = {
+       mp4: "video/mp4",
+       webm: "video/webm",
+@@ -96,20 +98,21 @@ export async function getPrintableDocumentHtml(doc) {
+   if (!documentElement) {
+     return "";
+   }
+ 
+   const clone = documentElement.cloneNode(true);
+   clone.querySelectorAll(".mermaid-diagram__controls").forEach((element) => element.remove());
+   clone.querySelectorAll(".ProseMirror-selectednode").forEach((element) => {
+     element.classList.remove("ProseMirror-selectednode");
+   });
+   await prepareMermaidDiagramsForPrint(clone);
++  await prepareMindMapsForPrint(clone);
+   cleanupMathElementsForPrint(clone);
+   await inlinePrintableImages(clone);
+   if (doc) {
+     renderTableOfContentsForPrint(clone, doc);
+   }
+   return clone.innerHTML;
+ }
+ 
+ async function prepareMermaidDiagramsForPrint(root) {
+   const diagrams = root.querySelectorAll(".mermaid-diagram");
+@@ -202,20 +205,51 @@ async function prepareMermaidDiagramsForPrint(root) {
+           resolve();
+         }
+       });
+       promises.push(promise);
+     }
+   });
+ 
+   await Promise.all(promises);
+ }
+ 
++async function prepareMindMapsForPrint(root) {
++  const maps = root.querySelectorAll(".mindmap-diagram");
++  maps.forEach((map) => {
++    const content = map.querySelector(".mindmap-diagram__content");
++    if (!content) return;
++
++    const rect = content.getBoundingClientRect?.() || { width: 800, height: 480 };
++    const dimensions = getStaticMindMapDimensions(
++      { width: rect.width || 800, height: rect.height || 480 },
++      600,
++      760,
++    );
++    const data = map.dataset.mindmap || "";
++    const svg = buildMindMapFallbackSvg(data);
++    const encoded = encodeURIComponent(svg)
++      .replaceAll("'", "%27")
++      .replaceAll('"', "%22");
++    const image = document.createElement("img");
++    image.src = `data:image/svg+xml;charset=utf-8,${encoded}`;
++    image.setAttribute("width", String(dimensions.targetWidth));
++    image.setAttribute("height", String(dimensions.targetHeight));
++    image.style.width = `${dimensions.targetWidth}px`;
++    image.style.maxWidth = "100%";
++    image.style.height = "auto";
++    image.style.margin = "0 auto";
++    image.style.display = "block";
++    content.innerHTML = "";
++    content.appendChild(image);
++  });
++}
++
+ export function getSvgPrintDimensions(svg, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
+   const viewBox = parseSvgViewBox(svg.getAttribute("viewBox"));
+   const sourceWidth = getSvgLength(svg.getAttribute("width")) || getSvgLength(svg.style.width) || viewBox?.width || 800;
+   const sourceHeight = getSvgLength(svg.getAttribute("height")) || getSvgLength(svg.style.height) || viewBox?.height || 600;
+   const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight);
+ 
+   return {
+     sourceWidth,
+     sourceHeight,
+     targetWidth: Math.round(sourceWidth * scale),
+diff --git a/tests/export-runtime.test.mjs b/tests/export-runtime.test.mjs
+index e900645..9286dcb 100644
+--- a/tests/export-runtime.test.mjs
++++ b/tests/export-runtime.test.mjs
+@@ -92,10 +92,31 @@ test("centers exported Mermaid diagrams without viewport borders", () => {
+ test("does not force PDF Mermaid containers to avoid page breaks", () => {
+   const diagramRule = pdfExportSource.match(/\.mermaid-diagram\s*\{[^}]+\}/)?.[0] || "";
+   const viewportRule = pdfExportSource.match(/\.mermaid-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
+   const contentRule = pdfExportSource.match(/\.mermaid-diagram__content\s*\{[^}]+\}/)?.[0] || "";
+ 
+   assert.equal(diagramRule.includes("break-inside: avoid !important;"), false);
+   assert.equal(diagramRule.includes("page-break-inside: avoid !important;"), false);
+   assert.equal(viewportRule.includes("break-inside: avoid !important;"), false);
+   assert.equal(contentRule.includes("break-inside: avoid !important;"), false);
+ });
++
++test("prepares mindmaps for static export before printable HTML is returned", () => {
++  assert.equal(runtimeSource.includes("prepareMindMapsForPrint"), true);
++  assert.equal(runtimeSource.includes('querySelectorAll(".mindmap-diagram")'), true);
++  assert.equal(runtimeSource.includes("getStaticMindMapDimensions"), true);
++});
++
++test("exports static mindmaps with centered borderless styles", () => {
++  for (const source of [pdfExportSource, htmlPackageSource]) {
++    const viewportRule = source.match(/\.mindmap-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
++    const contentRule = source.match(/\.mindmap-diagram__content\s*\{[^}]+\}/)?.[0] || "";
++    const imageRule = source.match(/\.mindmap-diagram img\s*\{[^}]+\}/)?.[0] || "";
++
++    assert.equal(viewportRule.includes("border: 0 !important;"), true);
++    assert.equal(contentRule.includes("justify-content: center !important;"), true);
++    assert.equal(imageRule.includes("margin: 0 auto !important;"), true);
++    assert.equal(imageRule.includes("max-width: 100% !important;"), true);
++    assert.equal(imageRule.includes("border: 0 !important;"), true);
++    assert.equal(imageRule.includes("border-radius: 0 !important;"), true);
++  }
++});

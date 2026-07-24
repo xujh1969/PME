@@ -217,6 +217,10 @@ async function prepareMermaidDiagramsForPrint(root) {
 export async function prepareMindMapsForPrint(root) {
   const maps = root.querySelectorAll(".mindmap-diagram");
   maps.forEach((map) => {
+    const dragToggle = map.querySelector(".mindmap-diagram__drag-toggle");
+    if (dragToggle) {
+      dragToggle.remove();
+    }
     const content = map.querySelector(".mindmap-diagram__content");
     if (!content) return;
 

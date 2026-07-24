@@ -664,8 +664,8 @@
 
 .ProseMirror .mindmap-diagram {
   position: relative;
-  width: calc(100% + 96px);
-  margin: 18px -48px;
+  width: calc(100% + 48px);
+  margin: 18px -24px;
   user-select: none;
 }
 
@@ -675,6 +675,43 @@
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-lg);
   background: var(--color-surface-soft);
+}
+
+.ProseMirror .mindmap-diagram__drag-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ProseMirror .mindmap-diagram__drag-toggle:hover {
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.ProseMirror .mindmap-diagram__drag-toggle.is-active {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-white);
+}
+
+.ProseMirror .mindmap-diagram.is-drag-mode .mindmap-diagram__viewport {
+  cursor: grab;
+}
+
+.ProseMirror .mindmap-diagram.is-drag-mode .mindmap-diagram__viewport:active {
+  cursor: grabbing;
 }
 
 .ProseMirror .mindmap-diagram__content {
