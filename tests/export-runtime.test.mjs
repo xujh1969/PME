@@ -99,3 +99,22 @@ test("does not force PDF Mermaid containers to avoid page breaks", () => {
   assert.equal(viewportRule.includes("break-inside: avoid !important;"), false);
   assert.equal(contentRule.includes("break-inside: avoid !important;"), false);
 });
+
+test("prepares mindmaps for static export before printable HTML is returned", () => {
+  assert.equal(runtimeSource.includes("prepareMindMapsForPrint"), true);
+  assert.equal(runtimeSource.includes('querySelectorAll(".mindmap-diagram")'), true);
+  assert.equal(runtimeSource.includes("getStaticMindMapDimensions"), true);
+});
+
+test("exports static mindmaps with centered borderless styles", () => {
+  for (const source of [pdfExportSource, htmlPackageSource]) {
+    const viewportRule = source.match(/\.mindmap-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
+    const contentRule = source.match(/\.mindmap-diagram__content\s*\{[^}]+\}/)?.[0] || "";
+    const imageRule = source.match(/\.mindmap-diagram img\s*\{[^}]+\}/)?.[0] || "";
+
+    assert.equal(viewportRule.includes("border: 0 !important;"), true);
+    assert.equal(contentRule.includes("justify-content: center !important;"), true);
+    assert.equal(imageRule.includes("margin: 0 auto !important;"), true);
+    assert.equal(imageRule.includes("max-width: 100% !important;"), true);
+  }
+});

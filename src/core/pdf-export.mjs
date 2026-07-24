@@ -333,6 +333,35 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       height: auto !important;
       margin: 0 auto !important;
     }
+
+    .mindmap-diagram {
+      width: 100%;
+      margin: 16px 0;
+      overflow: visible;
+    }
+
+    .mindmap-diagram__viewport {
+      height: auto !important;
+      overflow: visible !important;
+      border: 0 !important;
+      border-radius: 0;
+      padding: 10px 0;
+    }
+
+    .mindmap-diagram__content {
+      width: 100% !important;
+      min-width: 0 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: flex-start !important;
+    }
+
+    .mindmap-diagram img {
+      display: block !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 0 auto !important;
+    }
     
     ${katexCss}
     .katex-display { overflow: visible; }

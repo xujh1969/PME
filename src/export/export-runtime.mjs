@@ -1,3 +1,5 @@
+import { buildMindMapFallbackSvg, getStaticMindMapDimensions } from "../core/mindmap-data.mjs";
+
 export async function loadLocalImageResource(source) {
   const { invoke } = await import("@tauri-apps/api/core");
   const result = await invoke("read_binary_file_path", { filePath: source });
@@ -103,6 +105,7 @@ export async function getPrintableDocumentHtml(doc) {
     element.classList.remove("ProseMirror-selectednode");
   });
   await prepareMermaidDiagramsForPrint(clone);
+  await prepareMindMapsForPrint(clone);
   cleanupMathElementsForPrint(clone);
   await inlinePrintableImages(clone);
   if (doc) {
@@ -207,6 +210,37 @@ async function prepareMermaidDiagramsForPrint(root) {
   });
 
   await Promise.all(promises);
+}
+
+async function prepareMindMapsForPrint(root) {
+  const maps = root.querySelectorAll(".mindmap-diagram");
+  maps.forEach((map) => {
+    const content = map.querySelector(".mindmap-diagram__content");
+    if (!content) return;
+
+    const rect = content.getBoundingClientRect?.() || { width: 800, height: 480 };
+    const dimensions = getStaticMindMapDimensions(
+      { width: rect.width || 800, height: rect.height || 480 },
+      600,
+      760,
+    );
+    const data = map.dataset.mindmap || "";
+    const svg = buildMindMapFallbackSvg(data);
+    const encoded = encodeURIComponent(svg)
+      .replaceAll("'", "%27")
+      .replaceAll('"', "%22");
+    const image = document.createElement("img");
+    image.src = `data:image/svg+xml;charset=utf-8,${encoded}`;
+    image.setAttribute("width", String(dimensions.targetWidth));
+    image.setAttribute("height", String(dimensions.targetHeight));
+    image.style.width = `${dimensions.targetWidth}px`;
+    image.style.maxWidth = "100%";
+    image.style.height = "auto";
+    image.style.margin = "0 auto";
+    image.style.display = "block";
+    content.innerHTML = "";
+    content.appendChild(image);
+  });
 }
 
 export function getSvgPrintDimensions(svg, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
