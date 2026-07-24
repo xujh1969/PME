@@ -1144,6 +1144,9 @@ function bindGlobalShortcuts() {
   }
 
   document.addEventListener("keydown", (event) => {
+    if (isMindMapDiagramEvent(event)) {
+      return;
+    }
     const command = getAppShortcutCommand(event);
     if (!command || state.screen !== "shell") {
       return;
@@ -1598,6 +1601,9 @@ function handleReplaceKeydown(event) {
 }
 
 function handleGlobalEscape(event) {
+  if (isMindMapDiagramEvent(event)) {
+    return;
+  }
   if (event.key === "Escape" && state.showReplace) {
     state.showReplace = false;
     render();
@@ -3205,6 +3211,9 @@ function selectEditorNode(pos) {
 }
 
 function handleObjectKeydown(event) {
+  if (isMindMapDiagramEvent(event)) {
+    return;
+  }
   if (!editor || (event.key !== "Enter" && event.key !== "F2")) {
     return;
   }
@@ -4232,6 +4241,9 @@ function handleDrop(event) {
 }
 
 async function handlePaste(event) {
+  if (isMindMapDiagramEvent(event)) {
+    return;
+  }
   const sourceEditor = document.querySelector(".source-editor");
   if (sourceEditor) {
     event.preventDefault();
@@ -4296,6 +4308,9 @@ async function handlePaste(event) {
 }
 
 async function handleCopy(event) {
+  if (isMindMapDiagramEvent(event)) {
+    return;
+  }
   const sourceEditor = document.querySelector(".source-editor");
   if (sourceEditor) {
     const selectedText = sourceEditor.value.substring(sourceEditor.selectionStart, sourceEditor.selectionEnd);
@@ -4319,6 +4334,9 @@ async function handleCopy(event) {
 }
 
 async function handleCut(event) {
+  if (isMindMapDiagramEvent(event)) {
+    return;
+  }
   const sourceEditor = document.querySelector(".source-editor");
   if (sourceEditor) {
     const selectedText = sourceEditor.value.substring(sourceEditor.selectionStart, sourceEditor.selectionEnd);
@@ -4344,10 +4362,17 @@ async function handleCut(event) {
 }
 
 function handlePasteShortcut(event) {
+  if (isMindMapDiagramEvent(event)) {
+    return;
+  }
   const primary = Boolean(event.ctrlKey || event.metaKey);
   if (primary && event.shiftKey && event.key.toLowerCase() === "v") {
     pastePlainTextMode = true;
   }
+}
+
+function isMindMapDiagramEvent(event) {
+  return Boolean(event.target.closest?.(".mindmap-diagram"));
 }
 
 async function insertImageFiles(imageFiles, options = {}) {

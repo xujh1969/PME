@@ -63,6 +63,20 @@ test("allows only mindmap pointer backgrounds to reach TipTap atom selection", (
   assert.match(source, /if \(!MINDMAP_ATOM_SELECTION_EVENTS\.has\(event\.type\)\) \{\s+return true;\s+\}/);
 });
 
+test("isolates mindmap clipboard and keyboard events from app handlers", () => {
+  assert.match(appSource, /function isMindMapDiagramEvent\(event\) \{\s+return Boolean\(event\.target\.closest\?\.\("\.mindmap-diagram"\)\);\s+\}/);
+  for (const handler of ["handlePaste", "handleCopy", "handleCut", "handlePasteShortcut", "handleObjectKeydown", "handleGlobalEscape"]) {
+    assert.match(appSource, new RegExp(`function ${handler}\\(event\\) \\{\\s+if \\(isMindMapDiagramEvent\\(event\\)\\) \\{\\s+return;\\s+\\}`));
+  }
+  assert.match(appSource, /document\.addEventListener\("keydown", \(event\) => \{\s+if \(isMindMapDiagramEvent\(event\)\) \{\s+return;\s+\}/);
+});
+
+test("stops mindmap keyboard events before they reach document listeners", () => {
+  assert.match(source, /const stopMindMapKeydown = \(event\) => \{\s+event\.stopPropagation\(\);\s+\};/);
+  assert.match(source, /wrapper\.addEventListener\("keydown", stopMindMapKeydown\);/);
+  assert.match(source, /wrapper\.removeEventListener\("keydown", stopMindMapKeydown\);/);
+});
+
 test("shows escaped initialization errors without leaking a partial instance", () => {
   assert.equal(source.includes("try {"), true);
   assert.equal(source.includes("mind.init(normalized.data)"), true);

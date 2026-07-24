@@ -86,6 +86,10 @@ export const MindMap = Node.create({
       wrapper.dataset.mindmap = node.attrs.raw || serializeMindMapData(node.attrs.data);
       viewport.appendChild(content);
       wrapper.appendChild(viewport);
+      const stopMindMapKeydown = (event) => {
+        event.stopPropagation();
+      };
+      wrapper.addEventListener("keydown", stopMindMapKeydown);
 
       let mind = null;
       let lastRenderedData = wrapper.dataset.mindmap;
@@ -202,6 +206,7 @@ export const MindMap = Node.create({
           return true;
         },
         destroy: () => {
+          wrapper.removeEventListener("keydown", stopMindMapKeydown);
           clearContent();
         },
       };
