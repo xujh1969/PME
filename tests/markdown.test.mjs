@@ -329,6 +329,35 @@ test("parses and serializes mermaid diagrams", () => {
   assert.equal(serializeMarkdown(doc), `${markdown}\n`);
 });
 
+test("parses and serializes mindmap diagrams", () => {
+  const markdown = [
+    "```mindmap",
+    "{",
+    '  "nodeData": {',
+    '    "id": "root",',
+    '    "topic": "Plan",',
+    '    "children": []',
+    "  }",
+    "}",
+    "```",
+  ].join("\n");
+
+  const doc = parseMarkdown(markdown);
+
+  assert.equal(doc.content[0].type, "mindMap");
+  assert.equal(doc.content[0].attrs.data.nodeData.topic, "Plan");
+  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
+});
+
+test("preserves invalid mindmap JSON during markdown round trip", () => {
+  const markdown = "```mindmap\n{not-json\n```";
+  const doc = parseMarkdown(markdown);
+
+  assert.equal(doc.content[0].type, "mindMap");
+  assert.equal(doc.content[0].attrs.raw, "{not-json");
+  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
+});
+
 test("parses single-line double-dollar math as block math", () => {
   assert.deepEqual(parseMarkdown("$$E=mc^2$$"), {
     type: "doc",

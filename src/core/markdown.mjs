@@ -1,3 +1,5 @@
+import { normalizeMindMapData, serializeMindMapData } from "./mindmap-data.mjs";
+
 export function parseMarkdown(markdown) {
   const lines = markdown.replaceAll("\r\n", "\n").split("\n");
   const footnotes = collectFootnoteDefinitions(lines);
@@ -101,6 +103,15 @@ export function parseMarkdown(markdown) {
         content.push({
           type: "mermaidDiagram",
           attrs: { code: codeLines.join("\n") },
+        });
+        index += 1;
+        continue;
+      }
+      if (language.toLowerCase() === "mindmap") {
+        const normalized = normalizeMindMapData(codeLines.join("\n"));
+        content.push({
+          type: "mindMap",
+          attrs: normalized,
         });
         index += 1;
         continue;
@@ -326,6 +337,14 @@ function serializeNode(node, options) {
     return [
       "```mermaid",
       node.attrs?.code || "",
+      "```",
+    ].join("\n");
+  }
+
+  if (node.type === "mindMap") {
+    return [
+      "```mindmap",
+      node.attrs?.raw || serializeMindMapData(node.attrs?.data),
       "```",
     ].join("\n");
   }
