@@ -333,6 +333,8 @@ function buildHtmlExportHtml({ title, documentHtml }) {
 
     .mindmap-diagram img {
       display: block !important;
+      border: 0 !important;
+      border-radius: 0 !important;
       max-width: 100% !important;
       height: auto !important;
       margin: 0 auto !important;

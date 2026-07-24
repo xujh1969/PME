@@ -116,5 +116,7 @@ test("exports static mindmaps with centered borderless styles", () => {
     assert.equal(contentRule.includes("justify-content: center !important;"), true);
     assert.equal(imageRule.includes("margin: 0 auto !important;"), true);
     assert.equal(imageRule.includes("max-width: 100% !important;"), true);
+    assert.equal(imageRule.includes("border: 0 !important;"), true);
+    assert.equal(imageRule.includes("border-radius: 0 !important;"), true);
   }
 });
