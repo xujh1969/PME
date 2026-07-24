@@ -93,7 +93,7 @@ export function waitForMilliseconds(milliseconds) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 }
 
-export async function getPrintableDocumentHtml(doc) {
+export async function getPrintableDocumentHtml(doc, { inlineImages = true } = {}) {
   const documentElement = document.querySelector("#tiptapEditor .ProseMirror");
   if (!documentElement) {
     return "";
@@ -107,7 +107,9 @@ export async function getPrintableDocumentHtml(doc) {
   await prepareMermaidDiagramsForPrint(clone);
   await prepareMindMapsForPrint(clone);
   cleanupMathElementsForPrint(clone);
-  await inlinePrintableImages(clone);
+  if (inlineImages) {
+    await inlinePrintableImages(clone);
+  }
   if (doc) {
     renderTableOfContentsForPrint(clone, doc);
   }
@@ -212,7 +214,7 @@ async function prepareMermaidDiagramsForPrint(root) {
   await Promise.all(promises);
 }
 
-async function prepareMindMapsForPrint(root) {
+export async function prepareMindMapsForPrint(root) {
   const maps = root.querySelectorAll(".mindmap-diagram");
   maps.forEach((map) => {
     const content = map.querySelector(".mindmap-diagram__content");

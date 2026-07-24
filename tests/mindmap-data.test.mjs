@@ -30,6 +30,9 @@ test("preserves serializable Mind Elixir fields while removing parent references
   const result = normalizeMindMapData({
     direction: 2,
     meta: { owner: "PME" },
+    summaries: [
+      { id: "summary-1", parent: "root", start: 0, end: 0, label: "Summary" },
+    ],
     nodeData: {
       id: "root",
       topic: "Root",
@@ -67,9 +70,23 @@ test("preserves serializable Mind Elixir fields while removing parent references
   assert.equal(result.data.nodeData.branchColor, "#ff0000");
   assert.equal(result.data.nodeData.note, "note");
   assert.deepEqual(result.data.nodeData.metadata, { priority: 1 });
+  assert.equal(result.data.summaries[0].parent, "root");
   assert.equal("parent" in result.data.nodeData, false);
   assert.equal("parent" in result.data.nodeData.children[0], false);
   assert.deepEqual(result.data.nodeData.children[0].style, { background: "#eeeeee" });
+});
+
+test("preserves serializable string parent fields outside summaries", () => {
+  const result = normalizeMindMapData({
+    nodeData: {
+      id: "root",
+      topic: "Root",
+      parent: "serialized-parent",
+      children: [],
+    },
+  });
+
+  assert.equal(result.data.nodeData.parent, "serialized-parent");
 });
 
 test("preserves invalid mindmap JSON as raw text", () => {

@@ -131,7 +131,7 @@ import { createEditorExtensions } from "./editor/editor-extensions.mjs";
 import { headingCollapsePlugin } from "./editor/heading-collapse.mjs";
 import { AlignedTableCell, AlignedTableHeader, AssetImage, ParagraphWithIndent } from "./editor/custom-nodes.mjs";
 import { MermaidDiagram } from "./editor/mermaid-node.mjs";
-import { MindMap } from "./editor/mindmap-node.mjs";
+import { flushMindMapEdits, MindMap } from "./editor/mindmap-node.mjs";
 import {
   SmartCodeBlockLowlight,
 } from "./editor/code-block-actions.mjs";
@@ -1488,6 +1488,7 @@ async function toggleSourceView() {
   }
 
   if (editor) {
+    flushMindMapEdits(editor.view.dom);
     state.documents[state.selectedPath] = editor.getJSON();
   }
   const currentDoc = getCurrentDocument();
@@ -2282,6 +2283,7 @@ function syncSelectedDocumentToState() {
       basePath: state.selectedPath,
     });
   } else if (editor) {
+    flushMindMapEdits(editor.view.dom);
     state.documents[state.selectedPath] = editor.getJSON();
     state.files[state.selectedPath] = serializeMarkdown(getCurrentDocument(), {
       basePath: state.selectedPath,
@@ -3934,7 +3936,7 @@ async function packageCurrentDocumentAsHtml() {
     }
   }
 
-  const documentHtml = editor?.view?.dom?.innerHTML || "";
+  const documentHtml = await getPrintableDocumentHtml(doc, { inlineImages: false });
 
   if (editor) {
     for (const pos of collapsedHeadings) {
@@ -4385,6 +4387,7 @@ async function insertImageAsset(asset, options = {}) {
 
 function destroyEditor() {
   if (editor) {
+    flushMindMapEdits(editor.view.dom);
     editor.destroy();
     editor = null;
   }

@@ -8,6 +8,16 @@ import {
 } from "../core/mindmap-data.mjs";
 import { escapeHtml } from "../core/html-utils.mjs";
 
+const MINDMAP_ATOM_SELECTION_EVENTS = new Set(["pointerdown", "mousedown", "click"]);
+
+export function flushMindMapEdits(root) {
+  root?.querySelectorAll?.("#input-box").forEach((input) => {
+    if (typeof input.blur === "function") {
+      input.blur();
+    }
+  });
+}
+
 export const MindMap = Node.create({
   name: "mindMap",
   group: "block",
@@ -90,6 +100,7 @@ export const MindMap = Node.create({
       };
 
       const destroyMind = () => {
+        flushMindMapEdits(content);
         removeListeners();
         if (typeof mind?.destroy === "function") {
           mind.destroy();
@@ -126,6 +137,7 @@ export const MindMap = Node.create({
       };
 
       const render = (attrs) => {
+        flushMindMapEdits(content);
         const normalized = normalizeMindMapData(attrs.raw || attrs.data);
         const serialized = normalized.raw || serializeMindMapData(normalized.data);
         wrapper.dataset.mindmap = serialized;
@@ -164,6 +176,12 @@ export const MindMap = Node.create({
       return {
         dom: wrapper,
         stopEvent: (event) => {
+          if (event.target.closest?.(".mindmap-diagram") !== wrapper) {
+            return false;
+          }
+          if (!MINDMAP_ATOM_SELECTION_EVENTS.has(event.type)) {
+            return true;
+          }
           if (
             event.target === wrapper
             || event.target === viewport
@@ -172,7 +190,7 @@ export const MindMap = Node.create({
           ) {
             return false;
           }
-          return Boolean(event.target.closest?.(".mindmap-diagram__content"));
+          return true;
         },
         update: (updatedNode) => {
           if (updatedNode.type.name !== this.name) return false;

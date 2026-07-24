@@ -139,7 +139,7 @@ function cloneSerializable(value, seen = new WeakSet()) {
 
   const result = {};
   for (const [key, item] of Object.entries(value)) {
-    if (key === "parent") continue;
+    if (key === "parent" && typeof item !== "string") continue;
     const cloned = cloneSerializable(item, seen);
     if (cloned !== undefined) {
       result[key] = cloned;

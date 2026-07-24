@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { getSvgPrintDimensions } from "../src/export/export-runtime.mjs";
+import {
+  getSvgPrintDimensions,
+  prepareMindMapsForPrint,
+} from "../src/export/export-runtime.mjs";
 
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
 const runtimeSource = readFileSync(new URL("../src/export/export-runtime.mjs", import.meta.url), "utf8");
@@ -108,6 +111,67 @@ test("prepares mindmaps for static export before printable HTML is returned", ()
   assert.equal(runtimeSource.includes("staticMap.width"), true);
   assert.equal(runtimeSource.includes("staticMap.height"), true);
   assert.equal(runtimeSource.includes("getBoundingClientRect"), false);
+});
+
+test("routes packaged HTML through the staticized clone without inlining package assets", () => {
+  assert.equal(
+    appSource.includes("await getPrintableDocumentHtml(doc, { inlineImages: false })"),
+    true,
+  );
+  assert.equal(
+    appSource.includes('const documentHtml = editor?.view?.dom?.innerHTML || "";'),
+    false,
+  );
+  assert.equal(runtimeSource.includes("if (inlineImages)"), true);
+});
+
+test("replaces Mind Elixir custom DOM with a static image", async () => {
+  const previousDocument = globalThis.document;
+  const content = {
+    innerHTML: "<me-nodes><me-tpc>Interactive</me-tpc></me-nodes>",
+    children: [],
+    appendChild(child) {
+      this.children.push(child);
+    },
+  };
+  const map = {
+    dataset: {
+      mindmap: JSON.stringify({
+        nodeData: { id: "root", topic: "Static", children: [] },
+      }),
+    },
+    querySelector(selector) {
+      return selector === ".mindmap-diagram__content" ? content : null;
+    },
+  };
+  globalThis.document = {
+    createElement(tagName) {
+      return {
+        tagName: tagName.toUpperCase(),
+        style: {},
+        attributes: {},
+        setAttribute(name, value) {
+          this.attributes[name] = String(value);
+        },
+      };
+    },
+  };
+
+  try {
+    await prepareMindMapsForPrint({
+      querySelectorAll(selector) {
+        return selector === ".mindmap-diagram" ? [map] : [];
+      },
+    });
+  } finally {
+    globalThis.document = previousDocument;
+  }
+
+  assert.equal(content.innerHTML, "");
+  assert.equal(content.children.length, 1);
+  assert.equal(content.children[0].tagName, "IMG");
+  assert.match(content.children[0].src, /^data:image\/svg\+xml/);
+  assert.equal(content.children[0].src.includes("<me-"), false);
 });
 
 test("isolates mindmap export failures and emits an escaped placeholder", () => {
