@@ -131,6 +131,7 @@ import { createEditorExtensions } from "./editor/editor-extensions.mjs";
 import { headingCollapsePlugin } from "./editor/heading-collapse.mjs";
 import { AlignedTableCell, AlignedTableHeader, AssetImage, ParagraphWithIndent } from "./editor/custom-nodes.mjs";
 import { MermaidDiagram } from "./editor/mermaid-node.mjs";
+import { MindMap } from "./editor/mindmap-node.mjs";
 import {
   SmartCodeBlockLowlight,
 } from "./editor/code-block-actions.mjs";
@@ -525,6 +526,7 @@ function renderShell() {
             </svg>
           </button>
           ${toolButton("mermaid", "Workflow", "Mermaid")}
+          ${toolButton("mindmap", "Workflow", "思维导图")}
           ${toolButton("emoji", "Smile", "表情")}
           <button class="icon-button" data-command="details" title="折叠块" aria-label="折叠块">
             <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
@@ -695,6 +697,7 @@ function renderAppMenu() {
       menuItem("formula", "块级公式"),
       menuItem("inline-formula", "行内公式"),
       menuItem("mermaid", "Mermaid"),
+      menuItem("mindmap", "思维导图"),
       menuItem("code-block", "代码块"),
       menuItem("details", "折叠详情块"),
       menuItem("horizontal-rule", "分割线"),
@@ -2646,6 +2649,7 @@ function mountEditor() {
       footnote: Footnote,
       tableOfContents: TableOfContents,
       mermaidDiagram: MermaidDiagram,
+      mindMap: MindMap,
       assetImage: AssetImage,
       bubbleMenuElement: document.querySelector("#bubble-menu") || createBubbleMenuElement(),
       onBlockDragStart: () => { isBlockDragInProgress = true; },

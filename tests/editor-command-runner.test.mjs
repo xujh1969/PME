@@ -64,6 +64,18 @@ test("runs basic TipTap chain commands", () => {
   ]);
 });
 
+test("runs the mindmap insert command", () => {
+  const editor = createEditorStub();
+
+  runEditorCommand("mindmap", { editor });
+
+  assert.deepEqual(editor.calls, [
+    ["focus"],
+    ["insertMindMap"],
+    ["run"],
+  ]);
+});
+
 test("delegates link creation when the current selection is not a link", () => {
   const editor = createEditorStub();
   const calls = [];

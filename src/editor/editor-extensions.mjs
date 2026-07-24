@@ -97,6 +97,7 @@ export function createEditorExtensions(options) {
     }),
     Typography,
     options.mermaidDiagram,
+    options.mindMap,
     options.assetImage,
     Callout,
     Video,
@@ -123,7 +124,7 @@ export function createEditorExtensions(options) {
         }
         if (selection instanceof NodeSelection) {
           const node = selection.node;
-          const blockList = ["video", "image", "blockMath", "mermaidDiagram", "codeBlock"];
+          const blockList = ["video", "image", "blockMath", "mermaidDiagram", "mindMap", "codeBlock"];
           if (blockList.includes(node.type.name)) {
             return false;
           }

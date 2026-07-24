@@ -139,6 +139,8 @@ export function runEditorCommand(command, context) {
     chain.insertInlineMath({ latex: "x = y" }).run();
   } else if (command === "mermaid") {
     chain.insertMermaidDiagram({ code: "graph TD\n  A-->B" }).run();
+  } else if (command === "mindmap") {
+    chain.insertMindMap().run();
   } else if (command === "heading-up") {
     const currentLevel = editor.getAttributes("heading").level;
     if (currentLevel && currentLevel < 6) {
