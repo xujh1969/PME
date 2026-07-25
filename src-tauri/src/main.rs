@@ -412,9 +412,11 @@ fn read_readme_file() -> Result<String, String> {
     let exe_dir = exe_path.parent().ok_or_else(|| "Failed to get app directory.".to_string())?;
     
     let app_dir_candidates = [
+        exe_dir.join("resources").join("app").join("dist").join("assets"),
         exe_dir.join("resources").join("assets"),
         exe_dir.join("assets"),
         exe_dir.to_path_buf(),
+        exe_dir.parent().map(|p| p.join("resources").join("app").join("dist").join("assets")).unwrap_or_else(|| exe_dir.join("assets")),
         exe_dir.parent().map(|p| p.join("resources").join("assets")).unwrap_or_else(|| exe_dir.join("assets")),
         exe_dir.parent().unwrap_or(exe_dir).to_path_buf(),
     ];
@@ -429,6 +431,7 @@ fn read_readme_file() -> Result<String, String> {
     let readme_candidates = [
         exe_dir.join("README.md"),
         exe_dir.parent().unwrap_or(exe_dir).join("README.md"),
+        exe_dir.join("resources").join("app").join("dist").join("README.md"),
     ];
     
     for path in readme_candidates {

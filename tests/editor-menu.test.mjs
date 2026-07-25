@@ -17,3 +17,11 @@ test("marks internal block drags as move operations instead of file drops", () =
   assert.equal(appSource.includes("isBlockDragInProgress = false;"), true);
   assert.equal(appSource.includes('event.dataTransfer.dropEffect = "move";'), true);
 });
+
+test("bundles the help manual through Vite instead of loading a loose runtime asset", () => {
+  assert.equal(appSource.includes('import helpManualMarkdown from "./assets/PME使用说明书.md?raw";'), true);
+  assert.equal(appSource.includes("const markdown = helpManualMarkdown.trim()"), true);
+  assert.equal(appSource.includes('fetch("asset:///assets/PME使用说明书.md")'), false);
+  assert.equal(appSource.includes('fetch("assets/PME使用说明书.md")'), false);
+  assert.equal(appSource.includes('invoke("read_readme_file")'), false);
+});

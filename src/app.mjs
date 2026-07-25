@@ -2,6 +2,7 @@ import { Editor } from "@tiptap/core";
 import Heading from "@tiptap/extension-heading";
 import { migrateMathStrings } from "@tiptap/extension-mathematics";
 import { NodeSelection, TextSelection } from "@tiptap/pm/state";
+import helpManualMarkdown from "./assets/PME使用说明书.md?raw";
 import { Footnote } from "./core/footnote-extension.mjs";
 import { TableOfContents } from "./core/toc-extension.mjs";
 import { CustomOrderedList, CustomListItem } from "./core/ordered-list-extension.mjs";
@@ -3763,25 +3764,9 @@ async function openHelpDocument() {
     return;
   }
 
-  let markdown = "# PME - Portable Markdown Editor\n\n帮助文档加载失败。";
-  
-  try {
-    if (isTauriRuntime()) {
-      const { invoke } = await import("@tauri-apps/api/core");
-      markdown = await invoke("read_readme_file");
-    } else {
-      const response = await fetch("assets/PME使用说明书.md");
-      if (response.ok) {
-        markdown = await response.text();
-      } else {
-        const fallback = await fetch("README.md");
-        if (fallback.ok) {
-          markdown = await fallback.text();
-        }
-      }
-    }
-  } catch {
-  }
+  const markdown = helpManualMarkdown.trim()
+    ? helpManualMarkdown
+    : "# PME - Portable Markdown Editor\n\n使用说明书未找到。";
 
   const parsed = parseMarkdown(markdown);
   state.files[helpPath] = markdown;
