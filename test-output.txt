@@ -1,0 +1,1493 @@
+﻿
+> pme@0.2.0 test
+> node --test
+
+✔ dispatches file and export menu commands to callbacks (2.0526ms)
+✔ returns async save and open command work so callers can await errors (0.5433ms)
+✔ dispatches clipboard and selection commands (1.2635ms)
+✔ uses editor undo redo when an editor is available (0.4425ms)
+✔ falls back to document execCommand for undo redo without an editor (0.3012ms)
+✔ toggles view state and renders (0.3211ms)
+✖ dispatches zoom search about and unknown editor commands (0.611ms)
+✔ detects supported image file names (1.2721ms)
+✔ extracts normalized image extensions (0.251ms)
+✔ creates a traceable asset path (2.7111ms)
+✔ extracts image files from dropped or pasted files (0.3785ms)
+✔ extracts image files from clipboard items (0.3483ms)
+✔ detects image file drag items (0.287ms)
+✔ creates stable fingerprints for identical image blobs (13.9796ms)
+✔ uses the URL file name for supported network images (0.264ms)
+✔ falls back to MIME type for network images without a supported URL name (0.2908ms)
+✔ keeps native file paths for inserted local image files (0.4665ms)
+✔ uses file names for browser inserted image files and no asset path for embedded data URLs (0.1828ms)
+✔ moves a top-level block after a later block (4.2125ms)
+✔ moves a top-level block before an earlier block (2.0125ms)
+✔ extracts HTTP image URLs from pasted HTML (1.6004ms)
+✔ extracts data image URLs from pasted HTML (0.2609ms)
+✔ decodes HTML entities before validating the pasted image URL (0.1624ms)
+✔ ignores non-remote pasted image URLs (0.1503ms)
+✔ owns code block keyboard behavior outside the app entry (1.2489ms)
+✔ owns the code language picker outside the app entry (0.369ms)
+✔ chooses indentation size by code language (1.5699ms)
+✔ keeps current indentation on a new code line (0.3972ms)
+✔ adds language-specific indentation after block openers (0.3223ms)
+✔ defines the Notion-inspired design tokens used by PME (1.5578ms)
+✔ does not keep the previous blue primary color in the app theme (0.242ms)
+✔ keeps document tabs light instead of black pill tabs (0.2993ms)
+✔ keeps tab hover on the whole tab instead of the inner label button (0.3425ms)
+✔ styles image insert modal controls with the design system (0.312ms)
+✔ styles the generated table of contents block (0.289ms)
+✔ keeps image insert modal focused on local and network sources (0.3711ms)
+✖ prevents button labels from wrapping (0.9598ms)
+✔ keeps app icon sizing from leaking into rendered Mermaid SVGs (0.3512ms)
+✖ keeps Mermaid and mind map blocks extended beyond editor content column (0.4567ms)
+✔ uses compact form controls inside editor dialogs (0.2543ms)
+✖ keeps the image scale dialog input at a usable size (0.6371ms)
+✔ inserts paragraphs around selected block nodes instead of raw cursor offsets (0.2138ms)
+✖ renders a visual hero welcome page with markdown file actions (0.2722ms)
+✔ starts new markdown files without requiring a project directory (0.151ms)
+✖ keeps recent file menu inside the welcome viewport (0.3195ms)
+✔ keeps the sidebar focused on outline instead of an assets tree (0.3808ms)
+✔ uses a Typora-like contextual toolbar for table editing (0.2692ms)
+✔ expands the app menus with Typora-inspired usable commands (0.209ms)
+✔ exposes Markdown file insertion in the Insert menu and toolbar (0.1382ms)
+✔ supports menu-driven view toggles and editor zoom (0.2161ms)
+✔ does not use browser alert or confirm dialogs (5.1998ms)
+✔ resolves absolute and relative local Markdown links (1.2358ms)
+✔ ignores web links, anchors, and non-Markdown files (0.214ms)
+✖ claims local Markdown link clicks before the editor marks content modified (1.1669ms)
+✔ imports the local absolute path helper used by save and linked file resolution (0.9635ms)
+✔ counts words and characters in document text (1.6093ms)
+✔ treats blank document text as zero words (0.4253ms)
+✔ lets TipTap initialize dragging before PME adds compatibility data (1.0293ms)
+✔ renders the drag handle as a pointer-driven non-button element (0.1878ms)
+✔ keeps the drag handle visible while the pointer moves onto it (0.1588ms)
+✔ runs source view command without requiring an editor (2.3537ms)
+✔ runs basic TipTap chain commands (0.4729ms)
+✔ runs the mindmap insert command (0.2251ms)
+✔ delegates link creation when the current selection is not a link (0.3193ms)
+✔ unsets active links through the command chain (0.2053ms)
+✔ inserts a table after the table modal resolves (5.5273ms)
+✔ uses injected callbacks for non-chain editor actions (0.4526ms)
+✔ keeps object node selection while clicking app menu commands (1.4852ms)
+✔ marks internal block drags as move operations instead of file drops (0.3375ms)
+✔ owns editor popover UI outside the app entry (1.2399ms)
+✔ keeps third-party TipTap extension registration outside the app entry (0.9001ms)
+✔ keeps stateless image and table node extensions outside the app entry (0.3741ms)
+✔ owns environment-specific export helpers outside the app entry (1.325ms)
+✔ owns the PDF options modal outside the app entry (0.2538ms)
+✔ derives Mermaid PDF dimensions from viewBox when svg width is percentage (1.1157ms)
+✔ constrains tall Mermaid PDF dimensions to printable page height (0.2953ms)
+✔ does not force Mermaid SVG fallbacks to fill PDF page width (0.3608ms)
+✔ centers exported Mermaid diagrams without viewport borders (0.5677ms)
+✔ does not force PDF Mermaid containers to avoid page breaks (0.2892ms)
+✔ prepares mindmaps for static export before printable HTML is returned (0.2193ms)
+✔ routes packaged HTML through the staticized clone without inlining package assets (0.3112ms)
+✔ replaces Mind Elixir custom DOM with a static image (2.5166ms)
+✔ isolates mindmap export failures and emits an escaped placeholder (0.223ms)
+✔ exports static mindmaps with centered borderless styles (0.4021ms)
+✔ footnote extension stores ids and note text (1.8972ms)
+✔ app inserts footnotes through a content modal (0.3363ms)
+✔ escapes HTML text and attribute values (0.7576ms)
+✔ escapes strings used inside quoted CSS selectors (0.1553ms)
+✔ loads remote image resources through fetch (2.018ms)
+✔ rejects fetched non-image resources (1.09ms)
+✔ loads Tauri local absolute image resources through the local loader (0.6638ms)
+✔ loads relative document resources from hydrated preview URLs (1.2031ms)
+✔ reports unavailable document resources (0.7159ms)
+✔ normalizes positive image width values (1.1965ms)
+✔ normalizes positive image scale values (0.357ms)
+✔ calculates rendered image width from scale metadata before stored width (0.297ms)
+✔ calculates scaled image width only when scale and original width are available (0.5422ms)
+DEBUG: parseInline found link match: [Read A](C:/notes/a.md#intro) , text: Read A , href: C:/notes/a.md#intro
+DEBUG: linkedText called, text: Read A , href: C:/notes/a.md#intro
+DEBUG: parseInline found link match: [Read B](sub/b.md#part) , text: Read B , href: sub/b.md#part
+DEBUG: linkedText called, text: Read B , href: sub/b.md#part
+DEBUG: parseInline found link match: [Back to A](../a.md) , text: Back to A , href: ../a.md
+DEBUG: linkedText called, text: Back to A , href: ../a.md
+DEBUG: parseInline found link match: [One](C:/one/readme.md) , text: One , href: C:/one/readme.md
+DEBUG: linkedText called, text: One , href: C:/one/readme.md
+DEBUG: parseInline found link match: [Two](D:/two/readme.md) , text: Two , href: D:/two/readme.md
+DEBUG: linkedText called, text: Two , href: D:/two/readme.md
+DEBUG: parseInline found link match: [Missing](C:/none.md) , text: Missing , href: C:/none.md
+DEBUG: linkedText called, text: Missing , href: C:/none.md
+✖ recursively packages linked markdown, images, anchors, and cycles (10.2622ms)
+✔ uses stable distinct names for same-name documents and reports missing links (2.5917ms)
+✔ hydrates local absolute image paths with preview URLs while preserving asset paths (2.0859ms)
+✔ hydrates every opened document before the first editor render (3.3023ms)
+✔ leaves non-local and failed local image previews unchanged (0.5316ms)
+✔ provides a local markdown picker with custom display text (1.2517ms)
+✔ exposes absolute markdown selection and text loading through the adapter (0.3686ms)
+✔ builds a markdown zip package with assets and rewritten image paths (11.0324ms)
+✔ records missing package images while still generating markdown (1.0431ms)
+✔ builds default markdown package zip file names (0.3325ms)
+✔ builds a recursive package when linked Markdown loading is available (4.5164ms)
+✔ detects markdown heading shortcuts (2.475ms)
+✔ ignores incomplete heading shortcuts (0.3957ms)
+DEBUG: parseInline found link match: [PME](https://example.com/pme) , text: PME , href: https://example.com/pme
+DEBUG: linkedText called, text: PME , href: https://example.com/pme
+DEBUG: parseInline found link match: [PME](https://example.com/pme) , text: PME , href: https://example.com/pme
+DEBUG: linkedText called, text: PME , href: https://example.com/pme
+✖ parses headings and paragraphs into the document model (5.8523ms)
+✖ parses bullet lists, blockquotes, code blocks, and images (1.9608ms)
+✔ parses and serializes task lists (2.6304ms)
+✔ parses and serializes horizontal rules (0.506ms)
+✔ serializes the supported document model back to markdown (1.8258ms)
+✔ round trips table of contents blocks (0.4109ms)
+✔ parses and serializes markdown tables (1.2548ms)
+✔ preserves markdown table alignment (0.458ms)
+✔ parses and serializes block math (0.3964ms)
+✔ parses and serializes mermaid diagrams (0.3786ms)
+✔ parses and serializes mindmap diagrams (1.1396ms)
+✔ preserves invalid mindmap JSON during markdown round trip (0.3293ms)
+✔ parses single-line double-dollar math as block math (0.1997ms)
+✔ round trips inline math nodes (0.2306ms)
+✔ parses and serializes footnotes (0.2612ms)
+✔ serializes image asset paths instead of preview object urls (0.1373ms)
+✔ round trips sized images as html image tags (0.3707ms)
+✔ round trips image scale metadata while exporting pixel width (0.1972ms)
+✖ serializes asset image paths relative to the markdown file (0.575ms)
+✖ adds a trailing blank line when the document ends with images (0.3394ms)
+✔ hydrates markdown image nodes with preview urls while preserving asset paths (0.4506ms)
+✔ hydrates relative markdown image paths against the markdown file (0.23ms)
+✔ round trips inline marks for toolbar formatting (0.4694ms)
+✔ round trips inline links (1.2435ms)
+✔ round trips PME generated markdown for supported nodes (0.2455ms)
+✔ owns the Mermaid node and rendering interactions outside the app entry (1.2269ms)
+✔ applies critical Mermaid colors after render for packaged WebView reliability (0.7905ms)
+✔ creates default Mind Elixir data with a root and children (2.5549ms)
+✔ normalizes valid mindmap JSON (0.927ms)
+✔ creates default mind maps in right-side mode with connected children (1.4103ms)
+✔ preserves serializable Mind Elixir fields while removing parent references (0.8043ms)
+✔ preserves serializable string parent fields outside summaries (0.2816ms)
+✔ preserves invalid mindmap JSON as raw text (0.3291ms)
+✔ serializes mindmap data with stable indentation (0.2104ms)
+✔ constrains static mindmap dimensions by width and height (0.3035ms)
+✔ builds a fallback SVG containing the root topic (1.6045ms)
+✔ builds a full static SVG with child topics, connectors, styles, and calculated bounds (2.1058ms)
+✔ defines the MindMap TipTap node outside the app entry (2.9539ms)
+✔ renders mindmap export markers for PDF and HTML static conversion (0.3256ms)
+✔ cleans up node view listeners before rerendering or destroying (0.2189ms)
+✔ preserves malformed persisted mindmap data and guards replacements (0.1932ms)
+✔ synchronizes operations immediately and does not blindly rerender self-originated updates (0.2256ms)
+✔ flushes active Mind Elixir editors before save, source switch, rerender, and destruction (0.7827ms)
+✔ allows only mindmap pointer backgrounds to reach TipTap atom selection (0.2871ms)
+✔ isolates mindmap clipboard and keyboard events from app handlers (1.3464ms)
+✔ stops mindmap keyboard events before they reach document listeners (0.7169ms)
+✔ shows escaped initialization errors without leaking a partial instance (0.6607ms)
+✔ refreshes the initial Mind Elixir layout after the DOM has painted (0.2363ms)
+✔ keeps network image URLs in the source document during editing (2.2869ms)
+✔ packages markdown images through the explicit document package flow (0.5213ms)
+✔ packages local absolute image paths through the Tauri binary reader (0.5007ms)
+✔ embeds pasted image data without writing an assets file while editing (0.572ms)
+✔ extracts heading levels and text from a document (2.4917ms)
+✔ ignores blank headings (0.2578ms)
+✔ detects local absolute image paths (1.4398ms)
+✔ normalizes relative image paths against the markdown document (0.4584ms)
+✖ builds stable package image names from sources (3.154ms)
+✔ collects image nodes recursively (1.1572ms)
+✔ packages image nodes once per source and rewrites nodes to assets paths (0.9539ms)
+✔ records missing image sources without rewriting the failed node (0.411ms)
+✔ extracts a slash-separated file name (1.6387ms)
+✔ extracts a Windows file name (0.5948ms)
+✔ computes relative paths between workspace paths (0.5306ms)
+✔ returns target path when relative path inputs are incomplete (0.2743ms)
+✔ normalizes saved markdown paths to workspace markdown file names (1.577ms)
+✔ keeps unchanged saved markdown paths from being adopted again (0.176ms)
+✔ sanitizes PDF file names with the existing replacement behavior (1.4805ms)
+✖ builds escaped PDF export HTML with requested page options (4.4114ms)
+✖ omits PDF title heading when includeTitle is false (1.4388ms)
+✔ reads valid recent workspaces and tolerates invalid storage (1.7247ms)
+✔ remembers recent workspaces newest-first without duplicates (0.4072ms)
+✔ finds all literal text matches (2.0786ms)
+✔ finds matches case insensitively (0.9532ms)
+✔ returns no matches for blank queries (0.3109ms)
+✔ identifies non-document text containers ignored by visual search (0.3066ms)
+✔ maps primary file shortcuts to app commands (1.4741ms)
+✔ maps function-key shortcuts without requiring modifiers (0.2195ms)
+✔ maps app view zoom shortcuts (0.2091ms)
+✔ does not map shortcuts from modal text fields except save (0.2568ms)
+✔ does not take browser-reserved new and close shortcuts (0.2118ms)
+✔ uses source draft text before serializing the document (2.3587ms)
+✔ serializes document text when no source draft exists (0.7354ms)
+✔ serializes a missing document as an empty document (0.1718ms)
+✔ renames source drafts when a saved markdown path is adopted (0.9741ms)
+✔ leaves source drafts unchanged when the old path has no draft (0.18ms)
+✔ keeps an empty themed startup surface before the app bundle renders (0.9979ms)
+✔ closing an inactive tab keeps the current selected tab (1.5083ms)
+✔ closing the active tab selects the next tab when available (0.3406ms)
+✔ closing the last open tab clears the selection (0.2893ms)
+✔ creates the next available untitled markdown path (0.3239ms)
+✔ opens a tab once and selects it (1.335ms)
+✔ updates and renames tab state immutably (0.2362ms)
+✔ exposes Tauri development and build scripts (2.4983ms)
+✔ points Tauri to the Vite dev server and production dist (1.1991ms)
+✔ uses a dark native window background during startup (0.22ms)
+✔ defines a minimal Tauri 2 Rust application (0.2783ms)
+✔ registers native workspace file commands (0.3239ms)
+✔ accepts both md and markdown file extensions in native commands (0.2118ms)
+✔ exports PDF through Edge headless without print headers (0.255ms)
+✔ hides the PowerShell host window for native folder picking (0.2018ms)
+✔ keeps supported text align values (1.6637ms)
+✔ normalizes unsupported text align values to null (0.2929ms)
+✔ builds table-of-contents items from document headings (4.2288ms)
+✔ falls back to a memory workspace adapter outside browser and Tauri (2.9937ms)
+✔ memory adapter creates a runnable starter workspace (1.7639ms)
+✔ memory adapter exposes single-file and export no-op methods (0.5613ms)
+✔ Tauri runtime detection is false in node tests (0.2354ms)
+✔ detects workspace adapters that can persist directly (0.341ms)
+✖ creates standalone markdown shell state (12.3073ms)
+✔ creates opened workspace shell state with hydrated markdown documents (2.3035ms)
+✖ adds an untitled markdown tab to an existing shell state (1.4904ms)
+✔ adds an opened markdown file into the current workspace (1.1848ms)
+✔ adds an opened markdown file with async document hydration (0.7316ms)
+✔ selects existing tab instead of duplicating an opened markdown file (0.6008ms)
+✔ only saves directly when a persisted workspace root exists (0.8904ms)
+✔ adopts a saved markdown path across files documents drafts paths and tabs (1.1339ms)
+✖ creates a named markdown document in the current workspace (1.9461ms)
+✔ opens a markdown document tab and hydrates missing document state (1.9705ms)
+✔ creates the default PME workspace snapshot (4.5372ms)
+✔ normalizes blank project names (0.4152ms)
+✔ builds a sorted project tree from workspace paths (31.8635ms)
+✔ deduplicates workspace file paths (0.561ms)
+✔ keeps explicit empty folders in the project tree (0.4279ms)
+✔ normalizes markdown file names for new documents (0.8234ms)
+✔ rejects unsafe markdown file names (0.444ms)
+✔ replaces a workspace path without duplicating entries (0.5269ms)
+✔ removes a workspace path while keeping asset entries (1.0277ms)
+ℹ tests 237
+ℹ suites 0
+ℹ pass 219
+ℹ fail 18
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5645.7594
+
+✖ failing tests:
+
+test at tests\app-command-runner.test.mjs:174:1
+✖ dispatches zoom search about and unknown editor commands (0.611ms)
+  TypeError: findInput.select is not a function
+      at runAppCommand (file:///C:/Users/AYOU/Desktop/PME_Trae/src/ui/app-command-runner.mjs:60:17)
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/app-command-runner.test.mjs:180:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at tests\design-system.test.mjs:69:1
+✖ prevents button labels from wrapping (0.9598ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:72:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\design-system.test.mjs:82:1
+✖ keeps Mermaid and mind map blocks extended beyond editor content column (0.4567ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:87:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\design-system.test.mjs:99:1
+✖ keeps the image scale dialog input at a usable size (0.6371ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:107:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\design-system.test.mjs:122:1
+✖ renders a visual hero welcome page with markdown file actions (0.2722ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:123:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\design-system.test.mjs:138:1
+✖ keeps recent file menu inside the welcome viewport (0.3195ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:141:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\document-link.test.mjs:20:1
+✖ claims local Markdown link clicks before the editor marks content modified (1.1669ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/document-link.test.mjs:25:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\linked-markdown-package.test.mjs:8:1
+✖ recursively packages linked markdown, images, anchors, and cycles (10.2622ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/linked-markdown-package.test.mjs:39:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\markdown.test.mjs:10:1
+✖ parses headings and paragraphs into the document model (5.8523ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      content: [
+        {
+          attrs: {
+  +         collapsed: false,
+            level: 1
+          },
+          content: [
+            {
+              text: 'Title',
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/markdown.test.mjs:11:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { type: 'doc', content: [ [Object], [Object] ] },
+    expected: { type: 'doc', content: [ [Object], [Object] ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\markdown.test.mjs:27:1
+✖ parses bullet lists, blockquotes, code blocks, and images (1.9608ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      content: [
+        {
+          content: [
+            {
+  ...
+            {
+  +           content: [
+  +             {
+  +               text: 'Note',
+  +               type: 'text'
+  +             }
+  +           ],
+  +           type: 'paragraph'
+  -           text: 'Note',
+  -           type: 'text'
+            }
+          ],
+          type: 'blockquote'
+        },
+        {
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/markdown.test.mjs:28:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { type: 'doc', content: [ [Object], [Object], [Object], [Object] ] },
+    expected: { type: 'doc', content: [ [Object], [Object], [Object], [Object] ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\markdown.test.mjs:471:1
+✖ serializes asset image paths relative to the markdown file (0.575ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '![Dragged](assets/asset_20260707_080910_a83f9.png)\n\n'
+  - '![Dragged](../assets/asset_20260707_080910_a83f9.png)\n\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/markdown.test.mjs:486:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '![Dragged](assets/asset_20260707_080910_a83f9.png)\n\n',
+    expected: '![Dragged](../assets/asset_20260707_080910_a83f9.png)\n\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\markdown.test.mjs:496:1
+✖ adds a trailing blank line when the document ends with images (0.3394ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '![A](assets/a.png)\n\n![B](assets/b.png)\n\n'
+  - '![A](../assets/a.png)\n\n![B](../assets/b.png)\n\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/markdown.test.mjs:497:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '![A](assets/a.png)\n\n![B](assets/b.png)\n\n',
+    expected: '![A](../assets/a.png)\n\n![B](../assets/b.png)\n\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\package-resources.test.mjs:30:1
+✖ builds stable package image names from sources (3.154ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '003-image003.png'
+  - '003-png;base64,abc.png'
+         ^
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/package-resources.test.mjs:32:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '003-image003.png',
+    expected: '003-png;base64,abc.png',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\pdf-export.test.mjs:15:1
+✖ builds escaped PDF export HTML with requested page options (4.4114ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /@page \{ size: Letter landscape;/. Input:
+  
+  '<!doctype html>\n' +
+    '<html lang="zh-CN">\n' +
+    '<head>\n' +
+    '  <meta charset="utf-8" />\n' +
+    '  <title>&lt;Doc&gt; - PDF</title>\n' +
+    '  <style>\n' +
+    '    :root {\n' +
+    '      --color-ink: #0c0a09;\n' +
+    '      --color-slate: #4e4e4e;\n' +
+    '      --color-stone: #777169;\n' +
+    '      --color-canvas: #ffffff;\n' +
+    '      --color-canvas-soft: #ffffff;\n' +
+    '      --color-surface-soft: #ffffff;\n' +
+    '      --color-surface-strong: #f8f8f8;\n' +
+    '      --color-hairline: #e7e5e4;\n' +
+    '      --color-hairline-strong: #d6d3d1;\n' +
+    '      --color-code-keyword: #7c3aed;\n' +
+    '      --color-code-number: #c2410c;\n' +
+    '      --color-code-string: #16a34a;\n' +
+    '      --color-code-title: #2563eb;\n' +
+    '      --color-code-type: #0d9488;\n' +
+    '      --color-code-tag: #dc2626;\n' +
+    '      --radius-sm: 6px;\n' +
+    '      --radius-xl: 16px;\n' +
+    '      --font-display: Noto Sans SC, "Microsoft YaHei", "PingFang SC", sans-serif, "EB Garamond", "Times New Roman", serif;\n' +
+    '      --font-editor: Noto Sans SC, "Microsoft YaHei", "PingFang SC", sans-serif, "Inter", "SF Pro Display", "Segoe UI", sans-serif;\n' +
+    '      --font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;\n' +
+    '    }\n' +
+    '    \n' +
+    '    @page {\n' +
+    '      size: Letter landscape;\n' +
+    '      margin: 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    * { box-sizing: border-box; }\n' +
+    '    \n' +
+    '    body {\n' +
+    '      margin: 0;\n' +
+    '      color: var(--color-slate);\n' +
+    '      background: var(--color-canvas);\n' +
+    '      font: 1rem / 1.7 var(--font-editor);\n' +
+    '      letter-spacing: 0.16px;\n' +
+    '      -webkit-font-smoothing: antialiased;\n' +
+    '      -moz-osx-font-smoothing: grayscale;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .pdf-document {\n' +
+    '      width: min(920px, 100%);\n' +
+    '      margin: 0 auto;\n' +
+    '      padding: 64px 72px 96px;\n' +
+    '      background: var(--color-canvas);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .pdf-title {\n' +
+    '      font-size: 2.5rem;\n' +
+    '      font-weight: 300;\n' +
+    '      letter-spacing: -0.96px;\n' +
+    '      line-height: 1.2;\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-family: var(--font-display);\n' +
+    '      margin: 0 0 22px;\n' +
+    '      padding-bottom: 12px;\n' +
+    '      border-bottom: 1px solid var(--color-hairline-strong);\n' +
+    '    }\n' +
+    '    \n' +
+    '    h1, h2, h3 {\n' +
+    '      line-height: 1.2;\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-weight: 500;\n' +
+    '      font-family: var(--font-display);\n' +
+    '      letter-spacing: -0.32px;\n' +
+    '      break-after: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    h1 {\n' +
+    '      font-size: 2.5rem;\n' +
+    '      font-weight: 300;\n' +
+    '      letter-spacing: -0.96px;\n' +
+    '    }\n' +
+    '    \n' +
+    '    h2 {\n' +
+    '      font-size: 1.875rem;\n' +
+    '      font-weight: 300;\n' +
+    '      letter-spacing: -0.36px;\n' +
+    '    }\n' +
+    '    \n' +
+    '    h3 {\n' +
+    '      font-size: 1.5rem;\n' +
+    '      font-weight: 300;\n' +
+    '      letter-spacing: -0.24px;\n' +
+    '    }\n' +
+    '    \n' +
+    '    h4, h5, h6 {\n' +
+    '      line-height: 1.28;\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-weight: 500;\n' +
+    '      font-family: var(--font-display);\n' +
+    '      letter-spacing: -0.32px;\n' +
+    '      break-after: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    p {\n' +
+    '      margin: 0.6em 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    p[data-indent="1"] { padding-left: 2em; }\n' +
+    '    p[data-indent="2"] { padding-left: 4em; }\n' +
+    '    p[data-indent="3"] { padding-left: 6em; }\n' +
+    '    p[data-indent="4"] { padding-left: 8em; }\n' +
+    '    p[data-indent="5"] { padding-left: 10em; }\n' +
+    '    \n' +
+    '    ul, ol {\n' +
+    '      margin: 0.6em 0;\n' +
+    '      padding-left: 1.65em;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    ol[data-type="roman"] { list-style-type: upper-roman; }\n' +
+    '    ol[data-type="roman-lower"] { list-style-type: lower-roman; }\n' +
+    '    ol[data-type="alpha"] { list-style-type: lower-alpha; }\n' +
+    '    ol[data-type="alpha-upper"] { list-style-type: upper-alpha; }\n' +
+    '    \n' +
+    '    li {\n' +
+    '      margin: 0.25em 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    li > p {\n' +
+    '      margin: 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    ul[data-type="taskList"] {\n' +
+    '      padding-left: 0 !important;\n' +
+    '      list-style: none !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    li[data-type="taskItem"] {\n' +
+    '      display: inline-flex !important;\n' +
+    '      flex-direction: row !important;\n' +
+    '      flex-wrap: nowrap !important;\n' +
+    '      gap: 0.55em !important;\n' +
+    '      align-items: flex-start !important;\n' +
+    '      margin: 0.25em 0 !important;\n' +
+    '      width: 100% !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    li[data-type="taskItem"] > label {\n' +
+    '      width: auto !important;\n' +
+    '      flex: 0 0 auto !important;\n' +
+    '      display: inline-flex !important;\n' +
+    '      align-items: center !important;\n' +
+    '      justify-content: flex-start !important;\n' +
+    '      margin-top: 0.25em !important;\n' +
+    '      margin-right: 0 !important;\n' +
+    '      margin-bottom: 0 !important;\n' +
+    '      margin-left: 0 !important;\n' +
+    '      user-select: none !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    li[data-type="taskItem"] input[type="checkbox"] {\n' +
+    '      width: 1em !important;\n' +
+    '      height: 1em !important;\n' +
+    '      margin: 0 !important;\n' +
+    '      display: inline-block !important;\n' +
+    '      vertical-align: middle !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    blockquote {\n' +
+    '      margin-left: 0;\n' +
+    '      border-left: 2px solid var(--color-hairline-strong);\n' +
+    '      padding-left: 16px;\n' +
+    '      color: var(--color-stone);\n' +
+    '      font-style: italic;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    hr {\n' +
+    '      margin: 32px 0;\n' +
+    '      border: 0;\n' +
+    '      border-top: 1px solid var(--color-hairline);\n' +
+    '    }\n' +
+    '    \n' +
+    '    :not(pre) > code {\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      border-radius: var(--radius-sm);\n' +
+    '      background: var(--color-surface-soft);\n' +
+    '      padding: 0.15em 0.4em;\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-family: var(--font-mono);\n' +
+    '      font-size: 0.9em;\n' +
+    '    }\n' +
+    '    \n' +
+    '    a {\n' +
+    '      color: var(--color-ink);\n' +
+    '      text-decoration: underline;\n' +
+    '      text-decoration-color: var(--color-hairline-strong);\n' +
+    '      text-underline-offset: 0.2em;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .code-block-wrapper {\n' +
+    '      border-radius: var(--radius-xl);\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      overflow: hidden;\n' +
+    '      margin: 16px 0;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    pre {\n' +
+    '      padding: 20px 24px;\n' +
+    '      background: var(--color-canvas-soft);\n' +
+    '      color: var(--color-ink);\n' +
+    '      overflow: auto;\n' +
+    '      margin: 0;\n' +
+    '      border-radius: 0;\n' +
+    '      white-space: pre-wrap;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    pre code {\n' +
+    '      font-family: var(--font-mono);\n' +
+    '      font-size: 0.9rem;\n' +
+    '      line-height: 1.6;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-comment, .hljs-quote {\n' +
+    '      color: var(--color-stone);\n' +
+    '      font-style: italic;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-keyword, .hljs-selector-tag, .hljs-subst {\n' +
+    '      color: var(--color-code-keyword);\n' +
+    '      font-weight: 600;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable, .hljs-tag .hljs-attr {\n' +
+    '      color: var(--color-code-number);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-string, .hljs-doctag {\n' +
+    '      color: var(--color-code-string);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-title, .hljs-section, .hljs-selector-id {\n' +
+    '      color: var(--color-code-title);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-type, .hljs-class .hljs-title {\n' +
+    '      color: var(--color-code-type);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-tag, .hljs-name, .hljs-attribute {\n' +
+    '      color: var(--color-code-tag);\n' +
+    '    }\n' +
+    '    \n' +
+    '    img {\n' +
+    '      max-width: 100%;\n' +
+    '      height: auto;\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      border-radius: var(--radius-xl);\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    table {\n' +
+    '      width: 100%;\n' +
+    '      border-collapse: collapse;\n' +
+    '      table-layout: fixed;\n' +
+    '      margin: 24px 0;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    th, td {\n' +
+    '      position: relative;\n' +
+    '      min-width: 80px;\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      padding: 8px 12px;\n' +
+    '      line-height: 1.5;\n' +
+    '      vertical-align: top;\n' +
+    '      font-family: var(--font-editor);\n' +
+    '    }\n' +
+    '    \n' +
+    '    th {\n' +
+    '      background: var(--color-surface-strong);\n' +
+    '      font-weight: 500;\n' +
+    '      color: var(--color-ink);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .tableWrapper {\n' +
+    '      overflow-x: auto;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram {\n' +
+    '      width: 100%;\n' +
+    '      margin: 16px 0;\n' +
+    '      overflow: visible;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram__viewport {\n' +
+    '      height: auto !important;\n' +
+    '      overflow: visible !important;\n' +
+    '      border: 0 !important;\n' +
+    '      border-radius: 0;\n' +
+    '      padding: 10px 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram__content {\n' +
+    '      width: 100% !important;\n' +
+    '      min-width: 0 !important;\n' +
+    '      display: flex !important;\n' +
+    '      justify-content: center !important;\n' +
+    '      align-items: flex-start !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram svg {\n' +
+    '      width: auto !important;\n' +
+    '      max-width: 100% !important;\n' +
+    '      height: auto !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram img {\n' +
+    '      display: block !important;\n' +
+    '      max-width: 100% !important;\n' +
+    '      height: auto !important;\n' +
+    '      margin: 0 auto !important;\n' +
+    '    }\n' +
+    '\n' +
+    '    .mindmap-diagram {\n' +
+    '      width: 100%;\n' +
+    '      margin: 16px 0;\n' +
+    '      overflow: visible;\n' +
+    '    }\n' +
+    '\n' +
+    '    .mindmap-diagram__viewport {\n' +
+    '      height: auto !important;\n' +
+    '      overflow: visible !important;\n' +
+    '      border: 0 !important;\n' +
+    '      border-radius: 0;\n' +
+    '      padding: 10px 0;\n' +
+    '    }\n' +
+    '\n' +
+    '    .mindmap-diagram__content {\n' +
+    '      width: 100% !important;\n' +
+    '      min-width: 0 !important;\n' +
+    '      display: flex !important;\n' +
+    '      justify-content: center !important;\n' +
+    '      align-items: flex-start !important;\n' +
+    '    }\n' +
+    '\n' +
+    '    .mindmap-diagram img {\n' +
+    '      display: block !important;\n' +
+    '      border: 0 !important;\n' +
+    '      border-radius: 0 !important;\n' +
+    '      max-width: 100% !important;\n' +
+    '      height: auto !important;\n' +
+    '      margin: 0 auto !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    \n' +
+    '    .katex-display { overflow: visible; }\n' +
+    '    .katex { font-family: KaTeX_Main, "Inter", "SF Pro Display", "Segoe UI", sans-serif; }\n' +
+    '    .tiptap-mathematics-render { display: inline; }\n' +
+    '    .tiptap-mathematics-render[data-type="block-math"] { \n' +
+    '      display: block; \n' +
+    '      margin: 18px 0;\n' +
+    '      text-align: center;\n' +
+    '      overflow-x: auto;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .table-of-contents {\n' +
+    '      display: grid;\n' +
+    '      gap: 8px;\n' +
+    '      margin: 1em 0;\n' +
+    '      padding: 12px;\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      border-radius: var(--radius-xl);\n' +
+    '      background: var(--color-canvas-soft);\n' +
+    '    }\n' +
+    '\n' +
+    '    .table-of-contents__title {\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-size: 0.9rem;\n' +
+    '      font-weight: 600;\n' +
+    '    }\n' +
+    '\n' +
+    '    .table-of-contents__list {\n' +
+    '      display: grid;\n' +
+    '      gap: 2px;\n' +
+    '    }\n' +
+    '\n' +
+    '    .table-of-contents__item {\n' +
+    '      min-height: 28px;\n' +
+    '      border: 0;\n' +
+    '      background: transparent;\n' +
+    '      color: var(--color-slate);\n' +
+    '      padding: 4px 6px;\n' +
+    '      text-align: left;\n' +
+    '      white-space: normal;\n' +
+    '      font-size: 0.875rem;\n' +
+    '    }\n' +
+    '    \n' +
+    '    @media print {\n' +
+    '      @page { margin: 0; }\n' +
+    '      body {\n' +
+    '        margin: 0;\n' +
+    '        print-color-adjust: exact;\n' +
+    '        -webkit-print-color-adjust: exact;\n' +
+    '      }\n' +
+    '      .pdf-document {\n' +
+    '        padding: 64px 72px 96px;\n' +
+    '        margin: 0 auto;\n' +
+    '  '... 343 more characters
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/pdf-export.test.mjs:26:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!doctype html>\n<html lang="zh-CN">\n<head>\n  <meta charset="utf-8" />\n  <title>&lt;Doc&gt; - PDF</title>\n  <style>\n    :root {\n      --color-ink: #0c0a09;\n      --color-slate: #4e4e4e;\n      --color-stone: #777169;\n      --color-canvas: #ffffff;\n      --color-canvas-soft: #ffffff;\n      --color-surface-soft: #ffffff;\n      --color-surface-strong: #f8f8f8;\n      --color-hairline: #e7e5e4;\n      --color-hairline-strong: #d6d3d1;\n      --color-code-keyword: #7c3aed;\n      --color-code-number: #c2410c;\n      --color-code-string: #16a34a;\n      --color-code-title: #2563eb;\n      --color-code-type: #0d9488;\n      --color-code-tag: #dc2626;\n      --radius-sm: 6px;\n      --radius-xl: 16px;\n      --font-display: Noto Sans SC, "Microsoft YaHei", "PingFang SC", sans-serif, "EB Garamond", "Times New Roman", serif;\n      --font-editor: Noto Sans SC, "Microsoft YaHei", "PingFang SC", sans-serif, "Inter", "SF Pro Display", "Segoe UI", sans-serif;\n      --font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;\n    }\n    \n    @page {\n      size: Letter landscape;\n      margin: 0;\n    }\n    \n    * { box-sizing: border-box; }\n    \n    body {\n      margin: 0;\n      color: var(--color-slate);\n      background: var(--color-canvas);\n      font: 1rem / 1.7 var(--font-editor);\n      letter-spacing: 0.16px;\n      -webkit-font-smoothing: antialiased;\n      -moz-osx-font-smoothing: grayscale;\n    }\n    \n    .pdf-document {\n      width: min(920px, 100%);\n      margin: 0 auto;\n      padding: 64px 72px 96px;\n      background: var(--color-canvas);\n    }\n    \n    .pdf-title {\n      font-size: 2.5rem;\n      font-weight: 300;\n      letter-spacing: -0.96px;\n      line-height: 1.2;\n      color: var(--color-ink);\n      font-family: var(--font-display);\n      margin: 0 0 22px;\n      padding-bottom: 12px;\n      border-bottom: 1px solid var(--color-hairline-strong);\n    }\n    \n    h1, h2, h3 {\n      line-height: 1.2;\n      color: var(--color-ink);\n      font-weight: 500;\n      font-family: var(--font-display);\n      letter-spacing: -0.32px;\n      break-after: avoid;\n    }\n    \n    h1 {\n      font-size: 2.5rem;\n      font-weight: 300;\n      letter-spacing: -0.96px;\n    }\n    \n    h2 {\n      font-size: 1.875rem;\n      font-weight: 300;\n      letter-spacing: -0.36px;\n    }\n    \n    h3 {\n      font-size: 1.5rem;\n      font-weight: 300;\n      letter-spacing: -0.24px;\n    }\n    \n    h4, h5, h6 {\n      line-height: 1.28;\n      color: var(--color-ink);\n      font-weight: 500;\n      font-family: var(--font-display);\n      letter-spacing: -0.32px;\n      break-after: avoid;\n    }\n    \n    p {\n      margin: 0.6em 0;\n    }\n    \n    p[data-indent="1"] { padding-left: 2em; }\n    p[data-indent="2"] { padding-left: 4em; }\n    p[data-indent="3"] { padding-left: 6em; }\n    p[data-indent="4"] { padding-left: 8em; }\n    p[data-indent="5"] { padding-left: 10em; }\n    \n    ul, ol {\n      margin: 0.6em 0;\n      padding-left: 1.65em;\n      break-inside: avoid;\n    }\n    \n    ol[data-type="roman"] { list-style-type: upper-roman; }\n    ol[data-type="roman-lower"] { list-style-type: lower-roman; }\n    ol[data-type="alpha"] { list-style-type: lower-alpha; }\n    ol[data-type="alpha-upper"] { list-style-type: upper-alpha; }\n    \n    li {\n      margin: 0.25em 0;\n    }\n    \n    li > p {\n      margin: 0;\n    }\n    \n    ul[data-type="taskList"] {\n      padding-left: 0 !important;\n      list-style: none !important;\n    }\n    \n    li[data-type="taskItem"] {\n      display: inline-flex !important;\n      flex-direction: row !important;\n      flex-wrap: nowrap !important;\n      gap: 0.55em !important;\n      align-items: flex-start !important;\n      margin: 0.25em 0 !important;\n      width: 100% !important;\n    }\n    \n    li[data-type="taskItem"] > label {\n      width: auto !important;\n      flex: 0 0 auto !important;\n      display: inline-flex !important;\n      align-items: center !important;\n      justify-content: flex-start !important;\n      margin-top: 0.25em !important;\n      margin-right: 0 !important;\n      margin-bottom: 0 !important;\n      margin-left: 0 !important;\n      user-select: none !important;\n    }\n    \n    li[data-type="taskItem"] input[type="checkbox"] {\n      width: 1em !important;\n      height: 1em !important;\n      margin: 0 !important;\n      display: inline-block !important;\n      vertical-align: middle !important;\n    }\n    \n    blockquote {\n      margin-left: 0;\n      border-left: 2px solid var(--color-hairline-strong);\n      padding-left: 16px;\n      color: var(--color-stone);\n      font-style: italic;\n      break-inside: avoid;\n    }\n    \n    hr {\n      margin: 32px 0;\n      border: 0;\n      border-top: 1px solid var(--color-hairline);\n    }\n    \n    :not(pre) > code {\n      border: 1px solid var(--color-hairline);\n      border-radius: var(--radius-sm);\n      background: var(--color-surface-soft);\n      padding: 0.15em 0.4em;\n      color: var(--color-ink);\n      font-family: var(--font-mono);\n      font-size: 0.9em;\n    }\n    \n    a {\n      color: var(--color-ink);\n      text-decoration: underline;\n      text-decoration-color: var(--color-hairline-strong);\n      text-underline-offset: 0.2em;\n    }\n    \n    .code-block-wrapper {\n      border-radius: var(--radius-xl);\n      border: 1px solid var(--color-hairline);\n      overflow: hidden;\n      margin: 16px 0;\n      break-inside: avoid;\n    }\n    \n    pre {\n      padding: 20px 24px;\n      background: var(--color-canvas-soft);\n      color: var(--color-ink);\n      overflow: auto;\n      margin: 0;\n      border-radius: 0;\n      white-space: pre-wrap;\n      break-inside: avoid;\n    }\n    \n    pre code {\n      font-family: var(--font-mono);\n      font-size: 0.9rem;\n      line-height: 1.6;\n    }\n    \n    .hljs-comment, .hljs-quote {\n      color: var(--color-stone);\n      font-style: italic;\n    }\n    \n    .hljs-keyword, .hljs-selector-tag, .hljs-subst {\n      color: var(--color-code-keyword);\n      font-weight: 600;\n    }\n    \n    .hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable, .hljs-tag .hljs-attr {\n      color: var(--color-code-number);\n    }\n    \n    .hljs-string, .hljs-doctag {\n      color: var(--color-code-string);\n    }\n    \n    .hljs-title, .hljs-section, .hljs-selector-id {\n      color: var(--color-code-title);\n    }\n    \n    .hljs-type, .hljs-class .hljs-title {\n      color: var(--color-code-type);\n    }\n    \n    .hljs-tag, .hljs-name, .hljs-attribute {\n      color: var(--color-code-tag);\n    }\n    \n    img {\n      max-width: 100%;\n      height: auto;\n      border: 1px solid var(--color-hairline);\n      border-radius: var(--radius-xl);\n      break-inside: avoid;\n    }\n    \n    table {\n      width: 100%;\n      border-collapse: collapse;\n      table-layout: fixed;\n      margin: 24px 0;\n      break-inside: avoid;\n    }\n    \n    th, td {\n      position: relative;\n      min-width: 80px;\n      border: 1px solid var(--color-hairline);\n      padding: 8px 12px;\n      line-height: 1.5;\n      vertical-align: top;\n      font-family: var(--font-editor);\n    }\n    \n    th {\n      background: var(--color-surface-strong);\n      font-weight: 500;\n      color: var(--color-ink);\n    }\n    \n    .tableWrapper {\n      overflow-x: auto;\n    }\n    \n    .mermaid-diagram {\n      width: 100%;\n      margin: 16px 0;\n      overflow: visible;\n    }\n    \n    .mermaid-diagram__viewport {\n      height: auto !important;\n      overflow: visible !important;\n      border: 0 !important;\n      border-radius: 0;\n      padding: 10px 0;\n    }\n    \n    .mermaid-diagram__content {\n      width: 100% !important;\n      min-width: 0 !important;\n      display: flex !important;\n      justify-content: center !important;\n      align-items: flex-start !important;\n    }\n    \n    .mermaid-diagram svg {\n      width: auto !important;\n      max-width: 100% !important;\n      height: auto !important;\n    }\n    \n    .mermaid-diagram img {\n      display: block !important;\n      max-width: 100% !important;\n      height: auto !important;\n      margin: 0 auto !important;\n    }\n\n    .mindmap-diagram {\n      width: 100%;\n      margin: 16px 0;\n      overflow: visible;\n    }\n\n    .mindmap-diagram__viewport {\n      height: auto !important;\n      overflow: visible !important;\n      border: 0 !important;\n      border-radius: 0;\n      padding: 10px 0;\n    }\n\n    .mindmap-diagram__content {\n      width: 100% !important;\n      min-width: 0 !important;\n      display: flex !important;\n      justify-content: center !important;\n      align-items: flex-start !important;\n    }\n\n    .mindmap-diagram img {\n      display: block !important;\n      border: 0 !important;\n      border-radius: 0 !important;\n      max-width: 100% !important;\n      height: auto !important;\n      margin: 0 auto !important;\n    }\n    \n    \n    .katex-display { overflow: visible; }\n    .katex { font-family: KaTeX_Main, "Inter", "SF Pro Display", "Segoe UI", sans-serif; }\n    .tiptap-mathematics-render { display: inline; }\n    .tiptap-mathematics-render[data-type="block-math"] { \n      display: block; \n      margin: 18px 0;\n      text-align: center;\n      overflow-x: auto;\n    }\n    \n    .table-of-contents {\n      display: grid;\n      gap: 8px;\n      margin: 1em 0;\n      padding: 12px;\n      border: 1px solid var(--color-hairline);\n      border-radius: var(--radius-xl);\n      background: var(--color-canvas-soft);\n    }\n\n    .table-of-contents__title {\n      color: var(--color-ink);\n      font-size: 0.9rem;\n      font-weight: 600;\n    }\n\n    .table-of-contents__list {\n      display: grid;\n      gap: 2px;\n    }\n\n    .table-of-contents__item {\n      min-height: 28px;\n      border: 0;\n      background: transparent;\n      color: var(--color-slate);\n      padding: 4px 6px;\n      text-align: left;\n      white-space: normal;\n      font-size: 0.875rem;\n    }\n    \n    @media print {\n      @page { margin: 0; }\n      body {\n        margin: 0;\n        print-color-adjust: exact;\n        -webkit-print-color-adjust: exact;\n      }\n      .pdf-document {\n        padding: 64px 72px 96px;\n        margin: 0 auto;\n  '... 343 more characters,
+    expected: /@page \{ size: Letter landscape;/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\pdf-export.test.mjs:32:1
+✖ omits PDF title heading when includeTitle is false (1.4388ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /@page \{ size: A4 portrait;/. Input:
+  
+  '<!doctype html>\n' +
+    '<html lang="zh-CN">\n' +
+    '<head>\n' +
+    '  <meta charset="utf-8" />\n' +
+    '  <title>Doc - PDF</title>\n' +
+    '  <style>\n' +
+    '    :root {\n' +
+    '      --color-ink: #0c0a09;\n' +
+    '      --color-slate: #4e4e4e;\n' +
+    '      --color-stone: #777169;\n' +
+    '      --color-canvas: #ffffff;\n' +
+    '      --color-canvas-soft: #ffffff;\n' +
+    '      --color-surface-soft: #ffffff;\n' +
+    '      --color-surface-strong: #f8f8f8;\n' +
+    '      --color-hairline: #e7e5e4;\n' +
+    '      --color-hairline-strong: #d6d3d1;\n' +
+    '      --color-code-keyword: #7c3aed;\n' +
+    '      --color-code-number: #c2410c;\n' +
+    '      --color-code-string: #16a34a;\n' +
+    '      --color-code-title: #2563eb;\n' +
+    '      --color-code-type: #0d9488;\n' +
+    '      --color-code-tag: #dc2626;\n' +
+    '      --radius-sm: 6px;\n' +
+    '      --radius-xl: 16px;\n' +
+    '      --font-display: Noto Sans SC, "Microsoft YaHei", "PingFang SC", sans-serif, "EB Garamond", "Times New Roman", serif;\n' +
+    '      --font-editor: Noto Sans SC, "Microsoft YaHei", "PingFang SC", sans-serif, "Inter", "SF Pro Display", "Segoe UI", sans-serif;\n' +
+    '      --font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;\n' +
+    '    }\n' +
+    '    \n' +
+    '    @page {\n' +
+    '      size: A4 portrait;\n' +
+    '      margin: 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    * { box-sizing: border-box; }\n' +
+    '    \n' +
+    '    body {\n' +
+    '      margin: 0;\n' +
+    '      color: var(--color-slate);\n' +
+    '      background: var(--color-canvas);\n' +
+    '      font: 1rem / 1.7 var(--font-editor);\n' +
+    '      letter-spacing: 0.16px;\n' +
+    '      -webkit-font-smoothing: antialiased;\n' +
+    '      -moz-osx-font-smoothing: grayscale;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .pdf-document {\n' +
+    '      width: min(920px, 100%);\n' +
+    '      margin: 0 auto;\n' +
+    '      padding: 64px 72px 96px;\n' +
+    '      background: var(--color-canvas);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .pdf-title {\n' +
+    '      font-size: 2.5rem;\n' +
+    '      font-weight: 300;\n' +
+    '      letter-spacing: -0.96px;\n' +
+    '      line-height: 1.2;\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-family: var(--font-display);\n' +
+    '      margin: 0 0 22px;\n' +
+    '      padding-bottom: 12px;\n' +
+    '      border-bottom: 1px solid var(--color-hairline-strong);\n' +
+    '    }\n' +
+    '    \n' +
+    '    h1, h2, h3 {\n' +
+    '      line-height: 1.2;\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-weight: 500;\n' +
+    '      font-family: var(--font-display);\n' +
+    '      letter-spacing: -0.32px;\n' +
+    '      break-after: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    h1 {\n' +
+    '      font-size: 2.5rem;\n' +
+    '      font-weight: 300;\n' +
+    '      letter-spacing: -0.96px;\n' +
+    '    }\n' +
+    '    \n' +
+    '    h2 {\n' +
+    '      font-size: 1.875rem;\n' +
+    '      font-weight: 300;\n' +
+    '      letter-spacing: -0.36px;\n' +
+    '    }\n' +
+    '    \n' +
+    '    h3 {\n' +
+    '      font-size: 1.5rem;\n' +
+    '      font-weight: 300;\n' +
+    '      letter-spacing: -0.24px;\n' +
+    '    }\n' +
+    '    \n' +
+    '    h4, h5, h6 {\n' +
+    '      line-height: 1.28;\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-weight: 500;\n' +
+    '      font-family: var(--font-display);\n' +
+    '      letter-spacing: -0.32px;\n' +
+    '      break-after: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    p {\n' +
+    '      margin: 0.6em 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    p[data-indent="1"] { padding-left: 2em; }\n' +
+    '    p[data-indent="2"] { padding-left: 4em; }\n' +
+    '    p[data-indent="3"] { padding-left: 6em; }\n' +
+    '    p[data-indent="4"] { padding-left: 8em; }\n' +
+    '    p[data-indent="5"] { padding-left: 10em; }\n' +
+    '    \n' +
+    '    ul, ol {\n' +
+    '      margin: 0.6em 0;\n' +
+    '      padding-left: 1.65em;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    ol[data-type="roman"] { list-style-type: upper-roman; }\n' +
+    '    ol[data-type="roman-lower"] { list-style-type: lower-roman; }\n' +
+    '    ol[data-type="alpha"] { list-style-type: lower-alpha; }\n' +
+    '    ol[data-type="alpha-upper"] { list-style-type: upper-alpha; }\n' +
+    '    \n' +
+    '    li {\n' +
+    '      margin: 0.25em 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    li > p {\n' +
+    '      margin: 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    ul[data-type="taskList"] {\n' +
+    '      padding-left: 0 !important;\n' +
+    '      list-style: none !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    li[data-type="taskItem"] {\n' +
+    '      display: inline-flex !important;\n' +
+    '      flex-direction: row !important;\n' +
+    '      flex-wrap: nowrap !important;\n' +
+    '      gap: 0.55em !important;\n' +
+    '      align-items: flex-start !important;\n' +
+    '      margin: 0.25em 0 !important;\n' +
+    '      width: 100% !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    li[data-type="taskItem"] > label {\n' +
+    '      width: auto !important;\n' +
+    '      flex: 0 0 auto !important;\n' +
+    '      display: inline-flex !important;\n' +
+    '      align-items: center !important;\n' +
+    '      justify-content: flex-start !important;\n' +
+    '      margin-top: 0.25em !important;\n' +
+    '      margin-right: 0 !important;\n' +
+    '      margin-bottom: 0 !important;\n' +
+    '      margin-left: 0 !important;\n' +
+    '      user-select: none !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    li[data-type="taskItem"] input[type="checkbox"] {\n' +
+    '      width: 1em !important;\n' +
+    '      height: 1em !important;\n' +
+    '      margin: 0 !important;\n' +
+    '      display: inline-block !important;\n' +
+    '      vertical-align: middle !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    blockquote {\n' +
+    '      margin-left: 0;\n' +
+    '      border-left: 2px solid var(--color-hairline-strong);\n' +
+    '      padding-left: 16px;\n' +
+    '      color: var(--color-stone);\n' +
+    '      font-style: italic;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    hr {\n' +
+    '      margin: 32px 0;\n' +
+    '      border: 0;\n' +
+    '      border-top: 1px solid var(--color-hairline);\n' +
+    '    }\n' +
+    '    \n' +
+    '    :not(pre) > code {\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      border-radius: var(--radius-sm);\n' +
+    '      background: var(--color-surface-soft);\n' +
+    '      padding: 0.15em 0.4em;\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-family: var(--font-mono);\n' +
+    '      font-size: 0.9em;\n' +
+    '    }\n' +
+    '    \n' +
+    '    a {\n' +
+    '      color: var(--color-ink);\n' +
+    '      text-decoration: underline;\n' +
+    '      text-decoration-color: var(--color-hairline-strong);\n' +
+    '      text-underline-offset: 0.2em;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .code-block-wrapper {\n' +
+    '      border-radius: var(--radius-xl);\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      overflow: hidden;\n' +
+    '      margin: 16px 0;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    pre {\n' +
+    '      padding: 20px 24px;\n' +
+    '      background: var(--color-canvas-soft);\n' +
+    '      color: var(--color-ink);\n' +
+    '      overflow: auto;\n' +
+    '      margin: 0;\n' +
+    '      border-radius: 0;\n' +
+    '      white-space: pre-wrap;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    pre code {\n' +
+    '      font-family: var(--font-mono);\n' +
+    '      font-size: 0.9rem;\n' +
+    '      line-height: 1.6;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-comment, .hljs-quote {\n' +
+    '      color: var(--color-stone);\n' +
+    '      font-style: italic;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-keyword, .hljs-selector-tag, .hljs-subst {\n' +
+    '      color: var(--color-code-keyword);\n' +
+    '      font-weight: 600;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable, .hljs-tag .hljs-attr {\n' +
+    '      color: var(--color-code-number);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-string, .hljs-doctag {\n' +
+    '      color: var(--color-code-string);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-title, .hljs-section, .hljs-selector-id {\n' +
+    '      color: var(--color-code-title);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-type, .hljs-class .hljs-title {\n' +
+    '      color: var(--color-code-type);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .hljs-tag, .hljs-name, .hljs-attribute {\n' +
+    '      color: var(--color-code-tag);\n' +
+    '    }\n' +
+    '    \n' +
+    '    img {\n' +
+    '      max-width: 100%;\n' +
+    '      height: auto;\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      border-radius: var(--radius-xl);\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    table {\n' +
+    '      width: 100%;\n' +
+    '      border-collapse: collapse;\n' +
+    '      table-layout: fixed;\n' +
+    '      margin: 24px 0;\n' +
+    '      break-inside: avoid;\n' +
+    '    }\n' +
+    '    \n' +
+    '    th, td {\n' +
+    '      position: relative;\n' +
+    '      min-width: 80px;\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      padding: 8px 12px;\n' +
+    '      line-height: 1.5;\n' +
+    '      vertical-align: top;\n' +
+    '      font-family: var(--font-editor);\n' +
+    '    }\n' +
+    '    \n' +
+    '    th {\n' +
+    '      background: var(--color-surface-strong);\n' +
+    '      font-weight: 500;\n' +
+    '      color: var(--color-ink);\n' +
+    '    }\n' +
+    '    \n' +
+    '    .tableWrapper {\n' +
+    '      overflow-x: auto;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram {\n' +
+    '      width: 100%;\n' +
+    '      margin: 16px 0;\n' +
+    '      overflow: visible;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram__viewport {\n' +
+    '      height: auto !important;\n' +
+    '      overflow: visible !important;\n' +
+    '      border: 0 !important;\n' +
+    '      border-radius: 0;\n' +
+    '      padding: 10px 0;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram__content {\n' +
+    '      width: 100% !important;\n' +
+    '      min-width: 0 !important;\n' +
+    '      display: flex !important;\n' +
+    '      justify-content: center !important;\n' +
+    '      align-items: flex-start !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram svg {\n' +
+    '      width: auto !important;\n' +
+    '      max-width: 100% !important;\n' +
+    '      height: auto !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .mermaid-diagram img {\n' +
+    '      display: block !important;\n' +
+    '      max-width: 100% !important;\n' +
+    '      height: auto !important;\n' +
+    '      margin: 0 auto !important;\n' +
+    '    }\n' +
+    '\n' +
+    '    .mindmap-diagram {\n' +
+    '      width: 100%;\n' +
+    '      margin: 16px 0;\n' +
+    '      overflow: visible;\n' +
+    '    }\n' +
+    '\n' +
+    '    .mindmap-diagram__viewport {\n' +
+    '      height: auto !important;\n' +
+    '      overflow: visible !important;\n' +
+    '      border: 0 !important;\n' +
+    '      border-radius: 0;\n' +
+    '      padding: 10px 0;\n' +
+    '    }\n' +
+    '\n' +
+    '    .mindmap-diagram__content {\n' +
+    '      width: 100% !important;\n' +
+    '      min-width: 0 !important;\n' +
+    '      display: flex !important;\n' +
+    '      justify-content: center !important;\n' +
+    '      align-items: flex-start !important;\n' +
+    '    }\n' +
+    '\n' +
+    '    .mindmap-diagram img {\n' +
+    '      display: block !important;\n' +
+    '      border: 0 !important;\n' +
+    '      border-radius: 0 !important;\n' +
+    '      max-width: 100% !important;\n' +
+    '      height: auto !important;\n' +
+    '      margin: 0 auto !important;\n' +
+    '    }\n' +
+    '    \n' +
+    '    \n' +
+    '    .katex-display { overflow: visible; }\n' +
+    '    .katex { font-family: KaTeX_Main, "Inter", "SF Pro Display", "Segoe UI", sans-serif; }\n' +
+    '    .tiptap-mathematics-render { display: inline; }\n' +
+    '    .tiptap-mathematics-render[data-type="block-math"] { \n' +
+    '      display: block; \n' +
+    '      margin: 18px 0;\n' +
+    '      text-align: center;\n' +
+    '      overflow-x: auto;\n' +
+    '    }\n' +
+    '    \n' +
+    '    .table-of-contents {\n' +
+    '      display: grid;\n' +
+    '      gap: 8px;\n' +
+    '      margin: 1em 0;\n' +
+    '      padding: 12px;\n' +
+    '      border: 1px solid var(--color-hairline);\n' +
+    '      border-radius: var(--radius-xl);\n' +
+    '      background: var(--color-canvas-soft);\n' +
+    '    }\n' +
+    '\n' +
+    '    .table-of-contents__title {\n' +
+    '      color: var(--color-ink);\n' +
+    '      font-size: 0.9rem;\n' +
+    '      font-weight: 600;\n' +
+    '    }\n' +
+    '\n' +
+    '    .table-of-contents__list {\n' +
+    '      display: grid;\n' +
+    '      gap: 2px;\n' +
+    '    }\n' +
+    '\n' +
+    '    .table-of-contents__item {\n' +
+    '      min-height: 28px;\n' +
+    '      border: 0;\n' +
+    '      background: transparent;\n' +
+    '      color: var(--color-slate);\n' +
+    '      padding: 4px 6px;\n' +
+    '      text-align: left;\n' +
+    '      white-space: normal;\n' +
+    '      font-size: 0.875rem;\n' +
+    '    }\n' +
+    '    \n' +
+    '    @media print {\n' +
+    '      @page { margin: 0; }\n' +
+    '      body {\n' +
+    '        margin: 0;\n' +
+    '        print-color-adjust: exact;\n' +
+    '        -webkit-print-color-adjust: exact;\n' +
+    '      }\n' +
+    '      .pdf-document {\n' +
+    '        padding: 64px 72px 96px;\n' +
+    '        margin: 0 auto;\n' +
+    '        width: '... 292 more characters
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/pdf-export.test.mjs:40:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '<!doctype html>\n<html lang="zh-CN">\n<head>\n  <meta charset="utf-8" />\n  <title>Doc - PDF</title>\n  <style>\n    :root {\n      --color-ink: #0c0a09;\n      --color-slate: #4e4e4e;\n      --color-stone: #777169;\n      --color-canvas: #ffffff;\n      --color-canvas-soft: #ffffff;\n      --color-surface-soft: #ffffff;\n      --color-surface-strong: #f8f8f8;\n      --color-hairline: #e7e5e4;\n      --color-hairline-strong: #d6d3d1;\n      --color-code-keyword: #7c3aed;\n      --color-code-number: #c2410c;\n      --color-code-string: #16a34a;\n      --color-code-title: #2563eb;\n      --color-code-type: #0d9488;\n      --color-code-tag: #dc2626;\n      --radius-sm: 6px;\n      --radius-xl: 16px;\n      --font-display: Noto Sans SC, "Microsoft YaHei", "PingFang SC", sans-serif, "EB Garamond", "Times New Roman", serif;\n      --font-editor: Noto Sans SC, "Microsoft YaHei", "PingFang SC", sans-serif, "Inter", "SF Pro Display", "Segoe UI", sans-serif;\n      --font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;\n    }\n    \n    @page {\n      size: A4 portrait;\n      margin: 0;\n    }\n    \n    * { box-sizing: border-box; }\n    \n    body {\n      margin: 0;\n      color: var(--color-slate);\n      background: var(--color-canvas);\n      font: 1rem / 1.7 var(--font-editor);\n      letter-spacing: 0.16px;\n      -webkit-font-smoothing: antialiased;\n      -moz-osx-font-smoothing: grayscale;\n    }\n    \n    .pdf-document {\n      width: min(920px, 100%);\n      margin: 0 auto;\n      padding: 64px 72px 96px;\n      background: var(--color-canvas);\n    }\n    \n    .pdf-title {\n      font-size: 2.5rem;\n      font-weight: 300;\n      letter-spacing: -0.96px;\n      line-height: 1.2;\n      color: var(--color-ink);\n      font-family: var(--font-display);\n      margin: 0 0 22px;\n      padding-bottom: 12px;\n      border-bottom: 1px solid var(--color-hairline-strong);\n    }\n    \n    h1, h2, h3 {\n      line-height: 1.2;\n      color: var(--color-ink);\n      font-weight: 500;\n      font-family: var(--font-display);\n      letter-spacing: -0.32px;\n      break-after: avoid;\n    }\n    \n    h1 {\n      font-size: 2.5rem;\n      font-weight: 300;\n      letter-spacing: -0.96px;\n    }\n    \n    h2 {\n      font-size: 1.875rem;\n      font-weight: 300;\n      letter-spacing: -0.36px;\n    }\n    \n    h3 {\n      font-size: 1.5rem;\n      font-weight: 300;\n      letter-spacing: -0.24px;\n    }\n    \n    h4, h5, h6 {\n      line-height: 1.28;\n      color: var(--color-ink);\n      font-weight: 500;\n      font-family: var(--font-display);\n      letter-spacing: -0.32px;\n      break-after: avoid;\n    }\n    \n    p {\n      margin: 0.6em 0;\n    }\n    \n    p[data-indent="1"] { padding-left: 2em; }\n    p[data-indent="2"] { padding-left: 4em; }\n    p[data-indent="3"] { padding-left: 6em; }\n    p[data-indent="4"] { padding-left: 8em; }\n    p[data-indent="5"] { padding-left: 10em; }\n    \n    ul, ol {\n      margin: 0.6em 0;\n      padding-left: 1.65em;\n      break-inside: avoid;\n    }\n    \n    ol[data-type="roman"] { list-style-type: upper-roman; }\n    ol[data-type="roman-lower"] { list-style-type: lower-roman; }\n    ol[data-type="alpha"] { list-style-type: lower-alpha; }\n    ol[data-type="alpha-upper"] { list-style-type: upper-alpha; }\n    \n    li {\n      margin: 0.25em 0;\n    }\n    \n    li > p {\n      margin: 0;\n    }\n    \n    ul[data-type="taskList"] {\n      padding-left: 0 !important;\n      list-style: none !important;\n    }\n    \n    li[data-type="taskItem"] {\n      display: inline-flex !important;\n      flex-direction: row !important;\n      flex-wrap: nowrap !important;\n      gap: 0.55em !important;\n      align-items: flex-start !important;\n      margin: 0.25em 0 !important;\n      width: 100% !important;\n    }\n    \n    li[data-type="taskItem"] > label {\n      width: auto !important;\n      flex: 0 0 auto !important;\n      display: inline-flex !important;\n      align-items: center !important;\n      justify-content: flex-start !important;\n      margin-top: 0.25em !important;\n      margin-right: 0 !important;\n      margin-bottom: 0 !important;\n      margin-left: 0 !important;\n      user-select: none !important;\n    }\n    \n    li[data-type="taskItem"] input[type="checkbox"] {\n      width: 1em !important;\n      height: 1em !important;\n      margin: 0 !important;\n      display: inline-block !important;\n      vertical-align: middle !important;\n    }\n    \n    blockquote {\n      margin-left: 0;\n      border-left: 2px solid var(--color-hairline-strong);\n      padding-left: 16px;\n      color: var(--color-stone);\n      font-style: italic;\n      break-inside: avoid;\n    }\n    \n    hr {\n      margin: 32px 0;\n      border: 0;\n      border-top: 1px solid var(--color-hairline);\n    }\n    \n    :not(pre) > code {\n      border: 1px solid var(--color-hairline);\n      border-radius: var(--radius-sm);\n      background: var(--color-surface-soft);\n      padding: 0.15em 0.4em;\n      color: var(--color-ink);\n      font-family: var(--font-mono);\n      font-size: 0.9em;\n    }\n    \n    a {\n      color: var(--color-ink);\n      text-decoration: underline;\n      text-decoration-color: var(--color-hairline-strong);\n      text-underline-offset: 0.2em;\n    }\n    \n    .code-block-wrapper {\n      border-radius: var(--radius-xl);\n      border: 1px solid var(--color-hairline);\n      overflow: hidden;\n      margin: 16px 0;\n      break-inside: avoid;\n    }\n    \n    pre {\n      padding: 20px 24px;\n      background: var(--color-canvas-soft);\n      color: var(--color-ink);\n      overflow: auto;\n      margin: 0;\n      border-radius: 0;\n      white-space: pre-wrap;\n      break-inside: avoid;\n    }\n    \n    pre code {\n      font-family: var(--font-mono);\n      font-size: 0.9rem;\n      line-height: 1.6;\n    }\n    \n    .hljs-comment, .hljs-quote {\n      color: var(--color-stone);\n      font-style: italic;\n    }\n    \n    .hljs-keyword, .hljs-selector-tag, .hljs-subst {\n      color: var(--color-code-keyword);\n      font-weight: 600;\n    }\n    \n    .hljs-number, .hljs-literal, .hljs-variable, .hljs-template-variable, .hljs-tag .hljs-attr {\n      color: var(--color-code-number);\n    }\n    \n    .hljs-string, .hljs-doctag {\n      color: var(--color-code-string);\n    }\n    \n    .hljs-title, .hljs-section, .hljs-selector-id {\n      color: var(--color-code-title);\n    }\n    \n    .hljs-type, .hljs-class .hljs-title {\n      color: var(--color-code-type);\n    }\n    \n    .hljs-tag, .hljs-name, .hljs-attribute {\n      color: var(--color-code-tag);\n    }\n    \n    img {\n      max-width: 100%;\n      height: auto;\n      border: 1px solid var(--color-hairline);\n      border-radius: var(--radius-xl);\n      break-inside: avoid;\n    }\n    \n    table {\n      width: 100%;\n      border-collapse: collapse;\n      table-layout: fixed;\n      margin: 24px 0;\n      break-inside: avoid;\n    }\n    \n    th, td {\n      position: relative;\n      min-width: 80px;\n      border: 1px solid var(--color-hairline);\n      padding: 8px 12px;\n      line-height: 1.5;\n      vertical-align: top;\n      font-family: var(--font-editor);\n    }\n    \n    th {\n      background: var(--color-surface-strong);\n      font-weight: 500;\n      color: var(--color-ink);\n    }\n    \n    .tableWrapper {\n      overflow-x: auto;\n    }\n    \n    .mermaid-diagram {\n      width: 100%;\n      margin: 16px 0;\n      overflow: visible;\n    }\n    \n    .mermaid-diagram__viewport {\n      height: auto !important;\n      overflow: visible !important;\n      border: 0 !important;\n      border-radius: 0;\n      padding: 10px 0;\n    }\n    \n    .mermaid-diagram__content {\n      width: 100% !important;\n      min-width: 0 !important;\n      display: flex !important;\n      justify-content: center !important;\n      align-items: flex-start !important;\n    }\n    \n    .mermaid-diagram svg {\n      width: auto !important;\n      max-width: 100% !important;\n      height: auto !important;\n    }\n    \n    .mermaid-diagram img {\n      display: block !important;\n      max-width: 100% !important;\n      height: auto !important;\n      margin: 0 auto !important;\n    }\n\n    .mindmap-diagram {\n      width: 100%;\n      margin: 16px 0;\n      overflow: visible;\n    }\n\n    .mindmap-diagram__viewport {\n      height: auto !important;\n      overflow: visible !important;\n      border: 0 !important;\n      border-radius: 0;\n      padding: 10px 0;\n    }\n\n    .mindmap-diagram__content {\n      width: 100% !important;\n      min-width: 0 !important;\n      display: flex !important;\n      justify-content: center !important;\n      align-items: flex-start !important;\n    }\n\n    .mindmap-diagram img {\n      display: block !important;\n      border: 0 !important;\n      border-radius: 0 !important;\n      max-width: 100% !important;\n      height: auto !important;\n      margin: 0 auto !important;\n    }\n    \n    \n    .katex-display { overflow: visible; }\n    .katex { font-family: KaTeX_Main, "Inter", "SF Pro Display", "Segoe UI", sans-serif; }\n    .tiptap-mathematics-render { display: inline; }\n    .tiptap-mathematics-render[data-type="block-math"] { \n      display: block; \n      margin: 18px 0;\n      text-align: center;\n      overflow-x: auto;\n    }\n    \n    .table-of-contents {\n      display: grid;\n      gap: 8px;\n      margin: 1em 0;\n      padding: 12px;\n      border: 1px solid var(--color-hairline);\n      border-radius: var(--radius-xl);\n      background: var(--color-canvas-soft);\n    }\n\n    .table-of-contents__title {\n      color: var(--color-ink);\n      font-size: 0.9rem;\n      font-weight: 600;\n    }\n\n    .table-of-contents__list {\n      display: grid;\n      gap: 2px;\n    }\n\n    .table-of-contents__item {\n      min-height: 28px;\n      border: 0;\n      background: transparent;\n      color: var(--color-slate);\n      padding: 4px 6px;\n      text-align: left;\n      white-space: normal;\n      font-size: 0.875rem;\n    }\n    \n    @media print {\n      @page { margin: 0; }\n      body {\n        margin: 0;\n        print-color-adjust: exact;\n        -webkit-print-color-adjust: exact;\n      }\n      .pdf-document {\n        padding: 64px 72px 96px;\n        margin: 0 auto;\n        width: '... 292 more characters,
+    expected: /@page \{ size: A4 portrait;/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests\workspace-session.test.mjs:24:1
+✖ creates standalone markdown shell state (12.3073ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+  +     modified: false,
+  -     modified: true,
+        name: 'Untitled.md',
+        path: 'Untitled.md'
+      }
+    ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/workspace-session.test.mjs:35:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { name: 'Untitled.md', path: 'Untitled.md', modified: false } ],
+    expected: [ { name: 'Untitled.md', path: 'Untitled.md', modified: true } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\workspace-session.test.mjs:68:1
+✖ adds an untitled markdown tab to an existing shell state (1.4904ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + ''
+  - '# Untitled2\n\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/workspace-session.test.mjs:83:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: '# Untitled2\n\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\workspace-session.test.mjs:209:1
+✖ creates a named markdown document in the current workspace (1.9461ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '' !== '# Notes\n\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/workspace-session.test.mjs:223:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: '# Notes\n\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

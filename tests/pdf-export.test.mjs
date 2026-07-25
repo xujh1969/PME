@@ -23,7 +23,7 @@ test("builds escaped PDF export HTML with requested page options", () => {
     },
   });
 
-  assert.match(html, /@page \{ size: Letter landscape;/);
+  assert.match(html, /@page \{[\s\S]*size: Letter landscape;/);
   assert.match(html, /<title>&lt;Doc&gt; - PDF<\/title>/);
   assert.match(html, /<h1 class="pdf-title">&lt;Doc&gt;<\/h1>/);
   assert.match(html, /<p>Body<\/p>/);
@@ -37,5 +37,5 @@ test("omits PDF title heading when includeTitle is false", () => {
   });
 
   assert.equal(html.includes('<h1 class="pdf-title">'), false);
-  assert.match(html, /@page \{ size: A4 portrait;/);
+  assert.match(html, /@page \{[\s\S]*size: A4 portrait;/);
 });

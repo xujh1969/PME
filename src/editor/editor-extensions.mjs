@@ -92,6 +92,12 @@ export function createEditorExtensions(options) {
         element.setAttribute("aria-label", "拖动段落");
         element.setAttribute("title", "拖动段落");
         element.style.visibility = "hidden";
+        element.addEventListener("mouseenter", () => {
+          options.getEditor?.()?.commands.lockDragHandle?.();
+        });
+        element.addEventListener("mouseleave", () => {
+          options.getEditor?.()?.commands.unlockDragHandle?.();
+        });
         return element;
       },
     }),

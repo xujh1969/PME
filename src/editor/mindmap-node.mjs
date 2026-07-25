@@ -8,6 +8,61 @@ import {
 } from "../core/mindmap-data.mjs";
 import { escapeHtml } from "../core/html-utils.mjs";
 
+const MINDMAP_MODES = [
+  { id: "right", label: "右侧展开", direction: 1 },
+  { id: "left", label: "左侧展开", direction: 0 },
+  { id: "both", label: "两侧展开", direction: 2 },
+];
+
+export function selectMindMapMode() {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "text-modal";
+    overlay.innerHTML = `
+      <div class="text-modal__dialog" style="width: min(400px, 95%);" role="dialog" aria-modal="true" aria-label="选择思维导图模式">
+        <header class="text-modal__header"><strong>选择思维导图模式</strong><button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button></header>
+        <section class="text-modal__body" style="padding: var(--space-lg);">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${MINDMAP_MODES.map((mode) => `
+              <button type="button" class="mindmap-mode-button" data-mode="${mode.id}" data-direction="${mode.direction}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border: 1px solid var(--color-hairline); border-radius: var(--radius-md); background: var(--color-canvas); cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                <span style="font-size: 14px; color: var(--color-ink);">${mode.label}</span>
+                <span class="mindmap-mode-arrow" style="font-size: 16px;">${mode.id === "right" ? "→" : mode.id === "left" ? "←" : "↔"}</span>
+              </button>
+            `).join("")}
+          </div>
+        </section>
+        <footer class="text-modal__footer"><button data-modal-action="cancel">取消</button></footer>
+      </div>`;
+
+    const close = () => { overlay.remove(); };
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+        close();
+        resolve(null);
+      }
+      const modeButton = event.target.closest?.(".mindmap-mode-button");
+      if (modeButton) {
+        close();
+        resolve({
+          id: modeButton.dataset.mode,
+          direction: parseInt(modeButton.dataset.direction, 10),
+        });
+      }
+    });
+
+    overlay.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+        resolve(null);
+      }
+    });
+
+    document.body.appendChild(overlay);
+  });
+}
+
 const MINDMAP_ATOM_SELECTION_EVENTS = new Set(["pointerdown", "mousedown", "click"]);
 
 export function flushMindMapEdits(root) {
@@ -85,8 +140,8 @@ export const MindMap = Node.create({
       viewport.className = "mindmap-diagram__viewport";
       content.className = "mindmap-diagram__content";
       dragToggle.className = "mindmap-diagram__drag-toggle";
-      dragToggle.title = "拖拽模式";
-      dragToggle.innerHTML = '<span aria-hidden="true">🖐️</span>';
+      dragToggle.title = "编辑模式";
+      dragToggle.innerHTML = '<span aria-hidden="true">🖊</span>';
       wrapper.dataset.mindmap = node.attrs.raw || serializeMindMapData(node.attrs.data);
       viewport.appendChild(content);
       wrapper.appendChild(dragToggle);
@@ -99,6 +154,7 @@ export const MindMap = Node.create({
       let mind = null;
       let lastRenderedData = wrapper.dataset.mindmap;
       let isDragMode = false;
+      let layoutFrame = 0;
 
       const toggleDragMode = () => {
         isDragMode = !isDragMode;
@@ -143,6 +199,8 @@ export const MindMap = Node.create({
 
       const destroyMind = () => {
         flushMindMapEdits(content);
+        cancelAnimationFrame(layoutFrame);
+        layoutFrame = 0;
         removeListeners();
         if (typeof mind?.destroy === "function") {
           mind.destroy();
@@ -206,6 +264,11 @@ export const MindMap = Node.create({
             overflowHidden: !isDragMode,
           });
           mind.init(normalized.data);
+          layoutFrame = requestAnimationFrame(() => {
+            if (!mind) return;
+            mind.refresh?.();
+            mind.linkDiv?.();
+          });
           if (mind.bus?.addListener) {
             mind.bus.addListener("operation", syncData);
           }

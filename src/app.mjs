@@ -57,6 +57,7 @@ import {
   Workflow,
   Wand2,
   X,
+  Plus,
   createIcons,
 } from "lucide";
 
@@ -229,6 +230,7 @@ const lucideIcons = {
   Workflow,
   Wand2,
   X,
+  Plus,
   Underline: UnderlineIcon,
   Superscript: SuperscriptIcon,
   Subscript: SubscriptIcon,
@@ -377,7 +379,7 @@ function renderWelcome() {
       </video>
       <section class="welcome-hero">
         <div class="welcome-hero__content">
-          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.1.8</span></p>
+          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.2.0</span></p>
           <h1>PME</h1>
           <p class="welcome-hero__copy">为长文档、图表、公式和素材而生的本地 Markdown 工作台。</p>
           <div class="welcome-hero__actions">
@@ -403,7 +405,7 @@ function renderWelcome() {
             </div>
           </div>
         </div>
-        <div class="welcome-hero__note">Typora 风格编辑体验，保留 Markdown 的开放文件结构。</div>
+        
       </section>
     </main>
   `;
@@ -486,29 +488,33 @@ function renderShell() {
           ${toolButton("align-right", "AlignRight", "右对齐")}
           ${toolButton("align-justify", "AlignJustify", "两端对齐")}
         </div>
-        <div class="tool-group">
-          <span>格式</span>
-          ${toolButton("bold", "Bold", "加粗")}
-          ${toolButton("italic", "Italic", "斜体")}
-          ${toolButton("underline", "Underline", "下划线")}
-          ${toolButton("strike", "Strikethrough", "删除线")}
-          ${toolButton("text-color", "Palette", "文字颜色")}
-          ${toolButton("highlight-color", "Highlighter", "高亮")}
-          ${toolButton("superscript", "Superscript", "上标")}
-          ${toolButton("subscript", "Subscript", "下标")}
-          ${toolButton("link", "Link", editor?.isActive("link") ? "取消链接" : "链接", editor?.isActive("link") || false)}
+        <div class="tool-group tool-group--dropdown">
+          <span class="tool-group-label">格式</span>
+          <div class="tool-group-buttons">
+            ${toolButton("bold", "Bold", "加粗")}
+            ${toolButton("italic", "Italic", "斜体")}
+            ${toolButton("underline", "Underline", "下划线")}
+            ${toolButton("strike", "Strikethrough", "删除线")}
+            <div class="format-panel" data-format-panel>
+              <div class="format-panel__row">
+                ${toolButton("text-color", "Palette", "文字颜色")}
+                ${toolButton("highlight-color", "Highlighter", "高亮")}
+                ${toolButton("superscript", "Superscript", "上标")}
+                ${toolButton("subscript", "Subscript", "下标")}
+              </div>
+              <div class="format-panel__row">
+                ${toolButton("bullet-list", "List", "无序列表")}
+                ${toolButton("ordered-list", "ListOrdered", "有序列表")}
+                ${toolButton("task-list", "ListChecks", "任务列表")}
+                ${toolButton("blockquote", "Quote", "引用")}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="tool-group">
-          <span>插入</span>
-          ${toolButton("bullet-list", "List", "无序列表")}
-          ${toolButton("ordered-list", "ListOrdered", "有序列表")}
-          ${toolButton("task-list", "ListChecks", "任务列表")}
-          ${toolButton("blockquote", "Quote", "引用")}
-          ${toolButton("horizontal-rule", "Minus", "分割线")}
-          ${toolButton("code-block", "FileCode", "代码块")}
-          ${toolButton("code", "Code", "行内代码")}
-          ${toolButton("table", "Table", "表格")}
-          ${toolButton("image", "Image", "图片")}
+        <div class="tool-group tool-group--dropdown">
+          <span class="tool-group-label">插入</span>
+          <div class="tool-group-buttons">
+            ${toolButton("image", "Image", "图片")}
           <button class="icon-button" data-command="video" title="视频" aria-label="视频">
             <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
               <path d="M624.32 484.48a32 32 0 0 1 0 55.04l-160 96A32 32 0 0 1 416 608V416a32 32 0 0 1 48.32-27.52zM480 472.64v78.72L545.92 512z"/>
@@ -518,30 +524,38 @@ function renderShell() {
               <path d="M800 448a32 32 0 0 1 0-64h128a32 32 0 0 1 0 64z m0 192a32 32 0 0 1 0-64h128a32 32 0 0 1 0 64z"/>
             </svg>
           </button>
-          ${toolButton("markdown-link", "FileInput", "插入 Markdown 文件")}
-          ${toolButton("formula", "Sigma", "块级公式")}
-          <button class="icon-button" data-command="inline-formula" title="行内公式" aria-label="行内公式">
-            <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
-              <path d="M413.866667 189.44c36.650667 0 75.264 6.656 115.797333 19.968l-23.338667 85.418667-10.453333-3.413334c-23.893333-7.424-43.562667-11.178667-59.136-11.178666-13.610667 0-23.722667 4.309333-30.421333 12.928-4.437333 5.546667-9.002667 20.138667-13.738667 43.733333l-6.656 31.274667h84.565333l-18.346666 87.466666H367.616L293.418667 810.666667H173.824l74.197333-354.986667H181.333333l18.346667-87.509333h66.645333l9.6-45.44 2.304-10.794667c6.912-31.317333 13.525333-52.864 19.754667-64.597333 9.472-17.792 23.552-31.872 42.325333-42.282667 18.730667-10.410667 43.264-15.658667 73.514667-15.658667zM555.392 512l64.426667 95.957333L683.008 512h75.093333l-99.882666 145.066667L768 810.666667h-78.208l-71.253333-103.253334L547.114667 810.666667H469.333333l109.781334-155.861334L479.616 512h75.818667z"/>
-            </svg>
-          </button>
-          ${toolButton("mermaid", "Workflow", "Mermaid")}
-          <button class="icon-button" data-command="mindmap" title="思维导图" aria-label="思维导图">
-            <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
-              <path d="M388.7 542.88c-16.57 0-30-13.43-30-30s13.43-30 30-30c52.3 0 94.85-42.55 94.85-94.85v-67.81c0-40.96 15.84-79.58 44.6-108.74 28.76-29.16 67.16-45.53 108.12-46.1l3.43-0.05c16.57-0.22 30.18 13.02 30.41 29.58 0.23 16.57-13.02 30.18-29.58 30.41l-3.43 0.05c-51.58 0.71-93.55 43.25-93.55 94.84v67.81c0 85.4-69.47 154.86-154.85 154.86z"/>
-              <path d="M640.12 860.42h-0.42l-3.43-0.05c-40.96-0.56-79.36-16.93-108.12-46.09s-44.6-67.78-44.6-108.74v-67.8c0-52.3-42.55-94.85-94.85-94.85-16.57 0-30-13.43-30-30s13.43-30 30-30c85.38 0 154.85 69.47 154.85 154.85v67.8c0 51.59 41.96 94.13 93.55 94.84l3.43 0.05c16.57 0.23 29.81 13.84 29.59 30.41-0.24 16.42-13.62 29.58-30 29.58z"/>
-              <path d="M640.11 542.88H388.7c-16.57 0-30-13.43-30-30s13.43-30 30-30h251.42c16.57 0 30 13.43 30 30-0.01 16.57-13.44 30-30.01 30z"/>
-              <path d="M343.89 638.95H137.78c-38.6 0-70-31.4-70-70V456.81c0-38.6 31.4-70 70-70h206.11c38.6 0 70 31.4 70 70v112.13c0 38.6-31.4 70.01-70 70.01zM137.78 446.81c-5.51 0-10 4.49-10 10v112.13c0 5.51 4.49 10 10 10h206.11c5.51 0 10-4.49 10-10V456.81c0-5.51-4.49-10-10-10H137.78zM830.16 316.96h-93.98c-69.51 0-126.07-56.55-126.07-126.07S666.66 64.83 736.18 64.83h93.98c69.51 0 126.07 56.55 126.07 126.07-0.01 69.5-56.56 126.06-126.07 126.06z m-93.98-192.13c-36.43 0-66.07 29.64-66.07 66.07s29.64 66.07 66.07 66.07h93.98c36.43 0 66.07-29.64 66.07-66.07s-29.64-66.07-66.07-66.07h-93.98zM830.16 638.95h-93.98c-69.51 0-126.07-56.55-126.07-126.07 0-69.51 56.55-126.07 126.07-126.07h93.98c69.51 0 126.07 56.55 126.07 126.07-0.01 69.51-56.56 126.07-126.07 126.07z m-93.98-192.14c-36.43 0-66.07 29.64-66.07 66.07 0 36.43 29.64 66.07 66.07 66.07h93.98c36.43 0 66.07-29.64 66.07-66.07 0-36.43-29.64-66.07-66.07-66.07h-93.98z"/>
-              <path d="M830.16 959.17h-93.98c-69.51 0-126.07-56.55-126.07-126.07s56.55-126.07 126.07-126.07h93.98c69.51 0 126.07 56.55 126.07 126.07s-56.56 126.07-126.07 126.07z m-93.98-192.13c-36.43 0-66.07 29.64-66.07 66.07s29.64 66.07 66.07 66.07h93.98c36.43 0 66.07-29.64 66.07-66.07s-29.64-66.07-66.07-66.07h-93.98z"/>
-            </svg>
-          </button>
-          ${toolButton("emoji", "Smile", "表情")}
-          <button class="icon-button" data-command="details" title="折叠块" aria-label="折叠块">
-            <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
-              <path d="M867.1 141.17H156.08c-17.67 0-32 14.33-32 32s14.33 32 32 32H867.1c17.67 0 32-14.33 32-32s-14.33-32-32-32zM867.92 367.52H403.2c-17.67 0-32 14.33-32 32s14.33 32 32 32h464.73c17.67 0 32-14.33 32-32s-14.33-32-32.01-32zM867.92 573.87H403.2c-17.67 0-32 14.33-32 32s14.33 32 32 32h464.73c17.67 0 32-14.33 32-32s-14.33-32-32.01-32zM867.92 800.22H156.9c-17.67 0-32 14.33-32 32s14.33 32 32 32h711.02c17.67 0 32-14.33 32-32 0-17.68-14.32-32-32-32zM137.47 637.87V367.52l174.54 148.15z"/>
-            </svg>
-          </button>
+          ${toolButton("table", "Table", "表格")}
+          ${toolButton("link", "Link", editor?.isActive("link") ? "取消链接" : "链接", editor?.isActive("link") || false)}
+          <div class="insert-panel" data-insert-panel>
+            <div class="insert-panel__row">
+              ${toolButton("code", "Code", "行内代码")}
+              ${toolButton("code-block", "FileCode", "代码块")}
+              ${toolButton("formula", "Sigma", "块级公式")}
+              <button class="icon-button" data-command="inline-formula" title="行内公式" aria-label="行内公式">
+                <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
+                  <path d="M413.866667 189.44c36.650667 0 75.264 6.656 115.797333 19.968l-23.338667 85.418667-10.453333-3.413334c-23.893333-7.424-43.562667-11.178667-59.136-11.178666-13.610667 0-23.722667 4.309333-30.421333 12.928-4.437333 5.546667-9.002667 20.138667-13.738667 43.733333l-6.656 31.274667h84.565333l-18.346666 87.466666H367.616L293.418667 810.666667H173.824l74.197333-354.986667H181.333333l18.346667-87.509333h66.645333l9.6-45.44 2.304-10.794667c6.912-31.317333 13.525333-52.864 19.754667-64.597333 9.472-17.792 23.552-31.872 42.325333-42.282667 18.730667-10.410667 43.264-15.658667 73.514667-15.658667zM555.392 512l64.426667 95.957333L683.008 512h75.093333l-99.882666 145.066667L768 810.666667h-78.208l-71.253333-103.253334L547.114667 810.666667H469.333333l109.781334-155.861334L479.616 512h75.818667z"/>
+                </svg>
+              </button>
+              ${toolButton("mermaid", "Workflow", "Mermaid")}
+            </div>
+            <div class="insert-panel__row">
+              <button class="icon-button" data-command="mindmap" title="思维导图" aria-label="思维导图">
+                <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
+                  <path d="M388.7 542.88c-16.57 0-30-13.43-30-30s13.43-30 30-30c52.3 0 94.85-42.55 94.85-94.85v-67.81c0-40.96 15.84-79.58 44.6-108.74 28.76-29.16 67.16-45.53 108.12-46.1l3.43-0.05c16.57-0.22 30.18 13.02 30.41 29.58 0.23 16.57-13.02 30.18-29.58 30.41l-3.43 0.05c-51.58 0.71-93.55 43.25-93.55 94.84v67.81c0 85.4-69.47 154.86-154.85 154.86z"/>
+                  <path d="M640.12 860.42h-0.42l-3.43-0.05c-40.96-0.56-79.36-16.93-108.12-46.09s-44.6-67.78-44.6-108.74v-67.8c0-52.3-42.55-94.85-94.85-94.85-16.57 0-30-13.43-30-30s13.43-30 30-30c85.38 0 154.85 69.47 154.85 154.85v67.8c0 51.59 41.96 94.13 93.55 94.84l3.43 0.05c16.57 0.23 29.81 13.84 29.59 30.41-0.24 16.42-13.62 29.58-30 29.58z"/>
+                  <path d="M640.11 542.88H388.7c-16.57 0-30-13.43-30-30s13.43-30 30-30h251.42c16.57 0 30 13.43 30 30-0.01 16.57-13.44 30-30.01 30z"/>
+                  <path d="M343.89 638.95H137.78c-38.6 0-70-31.4-70-70V456.81c0-38.6 31.4-70 70-70h206.11c38.6 0 70 31.4 70 70v112.13c0 38.6-31.4 70.01-70 70.01zM137.78 446.81c-5.51 0-10 4.49-10 10v112.13c0 5.51 4.49 10 10 10h206.11c5.51 0 10-4.49 10-10V456.81c0-5.51-4.49-10-10-10H137.78zM830.16 316.96h-93.98c-69.51 0-126.07-56.55-126.07-126.07S666.66 64.83 736.18 64.83h93.98c69.51 0 126.07 56.55 126.07 126.07-0.01 69.5-56.56 126.06-126.07 126.06z m-93.98-192.13c-36.43 0-66.07 29.64-66.07 66.07s29.64 66.07 66.07 66.07h93.98c36.43 0 66.07-29.64 66.07-66.07s-29.64-66.07-66.07-66.07h-93.98zM830.16 638.95h-93.98c-69.51 0-126.07-56.55-126.07-126.07 0-69.51 56.55-126.07 126.07-126.07h93.98c69.51 0 126.07 56.55 126.07 126.07-0.01 69.51-56.56 126.07-126.07 126.07z m-93.98-192.14c-36.43 0-66.07 29.64-66.07 66.07 0 36.43 29.64 66.07 66.07 66.07h93.98c36.43 0 66.07-29.64 66.07-66.07 0-36.43-29.64-66.07-66.07-66.07h-93.98z"/>
+                  <path d="M830.16 959.17h-93.98c-69.51 0-126.07-56.55-126.07-126.07s56.55-126.07 126.07-126.07h93.98c69.51 0 126.07 56.55 126.07 126.07s-56.56 126.07-126.07 126.07z m-93.98-192.13c-36.43 0-66.07 29.64-66.07 66.07s29.64 66.07 66.07 66.07h93.98c36.43 0 66.07-29.64 66.07-66.07s-29.64-66.07-66.07-66.07h-93.98z"/>
+                </svg>
+              </button>
+              ${toolButton("emoji", "Smile", "表情")}
+              ${toolButton("horizontal-rule", "Minus", "分割线")}
+              ${toolButton("markdown-link", "FileInput", "插入 Markdown 文件")}
+            </div>
+          </div>
+          </div>
         </div>
+        <span class="tool-group-label tool-group-label--divider">AI</span>
         <button class="icon-button ai-magic-button" data-action="open-ai-assistant" title="AI 助手" aria-label="AI 助手">
           ${icon("Wand2")}
         </button>
@@ -650,15 +664,14 @@ function renderAppMenu() {
         menuItem("align-justify", "两端对齐"),
       ]),
       menuSubmenu("列表", [
-        menuSubmenu("有序列表", [
-          menuItem("ordered-list", "数字编号"),
-          menuItem("ordered-list-roman", "罗马数字"),
-          menuItem("ordered-list-alpha", "小写字母"),
-          menuItem("ordered-list-alpha-upper", "大写字母"),
+          menuSubmenu("有序列表", [
+            menuItem("ordered-list", "数字编号"),
+            menuItem("ordered-list-roman", "罗马数字"),
+            menuItem("ordered-list-alpha", "小写字母"),
+            menuItem("ordered-list-alpha-upper", "大写字母"),
+          ]),
+          menuItem("bullet-list", "无序列表"),
         ]),
-        menuItem("bullet-list", "无序列表"),
-        menuItem("task-list", "任务列表"),
-      ]),
       menuItem("blockquote", "引用"),
       menuSubmenu("警告框", [
         menuItem("callout-note", "提醒内容"),
@@ -685,14 +698,14 @@ function renderAppMenu() {
       menuItem("italic", "斜体", "Ctrl+I"),
       menuItem("underline", "下划线", "Ctrl+U"),
       menuItem("strike", "删除线", "Ctrl+Shift+5"),
-      menuItem("code", "行内代码"),
       menuSeparator(),
       menuItem("text-color", "文字颜色", "Ctrl+Shift+C"),
       menuItem("highlight-color", "背景高亮", "Ctrl+Shift+H"),
       menuItem("superscript", "上标", "Ctrl+Shift+Alt++"),
       menuItem("subscript", "下标", "Ctrl+Shift+Alt+-"),
       menuSeparator(),
-      menuItem("link", "超链接", "Ctrl+K", editor?.isActive("link") || false),
+      menuItem("task-list", "任务列表"),
+      menuItem("details", "折叠详情块"),
       menuSeparator(),
       menuItem("clear-format", "清除格式", "Ctrl+\\"),
     ]],
@@ -707,9 +720,9 @@ function renderAppMenu() {
       menuItem("mermaid", "Mermaid"),
       menuItem("mindmap", "思维导图"),
       menuItem("code-block", "代码块"),
-      menuItem("details", "折叠详情块"),
+      menuItem("code", "行内代码"),
+      menuItem("emoji", "表情"),
       menuItem("horizontal-rule", "分割线"),
-      menuItem("task-list", "任务列表"),
     ]],
     ["视图", [
       menuItem("toggle-sidebar", "显示侧边栏", null, state.showSidebar),
@@ -1063,12 +1076,12 @@ function bindEvents() {
       event.preventDefault();
     });
     button.addEventListener("click", () => {
-      runEditorCommand(button.dataset.command);
-      if (button.closest("[data-table-bubble]")) {
-        closeTableBubbleMenu();
-        requestAnimationFrame(() => updateTableBubbleToolbar());
-      }
-    });
+        runEditorCommand(button.dataset.command);
+        if (button.closest("[data-table-bubble]")) {
+          closeTableBubbleMenu();
+          requestAnimationFrame(() => updateTableBubbleToolbar());
+        }
+      });
   });
   bindTableBubbleEvents();
 
@@ -2041,6 +2054,9 @@ function isObjectInteractionTarget(target) {
     ".tiptap-mathematics-render",
     ".mermaid-diagram",
     ".mermaid-diagram__controls",
+    ".mindmap-diagram",
+    ".mindmap-diagram__viewport",
+    ".drag-handle",
     "#tiptapEditor .ProseMirror img",
   ].join(",")));
 }
@@ -2668,6 +2684,7 @@ function mountEditor() {
       mindMap: MindMap,
       assetImage: AssetImage,
       bubbleMenuElement: document.querySelector("#bubble-menu") || createBubbleMenuElement(),
+      getEditor: () => editor,
       onBlockDragStart: () => { isBlockDragInProgress = true; },
       onBlockDragEnd: () => { isBlockDragInProgress = false; },
       onBlockDragNodeChange: (pos) => { blockDragNodePos = pos; },
@@ -3753,9 +3770,14 @@ async function openHelpDocument() {
       const { invoke } = await import("@tauri-apps/api/core");
       markdown = await invoke("read_readme_file");
     } else {
-      const response = await fetch("README.md");
+      const response = await fetch("assets/PME使用说明书.md");
       if (response.ok) {
         markdown = await response.text();
+      } else {
+        const fallback = await fetch("README.md");
+        if (fallback.ok) {
+          markdown = await fallback.text();
+        }
       }
     }
   } catch {

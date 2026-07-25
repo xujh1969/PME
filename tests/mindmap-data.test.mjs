@@ -26,6 +26,14 @@ test("normalizes valid mindmap JSON", () => {
   assert.equal(result.data.nodeData.topic, "A");
 });
 
+test("creates default mind maps in right-side mode with connected children", () => {
+  const data = createDefaultMindMapData();
+
+  assert.equal(data.direction, 1);
+  assert.equal(data.nodeData.direction, 1);
+  assert.deepEqual(data.nodeData.children.map((child) => child.direction), [1, 1]);
+});
+
 test("preserves serializable Mind Elixir fields while removing parent references", () => {
   const result = normalizeMindMapData({
     direction: 2,

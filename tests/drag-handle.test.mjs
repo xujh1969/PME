@@ -19,3 +19,12 @@ test("renders the drag handle as a pointer-driven non-button element", () => {
   assert.equal(dragHandleConfig.includes('setAttribute("role", "button")'), true);
   assert.equal(dragHandleConfig.includes('document.createElement("button")'), false);
 });
+
+test("keeps the drag handle visible while the pointer moves onto it", () => {
+  const dragHandleConfig = extensionsSource.match(/DragHandle\.configure\(\{[\s\S]+?\n    \}\),/)?.[0] || "";
+
+  assert.equal(dragHandleConfig.includes('element.addEventListener("mouseenter"'), true);
+  assert.equal(dragHandleConfig.includes("options.getEditor?.()?.commands.lockDragHandle?.()"), true);
+  assert.equal(dragHandleConfig.includes('element.addEventListener("mouseleave"'), true);
+  assert.equal(dragHandleConfig.includes("options.getEditor?.()?.commands.unlockDragHandle?.()"), true);
+});

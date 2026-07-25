@@ -79,6 +79,17 @@ test("keeps app icon sizing from leaking into rendered Mermaid SVGs", () => {
   assert.equal(styles.includes(".ProseMirror .mermaid-diagram__content > svg"), true);
 });
 
+test("keeps Mermaid and mind map blocks extended beyond editor content column", () => {
+  for (const selector of [".ProseMirror .mermaid-diagram", ".ProseMirror .mindmap-diagram"]) {
+    const escapedSelector = selector.replaceAll(".", "\\.");
+    const rule = styles.match(new RegExp(`${escapedSelector}\\s*\\{[^}]+\\}`))?.[0] || "";
+
+    assert.equal(rule.includes("width: calc(100% + 96px);"), true);
+    assert.equal(rule.includes("margin: 18px -48px;"), true);
+    assert.equal(rule.includes("overflow: visible;"), true);
+  }
+});
+
 test("uses compact form controls inside editor dialogs", () => {
   const compactRule = styles.match(/\.image-modal__url-row input,[\s\S]+?\.code-language-modal__body select\s*\{[^}]+\}/)?.[0] || "";
 

@@ -31,7 +31,6 @@
   min-height: 0;
 }
 
-.toolbar,
 .statusbar {
   overflow: hidden;
 }
@@ -63,7 +62,7 @@
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  z-index: 40;
+  z-index: 2000;
   min-width: 220px;
   display: none;
   padding: 8px;
@@ -142,7 +141,7 @@
   position: absolute;
   top: 0;
   left: 100%;
-  z-index: 50;
+  z-index: 2001;
   min-width: 200px;
   max-width: 500px;
   width: fit-content;
@@ -279,6 +278,72 @@
   color: var(--color-stone);
   font-size: 12px;
   white-space: nowrap;
+}
+
+.tool-group-label {
+  padding: 4px 8px;
+  color: var(--color-stone);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tool-group--dropdown {
+  position: relative;
+  z-index: 100;
+}
+
+.tool-group-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.insert-panel,
+.format-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1000;
+  display: none;
+  padding: 8px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  box-shadow: var(--shadow-modal);
+}
+
+.tool-group--dropdown:hover::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 4px;
+}
+
+.tool-group--dropdown:hover .insert-panel,
+.tool-group--dropdown:hover .format-panel {
+  display: block;
+}
+
+.insert-panel__row,
+.format-panel__row {
+  display: flex;
+  gap: 4px;
+}
+
+.insert-panel__row + .insert-panel__row,
+.format-panel__row + .format-panel__row {
+  margin-top: 4px;
+}
+
+.tool-group-label--divider {
+  padding: 0 6px;
+  color: var(--color-slate);
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
 }
 
 .save-button {

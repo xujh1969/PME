@@ -177,6 +177,60 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true, 
   });
 }
 
+const DIAGRAM_ICONS = {
+  flowchart: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2" width="12" height="8" rx="1"/><rect x="34" y="2" width="12" height="8" rx="1"/><rect x="18" y="26" width="12" height="8" rx="1"/><path d="M14 6 L34 6"/><path d="M24 10 L24 26"/></svg>`,
+  sequence: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2" width="12" height="6" rx="1"/><rect x="34" y="2" width="12" height="6" rx="1"/><rect x="18" y="2" width="12" height="6" rx="1"/><path d="M8 8 L8 34" stroke-dasharray="2 2"/><path d="M24 8 L24 34" stroke-dasharray="2 2"/><path d="M40 8 L40 34" stroke-dasharray="2 2"/><path d="M8 14 L24 14" marker-end="url(#seq-arrow)"/><path d="M24 22 L40 22" marker-end="url(#seq-arrow)"/><path d="M40 30 L24 30" marker-end="url(#seq-arrow)"/><defs><marker id="seq-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs></svg>`,
+  gantt: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 2 L46 2 M2 2 L2 34"/><rect x="4" y="6" width="20" height="4" fill="currentColor" opacity="0.3" stroke="none"/><rect x="10" y="12" width="28" height="4" fill="currentColor" opacity="0.3" stroke="none"/><rect x="6" y="18" width="18" height="4" fill="currentColor" opacity="0.3" stroke="none"/><rect x="16" y="24" width="24" height="4" fill="currentColor" opacity="0.3" stroke="none"/></svg>`,
+  journey: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="6" cy="18" r="3"/><circle cx="18" cy="8" r="3"/><circle cx="30" cy="28" r="3"/><circle cx="42" cy="14" r="3"/><path d="M9 18 L15 10" marker-end="url(#j-arrow)"/><path d="M21 8 L27 26" marker-end="url(#j-arrow)"/><path d="M33 28 L39 16" marker-end="url(#j-arrow)"/><defs><marker id="j-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs></svg>`,
+  state: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="18" r="5"/><rect x="20" y="13" width="10" height="10" rx="5"/><circle cx="40" cy="18" r="5"/><path d="M13 18 L20 18" marker-end="url(#s-arrow)"/><path d="M30 18 L35 18" marker-end="url(#s-arrow)"/><defs><marker id="s-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs></svg>`,
+  er: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="13" width="12" height="10" rx="1"/><rect x="34" y="13" width="12" height="10" rx="1"/><polygon points="24,8 30,18 24,28 18,18"/><path d="M14 18 L18 18"/><path d="M30 18 L34 18"/></svg>`,
+  class: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="14" y="4" width="20" height="28"/><path d="M14 12 L34 12"/><path d="M14 20 L34 20"/><path d="M18 8 L30 8"/><path d="M18 16 L30 16"/><path d="M18 24 L30 24"/></svg>`,
+  git: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="18" r="3" fill="currentColor"/><circle cx="24" cy="10" r="3"/><circle cx="24" cy="26" r="3"/><circle cx="40" cy="18" r="3" fill="currentColor"/><path d="M8 18 Q16 18 24 10"/><path d="M24 10 L40 18"/><path d="M24 26 L40 18"/></svg>`,
+  pie: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="24" cy="18" r="12"/><path d="M24 18 L24 6" stroke-width="1.5"/><path d="M24 18 L35 24" stroke-width="1.5"/><path d="M24 18 L13 24" stroke-width="1.5"/><path d="M24 6 A12 12 0 0 1 35 24" fill="currentColor" opacity="0.3" stroke="none"/></svg>`,
+  mindmap: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="24" cy="18" r="4" fill="currentColor"/><circle cx="6" cy="8" r="3"/><circle cx="6" cy="28" r="3"/><circle cx="42" cy="8" r="3"/><circle cx="42" cy="28" r="3"/><path d="M20 18 L9 8"/><path d="M20 18 L9 28"/><path d="M28 18 L39 8"/><path d="M28 18 L39 28"/></svg>`,
+  requirement: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="6" width="14" height="24" rx="7"/><rect x="32" y="6" width="14" height="24" rx="7"/><path d="M8 18 L8 14"/><path d="M16 18 L32 18" marker-end="url(#r-arrow)"/><path d="M40 18 L40 22" marker-end="url(#r-arrow)"/><defs><marker id="r-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs></svg>`,
+  c4: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2" width="44" height="32" rx="2"/><rect x="6" y="6" width="20" height="12" rx="1"/><rect x="30" y="6" width="12" height="12" rx="1"/><rect x="6" y="22" width="14" height="8" rx="1"/><rect x="24" y="22" width="18" height="8" rx="1"/></svg>`,
+  kanban: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2" width="44" height="32" rx="2"/><path d="M17 2 L17 34"/><path d="M31 2 L31 34"/><rect x="5" y="6" width="9" height="6" rx="1" fill="currentColor" opacity="0.3" stroke="none"/><rect x="5" y="14" width="9" height="6" rx="1" fill="currentColor" opacity="0.3" stroke="none"/><rect x="20" y="6" width="9" height="6" rx="1" fill="currentColor" opacity="0.3" stroke="none"/><rect x="20" y="14" width="9" height="6" rx="1" fill="currentColor" opacity="0.3" stroke="none"/><rect x="34" y="6" width="9" height="6" rx="1" fill="currentColor" opacity="0.3" stroke="none"/></svg>`,
+  timeline: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 18 L44 18" marker-end="url(#t-arrow)"/><circle cx="10" cy="18" r="3" fill="currentColor"/><circle cx="22" cy="18" r="3" fill="currentColor"/><circle cx="34" cy="18" r="3" fill="currentColor"/><rect x="6" y="4" width="8" height="8" rx="1"/><rect x="18" y="24" width="8" height="8" rx="1"/><rect x="30" y="4" width="8" height="8" rx="1"/><defs><marker id="t-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs></svg>`,
+  architecture: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="4" width="44" height="8" rx="1"/><rect x="2" y="16" width="20" height="8" rx="1"/><rect x="26" y="16" width="20" height="8" rx="1"/><rect x="2" y="28" width="44" height="6" rx="1"/><path d="M12 12 L12 16"/><path d="M36 12 L36 16"/><path d="M22 24 L22 28"/><path d="M26 24 L26 28"/></svg>`,
+  xy: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 4 L6 30 L44 30"/><path d="M6 26 L14 20 L22 22 L30 14 L38 10" stroke-width="2"/><rect x="14" y="22" width="3" height="8" fill="currentColor" opacity="0.5" stroke="none"/><rect x="22" y="20" width="3" height="10" fill="currentColor" opacity="0.5" stroke="none"/><rect x="30" y="14" width="3" height="16" fill="currentColor" opacity="0.5" stroke="none"/></svg>`,
+  network: `<svg viewBox="0 0 48 36" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="24" cy="18" r="3" fill="currentColor"/><circle cx="8" cy="8" r="3"/><circle cx="40" cy="8" r="3"/><circle cx="8" cy="28" r="3"/><circle cx="40" cy="28" r="3"/><circle cx="24" cy="4" r="2"/><circle cx="24" cy="32" r="2"/><path d="M11 8 L21 16"/><path d="M27 16 L37 8"/><path d="M11 28 L21 20"/><path d="M27 20 L37 28"/><path d="M24 7 L24 15"/><path d="M24 21 L24 30"/></svg>`,
+};
+
+const DIAGRAM_TYPES = [
+  { id: "flowchart", label: "流程图", type: "flowchart" },
+  { id: "sequence", label: "时序图", type: "sequenceDiagram" },
+  { id: "gantt", label: "甘特图", type: "gantt" },
+  { id: "journey", label: "用户旅程图", type: "journey" },
+  { id: "state", label: "状态图", type: "stateDiagram-v2" },
+  { id: "er", label: "ER实体关系图", type: "erDiagram" },
+  { id: "class", label: "UML类图", type: "classDiagram" },
+  { id: "git", label: "Git分支图", type: "gitGraph" },
+  { id: "pie", label: "饼图", type: "pie" },
+  { id: "mindmap", label: "思维导图", type: "mindmap" },
+  { id: "requirement", label: "需求图", type: "requirementDiagram" },
+  { id: "c4", label: "C4架构图", type: "C4Model" },
+  { id: "kanban", label: "看板图", type: "kanban" },
+  { id: "timeline", label: "时间线图", type: "timeline" },
+  { id: "architecture", label: "架构图", type: "architecture" },
+  { id: "xy", label: "XY数据图表", type: "xyChart" },
+  { id: "network", label: "力导向网络图", type: "networkGraph" },
+  { id: null, label: "", type: null },
+];
+
+function createDiagramGrid() {
+  return DIAGRAM_TYPES.map((item) => {
+    if (!item.id) {
+      return `<div class="mermaid-ai-modal__grid-item mermaid-ai-modal__grid-item--disabled"></div>`;
+    }
+    const icon = DIAGRAM_ICONS[item.id] || "";
+    return `<button type="button" class="mermaid-ai-modal__grid-item" data-diagram-type="${item.id}" data-diagram-syntax="${item.type}" aria-label="${item.label}">
+      <span class="mermaid-ai-modal__grid-item-icon">${icon}</span>
+      <span class="mermaid-ai-modal__grid-item-label">${item.label}</span>
+    </button>`;
+  }).join("");
+}
+
 export function openMermaidAiModal({ onChunk }) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
@@ -185,15 +239,33 @@ export function openMermaidAiModal({ onChunk }) {
       <div class="text-modal__dialog mermaid-ai-modal" role="dialog" aria-modal="true" aria-label="AI生成Mermaid图表">
         <header class="text-modal__header"><strong>AI生成Mermaid图表</strong><button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button></header>
         <section class="mermaid-ai-modal__body">
-          <label><span>图表描述</span><textarea rows="4" data-mermaid-ai-input placeholder="TCP/IP建立连接发送数据再断开连接的交互流程(序列图)"></textarea></label>
+          <div class="mermaid-ai-modal__grid-section">
+            <span class="mermaid-ai-modal__grid-title">选择图表类型</span>
+            <div class="mermaid-ai-modal__grid">${createDiagramGrid()}</div>
+          </div>
+          <div class="mermaid-ai-modal__input-section">
+            <label><span>图表描述</span><textarea rows="6" data-mermaid-ai-input placeholder="请输入图表描述，例如：TCP/IP的交互过程"></textarea></label>
+          </div>
         </section>
-        <footer class="text-modal__footer"><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
+        <footer class="text-modal__footer"><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">生成</button></footer>
       </div>`;
 
     const input = overlay.querySelector("[data-mermaid-ai-input]");
     const applyButton = overlay.querySelector("[data-modal-action='apply']");
+    const gridItems = overlay.querySelectorAll("[data-diagram-type]");
+    let selectedType = null;
+    let selectedSyntax = null;
 
     const close = () => { overlay.remove(); showTableBubbleToolbar(); };
+
+    gridItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        gridItems.forEach((i) => i.classList.remove("is-selected"));
+        item.classList.add("is-selected");
+        selectedType = item.dataset.diagramType;
+        selectedSyntax = item.dataset.diagramSyntax;
+      });
+    });
 
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay || event.target.dataset.modalAction === "cancel") { close(); resolve(null); }
@@ -210,20 +282,50 @@ export function openMermaidAiModal({ onChunk }) {
     async function handleApply() {
       const description = input.value.trim();
       if (!description) return;
+      if (!selectedType) {
+        return;
+      }
 
       applyButton.disabled = true;
       close();
 
       try {
-        const prompt = `请根据以下描述生成Mermaid流程图代码，输出标准的Mermaid语法，不需要任何解释文字，直接输出代码内容。
+        const diagramTypeMap = {
+          flowchart: { name: "流程图", syntax: "flowchart" },
+          sequence: { name: "时序图", syntax: "sequenceDiagram" },
+          gantt: { name: "甘特图", syntax: "gantt" },
+          journey: { name: "用户旅程图", syntax: "journey" },
+          state: { name: "状态图", syntax: "stateDiagram-v2" },
+          er: { name: "ER实体关系图", syntax: "erDiagram" },
+          class: { name: "UML类图", syntax: "classDiagram" },
+          git: { name: "Git分支图", syntax: "gitGraph" },
+          pie: { name: "饼图", syntax: "pie" },
+          mindmap: { name: "思维导图", syntax: "mindmap" },
+          requirement: { name: "需求图", syntax: "requirementDiagram" },
+          c4: { name: "C4架构图", syntax: "C4Model" },
+          kanban: { name: "看板图", syntax: "kanban" },
+          timeline: { name: "时间线图", syntax: "timeline" },
+          architecture: { name: "架构图", syntax: "architecture" },
+          xy: { name: "XY数据图表", syntax: "xyChart" },
+          network: { name: "力导向网络图", syntax: "networkGraph" },
+        };
+
+        const diagramInfo = diagramTypeMap[selectedType];
+        const prompt = `你是一个专业的Mermaid图表生成助手。请根据以下描述生成标准的Mermaid${diagramInfo.name}代码。
 
 描述：${description}
 
 要求：
-1. 输出标准的Mermaid流程图代码（推荐使用graph TD或flowchart TD）
-2. 使用清晰的节点命名和连线
-3. 添加适当的注释说明关键步骤
-4. 直接输出代码，不要包含markdown代码块标记（如\`\`\`mermaid）`;
+1. 必须使用${diagramInfo.syntax}语法
+2. 输出完整的Mermaid代码，不包含任何解释文字或markdown代码块标记
+3. 使用清晰的节点命名和连线
+4. 添加适当的注释说明关键步骤
+5. 确保代码可以直接复制粘贴到Mermaid编辑器中运行
+
+示例格式：
+${diagramInfo.syntax}
+  %% 注释说明
+  节点定义和连线`;
 
         await generateText(prompt, (chunk) => {
           onChunk?.(chunk);

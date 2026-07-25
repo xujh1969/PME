@@ -1,5 +1,17 @@
 import { getCurrentFonts } from "./config.mjs";
-import katexCss from "./katex-fonts.css?raw";
+
+let katexCss = "";
+
+async function loadKatexCss() {
+  try {
+    const mod = await import("./katex-fonts.css?raw");
+    katexCss = mod.default || "";
+  } catch {
+    katexCss = "";
+  }
+}
+
+loadKatexCss();
 
 export function sanitizePdfFileName(name) {
   return name.replace(/[\\/:*?"<>|]/g, "_").trim() || "PME";
@@ -41,7 +53,7 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
     
     @page {
       size: ${pageSize};
-      margin: 0;
+      margin: 2cm 2.5cm;
     }
     
     * { box-sizing: border-box; }
@@ -59,7 +71,7 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
     .pdf-document {
       width: min(920px, 100%);
       margin: 0 auto;
-      padding: 64px 72px 96px;
+      padding: 32px 0 32px;
       background: var(--color-canvas);
     }
     
@@ -409,14 +421,14 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
     }
     
     @media print {
-      @page { margin: 0; }
+      @page { margin: 2cm 2.5cm; }
       body {
         margin: 0;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
       }
       .pdf-document {
-        padding: 64px 72px 96px;
+        padding: 32px 0 32px;
         margin: 0 auto;
         width: min(920px, 100%);
       }

@@ -409,24 +409,32 @@ fn get_command_line_file() -> Result<Option<String>, String> {
 #[tauri::command]
 fn read_readme_file() -> Result<String, String> {
     let exe_path = env::current_exe().map_err(|error| error.to_string())?;
+    let exe_dir = exe_path.parent().ok_or_else(|| "Failed to get app directory.".to_string())?;
     
-    let mut current_dir = exe_path.parent().ok_or_else(|| "Failed to get app directory.".to_string())?;
+    let app_dir_candidates = [
+        exe_dir.join("resources").join("assets"),
+        exe_dir.join("assets"),
+        exe_dir.to_path_buf(),
+        exe_dir.parent().map(|p| p.join("resources").join("assets")).unwrap_or_else(|| exe_dir.join("assets")),
+        exe_dir.parent().unwrap_or(exe_dir).to_path_buf(),
+    ];
     
-    for _ in 0..5 {
-        let manual_path = current_dir.join("PME使用说明书.md");
+    for dir in app_dir_candidates {
+        let manual_path = dir.join("PME使用说明书.md");
         if manual_path.exists() {
             return fs::read_to_string(manual_path).map_err(|error| error.to_string());
         }
-        
-        let readme_path = current_dir.join("README.md");
-        if readme_path.exists() {
-            return fs::read_to_string(readme_path).map_err(|error| error.to_string());
+    }
+    
+    let readme_candidates = [
+        exe_dir.join("README.md"),
+        exe_dir.parent().unwrap_or(exe_dir).join("README.md"),
+    ];
+    
+    for path in readme_candidates {
+        if path.exists() {
+            return fs::read_to_string(path).map_err(|error| error.to_string());
         }
-        
-        let Some(parent) = current_dir.parent() else {
-            break;
-        };
-        current_dir = parent;
     }
     
     Ok("# PME - Portable Markdown Editor\n\n使用说明书未找到。".to_string())
@@ -729,7 +737,7 @@ fn percent_encode_path(path: &str) -> String {
 }
 
 fn wait_for_pdf_file(path: &Path) -> Result<(), String> {
-    for attempt in 0..100 {
+    for _attempt in 0..100 {
         if path.metadata().map(|metadata| metadata.len() > 0).unwrap_or(false) {
             return Ok(());
         }

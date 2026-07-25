@@ -1,0 +1,614 @@
+﻿
+> pme@0.2.0 test
+> node --test
+
+✔ dispatches file and export menu commands to callbacks (2.3289ms)
+✔ returns async save and open command work so callers can await errors (0.5518ms)
+✔ dispatches clipboard and selection commands (1.5628ms)
+✔ uses editor undo redo when an editor is available (0.4553ms)
+✔ falls back to document execCommand for undo redo without an editor (0.3016ms)
+✔ toggles view state and renders (0.2788ms)
+✖ dispatches zoom search about and unknown editor commands (0.6062ms)
+✔ detects supported image file names (1.7842ms)
+✔ extracts normalized image extensions (0.2395ms)
+✔ creates a traceable asset path (2.6045ms)
+✔ extracts image files from dropped or pasted files (0.3611ms)
+✔ extracts image files from clipboard items (0.3792ms)
+✔ detects image file drag items (0.2883ms)
+✔ creates stable fingerprints for identical image blobs (12.4702ms)
+✔ uses the URL file name for supported network images (0.3974ms)
+✔ falls back to MIME type for network images without a supported URL name (0.3089ms)
+✔ keeps native file paths for inserted local image files (0.3978ms)
+✔ uses file names for browser inserted image files and no asset path for embedded data URLs (0.1667ms)
+✔ moves a top-level block after a later block (5.0636ms)
+✔ moves a top-level block before an earlier block (1.8187ms)
+✔ extracts HTTP image URLs from pasted HTML (1.3565ms)
+✔ extracts data image URLs from pasted HTML (0.314ms)
+✔ decodes HTML entities before validating the pasted image URL (0.2203ms)
+✔ ignores non-remote pasted image URLs (0.2139ms)
+✔ owns code block keyboard behavior outside the app entry (1.711ms)
+✔ owns the code language picker outside the app entry (0.5477ms)
+✔ chooses indentation size by code language (1.2629ms)
+✔ keeps current indentation on a new code line (0.5184ms)
+✔ adds language-specific indentation after block openers (0.4203ms)
+✔ defines the Notion-inspired design tokens used by PME (1.5624ms)
+✔ does not keep the previous blue primary color in the app theme (0.2488ms)
+✔ keeps document tabs light instead of black pill tabs (0.3135ms)
+✔ keeps tab hover on the whole tab instead of the inner label button (0.4314ms)
+✔ styles image insert modal controls with the design system (0.3472ms)
+✔ styles the generated table of contents block (0.2914ms)
+✔ keeps image insert modal focused on local and network sources (0.3783ms)
+✖ prevents button labels from wrapping (1.3545ms)
+✔ keeps app icon sizing from leaking into rendered Mermaid SVGs (1.5977ms)
+✔ keeps Mermaid and mind map blocks extended beyond editor content column (0.4709ms)
+✔ uses compact form controls inside editor dialogs (0.2919ms)
+✖ keeps the image scale dialog input at a usable size (0.6666ms)
+✔ inserts paragraphs around selected block nodes instead of raw cursor offsets (0.1749ms)
+✖ renders a visual hero welcome page with markdown file actions (0.2764ms)
+✔ starts new markdown files without requiring a project directory (0.1576ms)
+✖ keeps recent file menu inside the welcome viewport (0.3213ms)
+✔ keeps the sidebar focused on outline instead of an assets tree (0.3687ms)
+✔ uses a Typora-like contextual toolbar for table editing (0.2754ms)
+✔ expands the app menus with Typora-inspired usable commands (0.239ms)
+✔ exposes Markdown file insertion in the Insert menu and toolbar (0.173ms)
+✔ supports menu-driven view toggles and editor zoom (0.1882ms)
+✔ does not use browser alert or confirm dialogs (4.0596ms)
+✔ resolves absolute and relative local Markdown links (1.3987ms)
+✔ ignores web links, anchors, and non-Markdown files (0.2323ms)
+✖ claims local Markdown link clicks before the editor marks content modified (1.2577ms)
+✔ imports the local absolute path helper used by save and linked file resolution (1.503ms)
+✔ counts words and characters in document text (2.5439ms)
+✔ treats blank document text as zero words (0.3106ms)
+✔ lets TipTap initialize dragging before PME adds compatibility data (1.0239ms)
+✔ renders the drag handle as a pointer-driven non-button element (0.2936ms)
+✔ keeps the drag handle visible while the pointer moves onto it (0.2274ms)
+✔ runs source view command without requiring an editor (3.1279ms)
+✔ runs basic TipTap chain commands (0.6147ms)
+✔ runs the mindmap insert command (0.2661ms)
+✔ delegates link creation when the current selection is not a link (0.2897ms)
+✔ unsets active links through the command chain (0.2823ms)
+✔ inserts a table after the table modal resolves (7.3607ms)
+✔ uses injected callbacks for non-chain editor actions (0.4422ms)
+✔ keeps object node selection while clicking app menu commands (0.8861ms)
+✔ marks internal block drags as move operations instead of file drops (0.2384ms)
+✔ owns editor popover UI outside the app entry (1.07ms)
+✔ keeps third-party TipTap extension registration outside the app entry (0.8294ms)
+✔ keeps stateless image and table node extensions outside the app entry (0.3855ms)
+✔ owns environment-specific export helpers outside the app entry (2.0204ms)
+✔ owns the PDF options modal outside the app entry (0.2703ms)
+✔ derives Mermaid PDF dimensions from viewBox when svg width is percentage (1.7274ms)
+✔ constrains tall Mermaid PDF dimensions to printable page height (0.3421ms)
+✔ does not force Mermaid SVG fallbacks to fill PDF page width (0.3901ms)
+✔ centers exported Mermaid diagrams without viewport borders (0.5846ms)
+✔ does not force PDF Mermaid containers to avoid page breaks (0.2888ms)
+✔ prepares mindmaps for static export before printable HTML is returned (0.2351ms)
+✔ routes packaged HTML through the staticized clone without inlining package assets (0.3281ms)
+✔ replaces Mind Elixir custom DOM with a static image (2.7819ms)
+✔ isolates mindmap export failures and emits an escaped placeholder (0.2866ms)
+✔ exports static mindmaps with centered borderless styles (0.3711ms)
+✔ footnote extension stores ids and note text (5.3828ms)
+✔ app inserts footnotes through a content modal (0.8741ms)
+✔ escapes HTML text and attribute values (1.2892ms)
+✔ escapes strings used inside quoted CSS selectors (0.2597ms)
+✔ loads remote image resources through fetch (2.5157ms)
+✔ rejects fetched non-image resources (0.9893ms)
+✔ loads Tauri local absolute image resources through the local loader (0.676ms)
+✔ loads relative document resources from hydrated preview URLs (1.1544ms)
+✔ reports unavailable document resources (0.5433ms)
+✔ normalizes positive image width values (1.3404ms)
+✔ normalizes positive image scale values (0.317ms)
+✔ calculates rendered image width from scale metadata before stored width (0.2714ms)
+✔ calculates scaled image width only when scale and original width are available (0.2025ms)
+DEBUG: parseInline found link match: [Read A](C:/notes/a.md#intro) , text: Read A , href: C:/notes/a.md#intro
+DEBUG: linkedText called, text: Read A , href: C:/notes/a.md#intro
+DEBUG: parseInline found link match: [Read B](sub/b.md#part) , text: Read B , href: sub/b.md#part
+DEBUG: linkedText called, text: Read B , href: sub/b.md#part
+DEBUG: parseInline found link match: [Back to A](../a.md) , text: Back to A , href: ../a.md
+DEBUG: linkedText called, text: Back to A , href: ../a.md
+DEBUG: parseInline found link match: [One](C:/one/readme.md) , text: One , href: C:/one/readme.md
+DEBUG: linkedText called, text: One , href: C:/one/readme.md
+DEBUG: parseInline found link match: [Two](D:/two/readme.md) , text: Two , href: D:/two/readme.md
+DEBUG: linkedText called, text: Two , href: D:/two/readme.md
+DEBUG: parseInline found link match: [Missing](C:/none.md) , text: Missing , href: C:/none.md
+DEBUG: linkedText called, text: Missing , href: C:/none.md
+✖ recursively packages linked markdown, images, anchors, and cycles (14.5718ms)
+✔ uses stable distinct names for same-name documents and reports missing links (3.019ms)
+✔ hydrates local absolute image paths with preview URLs while preserving asset paths (2.1861ms)
+✔ hydrates every opened document before the first editor render (3.2053ms)
+✔ leaves non-local and failed local image previews unchanged (0.5008ms)
+✔ provides a local markdown picker with custom display text (1.5178ms)
+✔ exposes absolute markdown selection and text loading through the adapter (0.4401ms)
+✔ builds a markdown zip package with assets and rewritten image paths (10.2666ms)
+✔ records missing package images while still generating markdown (1.0951ms)
+✔ builds default markdown package zip file names (0.5418ms)
+✔ builds a recursive package when linked Markdown loading is available (9.7678ms)
+✔ detects markdown heading shortcuts (1.9745ms)
+✔ ignores incomplete heading shortcuts (1.0824ms)
+DEBUG: parseInline found link match: [PME](https://example.com/pme) , text: PME , href: https://example.com/pme
+DEBUG: linkedText called, text: PME , href: https://example.com/pme
+DEBUG: parseInline found link match: [PME](https://example.com/pme) , text: PME , href: https://example.com/pme
+DEBUG: linkedText called, text: PME , href: https://example.com/pme
+✖ parses headings and paragraphs into the document model (8.88ms)
+✖ parses bullet lists, blockquotes, code blocks, and images (3.3887ms)
+✔ parses and serializes task lists (2.0037ms)
+✔ parses and serializes horizontal rules (0.4748ms)
+✔ serializes the supported document model back to markdown (1.5709ms)
+✔ round trips table of contents blocks (0.378ms)
+✔ parses and serializes markdown tables (2.1675ms)
+✔ preserves markdown table alignment (0.4051ms)
+✔ parses and serializes block math (0.4894ms)
+✔ parses and serializes mermaid diagrams (0.5777ms)
+✔ parses and serializes mindmap diagrams (3.7608ms)
+✔ preserves invalid mindmap JSON during markdown round trip (1.588ms)
+✔ parses single-line double-dollar math as block math (0.2804ms)
+✔ round trips inline math nodes (0.3719ms)
+✔ parses and serializes footnotes (0.3886ms)
+✔ serializes image asset paths instead of preview object urls (0.175ms)
+✔ round trips sized images as html image tags (0.4876ms)
+✔ round trips image scale metadata while exporting pixel width (0.2529ms)
+✖ serializes asset image paths relative to the markdown file (0.6434ms)
+✖ adds a trailing blank line when the document ends with images (0.3742ms)
+✔ hydrates markdown image nodes with preview urls while preserving asset paths (0.4897ms)
+✔ hydrates relative markdown image paths against the markdown file (0.4126ms)
+✔ round trips inline marks for toolbar formatting (0.429ms)
+✔ round trips inline links (1.1741ms)
+✔ round trips PME generated markdown for supported nodes (0.3034ms)
+✔ owns the Mermaid node and rendering interactions outside the app entry (1.5728ms)
+✔ applies critical Mermaid colors after render for packaged WebView reliability (0.3012ms)
+✔ creates default Mind Elixir data with a root and children (1.6049ms)
+✔ normalizes valid mindmap JSON (0.6923ms)
+✔ creates default mind maps in right-side mode with connected children (4.0637ms)
+✔ preserves serializable Mind Elixir fields while removing parent references (2.2393ms)
+✔ preserves serializable string parent fields outside summaries (0.4358ms)
+✔ preserves invalid mindmap JSON as raw text (0.5802ms)
+✔ serializes mindmap data with stable indentation (0.4101ms)
+✔ constrains static mindmap dimensions by width and height (0.3303ms)
+✔ builds a fallback SVG containing the root topic (1.5741ms)
+✔ builds a full static SVG with child topics, connectors, styles, and calculated bounds (1.3734ms)
+✔ defines the MindMap TipTap node outside the app entry (5.3672ms)
+✔ renders mindmap export markers for PDF and HTML static conversion (0.2894ms)
+✔ cleans up node view listeners before rerendering or destroying (0.1831ms)
+✔ preserves malformed persisted mindmap data and guards replacements (0.16ms)
+✔ synchronizes operations immediately and does not blindly rerender self-originated updates (0.1671ms)
+✔ flushes active Mind Elixir editors before save, source switch, rerender, and destruction (0.6996ms)
+✔ allows only mindmap pointer backgrounds to reach TipTap atom selection (0.244ms)
+✔ isolates mindmap clipboard and keyboard events from app handlers (1.056ms)
+✔ stops mindmap keyboard events before they reach document listeners (0.2898ms)
+✔ shows escaped initialization errors without leaking a partial instance (0.4586ms)
+✔ refreshes the initial Mind Elixir layout after the DOM has painted (0.2214ms)
+✔ keeps network image URLs in the source document during editing (1.97ms)
+✔ packages markdown images through the explicit document package flow (0.3139ms)
+✔ packages local absolute image paths through the Tauri binary reader (0.2825ms)
+✔ embeds pasted image data without writing an assets file while editing (0.3093ms)
+✔ extracts heading levels and text from a document (2.321ms)
+✔ ignores blank headings (0.2397ms)
+✔ detects local absolute image paths (2.2041ms)
+✔ normalizes relative image paths against the markdown document (0.5036ms)
+✖ builds stable package image names from sources (2.2954ms)
+✔ collects image nodes recursively (0.972ms)
+✔ packages image nodes once per source and rewrites nodes to assets paths (0.787ms)
+✔ records missing image sources without rewriting the failed node (0.347ms)
+✔ extracts a slash-separated file name (1.3359ms)
+✔ extracts a Windows file name (0.1584ms)
+✔ computes relative paths between workspace paths (0.2381ms)
+✔ returns target path when relative path inputs are incomplete (0.124ms)
+✔ normalizes saved markdown paths to workspace markdown file names (1.2988ms)
+✔ keeps unchanged saved markdown paths from being adopted again (0.1353ms)
+✔ sanitizes PDF file names with the existing replacement behavior (1.432ms)
+✔ builds escaped PDF export HTML with requested page options (1.5044ms)
+✔ omits PDF title heading when includeTitle is false (0.2463ms)
+✔ reads valid recent workspaces and tolerates invalid storage (1.4151ms)
+✔ remembers recent workspaces newest-first without duplicates (0.2897ms)
+✔ finds all literal text matches (1.4214ms)
+✔ finds matches case insensitively (0.292ms)
+✔ returns no matches for blank queries (0.2057ms)
+✔ identifies non-document text containers ignored by visual search (0.2758ms)
+✔ maps primary file shortcuts to app commands (1.3234ms)
+✔ maps function-key shortcuts without requiring modifiers (0.2449ms)
+✔ maps app view zoom shortcuts (0.3505ms)
+✔ does not map shortcuts from modal text fields except save (0.4658ms)
+✔ does not take browser-reserved new and close shortcuts (0.239ms)
+✔ uses source draft text before serializing the document (2.2737ms)
+✔ serializes document text when no source draft exists (0.6814ms)
+✔ serializes a missing document as an empty document (0.1478ms)
+✔ renames source drafts when a saved markdown path is adopted (0.7609ms)
+✔ leaves source drafts unchanged when the old path has no draft (0.2262ms)
+✔ keeps an empty themed startup surface before the app bundle renders (1.2228ms)
+✔ closing an inactive tab keeps the current selected tab (5.414ms)
+✔ closing the active tab selects the next tab when available (0.5215ms)
+✔ closing the last open tab clears the selection (0.4429ms)
+✔ creates the next available untitled markdown path (0.5067ms)
+✔ opens a tab once and selects it (2.3149ms)
+✔ updates and renames tab state immutably (0.6062ms)
+✔ exposes Tauri development and build scripts (5.7985ms)
+✔ points Tauri to the Vite dev server and production dist (2.8973ms)
+✔ uses a dark native window background during startup (0.5569ms)
+✔ defines a minimal Tauri 2 Rust application (1.1215ms)
+✔ registers native workspace file commands (0.6005ms)
+✔ accepts both md and markdown file extensions in native commands (0.3794ms)
+✔ exports PDF through Edge headless without print headers (0.4272ms)
+✔ hides the PowerShell host window for native folder picking (0.339ms)
+✔ keeps supported text align values (3.5194ms)
+✔ normalizes unsupported text align values to null (0.4844ms)
+✔ builds table-of-contents items from document headings (3.1849ms)
+✔ falls back to a memory workspace adapter outside browser and Tauri (29.3466ms)
+✔ memory adapter creates a runnable starter workspace (17.7705ms)
+✔ memory adapter exposes single-file and export no-op methods (5.4582ms)
+✔ Tauri runtime detection is false in node tests (1.8983ms)
+✔ detects workspace adapters that can persist directly (2.4244ms)
+✖ creates standalone markdown shell state (7.3959ms)
+✔ creates opened workspace shell state with hydrated markdown documents (0.9484ms)
+✖ adds an untitled markdown tab to an existing shell state (0.7305ms)
+✔ adds an opened markdown file into the current workspace (1.9241ms)
+✔ adds an opened markdown file with async document hydration (0.4907ms)
+✔ selects existing tab instead of duplicating an opened markdown file (0.3507ms)
+✔ only saves directly when a persisted workspace root exists (1.248ms)
+✔ adopts a saved markdown path across files documents drafts paths and tabs (0.5819ms)
+✖ creates a named markdown document in the current workspace (0.6601ms)
+✔ opens a markdown document tab and hydrates missing document state (0.7696ms)
+✔ creates the default PME workspace snapshot (3.4802ms)
+✔ normalizes blank project names (0.2811ms)
+✔ builds a sorted project tree from workspace paths (24.6783ms)
+✔ deduplicates workspace file paths (0.4311ms)
+✔ keeps explicit empty folders in the project tree (0.369ms)
+✔ normalizes markdown file names for new documents (0.4131ms)
+✔ rejects unsafe markdown file names (0.3659ms)
+✔ replaces a workspace path without duplicating entries (0.3008ms)
+✔ removes a workspace path while keeping asset entries (0.3377ms)
+ℹ tests 237
+ℹ suites 0
+ℹ pass 222
+ℹ fail 15
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7742.376
+
+✖ failing tests:
+
+test at tests\app-command-runner.test.mjs:174:1
+✖ dispatches zoom search about and unknown editor commands (0.6062ms)
+  TypeError: findInput.select is not a function
+      at runAppCommand (file:///C:/Users/AYOU/Desktop/PME_Trae/src/ui/app-command-runner.mjs:60:17)
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/app-command-runner.test.mjs:180:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at tests\design-system.test.mjs:69:1
+✖ prevents button labels from wrapping (1.3545ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:72:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\design-system.test.mjs:99:1
+✖ keeps the image scale dialog input at a usable size (0.6666ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:107:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\design-system.test.mjs:122:1
+✖ renders a visual hero welcome page with markdown file actions (0.2764ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:123:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\design-system.test.mjs:138:1
+✖ keeps recent file menu inside the welcome viewport (0.3213ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/design-system.test.mjs:141:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\document-link.test.mjs:20:1
+✖ claims local Markdown link clicks before the editor marks content modified (1.2577ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/document-link.test.mjs:25:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\linked-markdown-package.test.mjs:8:1
+✖ recursively packages linked markdown, images, anchors, and cycles (14.5718ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/linked-markdown-package.test.mjs:39:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\markdown.test.mjs:10:1
+✖ parses headings and paragraphs into the document model (8.88ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      content: [
+        {
+          attrs: {
+  +         collapsed: false,
+            level: 1
+          },
+          content: [
+            {
+              text: 'Title',
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/markdown.test.mjs:11:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { type: 'doc', content: [ [Object], [Object] ] },
+    expected: { type: 'doc', content: [ [Object], [Object] ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\markdown.test.mjs:27:1
+✖ parses bullet lists, blockquotes, code blocks, and images (3.3887ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  ... Skipped lines
+  
+    {
+      content: [
+        {
+          content: [
+            {
+  ...
+            {
+  +           content: [
+  +             {
+  +               text: 'Note',
+  +               type: 'text'
+  +             }
+  +           ],
+  +           type: 'paragraph'
+  -           text: 'Note',
+  -           type: 'text'
+            }
+          ],
+          type: 'blockquote'
+        },
+        {
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/markdown.test.mjs:28:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { type: 'doc', content: [ [Object], [Object], [Object], [Object] ] },
+    expected: { type: 'doc', content: [ [Object], [Object], [Object], [Object] ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\markdown.test.mjs:471:1
+✖ serializes asset image paths relative to the markdown file (0.6434ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '![Dragged](assets/asset_20260707_080910_a83f9.png)\n\n'
+  - '![Dragged](../assets/asset_20260707_080910_a83f9.png)\n\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/markdown.test.mjs:486:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '![Dragged](assets/asset_20260707_080910_a83f9.png)\n\n',
+    expected: '![Dragged](../assets/asset_20260707_080910_a83f9.png)\n\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\markdown.test.mjs:496:1
+✖ adds a trailing blank line when the document ends with images (0.3742ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '![A](assets/a.png)\n\n![B](assets/b.png)\n\n'
+  - '![A](../assets/a.png)\n\n![B](../assets/b.png)\n\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/markdown.test.mjs:497:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '![A](assets/a.png)\n\n![B](assets/b.png)\n\n',
+    expected: '![A](../assets/a.png)\n\n![B](../assets/b.png)\n\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\package-resources.test.mjs:30:1
+✖ builds stable package image names from sources (2.2954ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '003-image003.png'
+  - '003-png;base64,abc.png'
+         ^
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/package-resources.test.mjs:32:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '003-image003.png',
+    expected: '003-png;base64,abc.png',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\workspace-session.test.mjs:24:1
+✖ creates standalone markdown shell state (7.3959ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+  +     modified: false,
+  -     modified: true,
+        name: 'Untitled.md',
+        path: 'Untitled.md'
+      }
+    ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/workspace-session.test.mjs:35:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.start (node:internal/test_runner/test:1096:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { name: 'Untitled.md', path: 'Untitled.md', modified: false } ],
+    expected: [ { name: 'Untitled.md', path: 'Untitled.md', modified: true } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests\workspace-session.test.mjs:68:1
+✖ adds an untitled markdown tab to an existing shell state (0.7305ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + ''
+  - '# Untitled2\n\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/workspace-session.test.mjs:83:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: '# Untitled2\n\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\workspace-session.test.mjs:209:1
+✖ creates a named markdown document in the current workspace (0.6601ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '' !== '# Notes\n\n'
+  
+      at TestContext.<anonymous> (file:///C:/Users/AYOU/Desktop/PME_Trae/tests/workspace-session.test.mjs:223:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: '# Notes\n\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -46,7 +46,7 @@ test("flushes active Mind Elixir editors before save, source switch, rerender, a
   assert.equal(source.includes("export function flushMindMapEdits"), true);
   assert.equal(source.includes('querySelectorAll?.("#input-box")'), true);
   assert.equal(source.includes("input.blur()"), true);
-  assert.match(source, /const destroyMind = \(\) => \{\s+flushMindMapEdits\(content\);\s+removeListeners\(\);/);
+  assert.match(source, /const destroyMind = \(\) => \{[\s\S]+?flushMindMapEdits\(content\);[\s\S]+?removeListeners\(\);/);
   assert.match(source, /const render = \(attrs\) => \{\s+flushMindMapEdits\(content\);/);
   assert.match(appSource, /function syncSelectedDocumentToState\(\)[\s\S]+?flushMindMapEdits\(editor\.view\.dom\);[\s\S]+?editor\.getJSON\(\)/);
   assert.match(appSource, /async function toggleSourceView\(\)[\s\S]+?flushMindMapEdits\(editor\.view\.dom\);[\s\S]+?editor\.getJSON\(\)/);
@@ -83,4 +83,12 @@ test("shows escaped initialization errors without leaking a partial instance", (
   assert.equal(source.includes("mindmap-diagram__error"), true);
   assert.equal(source.includes("escapeHtml(message)"), true);
   assert.equal(source.includes("destroyMind()"), true);
+});
+
+test("refreshes the initial Mind Elixir layout after the DOM has painted", () => {
+  assert.equal(source.includes("let layoutFrame = 0;"), true);
+  assert.equal(source.includes("cancelAnimationFrame(layoutFrame);"), true);
+  assert.equal(source.includes("layoutFrame = requestAnimationFrame(() => {"), true);
+  assert.equal(source.includes("mind.refresh?.();"), true);
+  assert.equal(source.includes("mind.linkDiv?.();"), true);
 });

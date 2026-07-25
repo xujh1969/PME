@@ -3,18 +3,27 @@ const STATIC_HORIZONTAL_GAP = 72;
 const STATIC_VERTICAL_GAP = 24;
 const STATIC_BRANCH_COLORS = ["#2563eb", "#dc2626", "#059669", "#7c3aed", "#d97706", "#0891b2"];
 
-export function createDefaultMindMapData() {
+export function createDefaultMindMapData(direction = 1) {
+  const children = [];
+  if (direction === 1) {
+    children.push({ id: "topic-1", topic: "主题 1", direction: 1, children: [] });
+    children.push({ id: "topic-2", topic: "主题 2", direction: 1, children: [] });
+  } else if (direction === 0) {
+    children.push({ id: "topic-1", topic: "主题 1", direction: 0, children: [] });
+    children.push({ id: "topic-2", topic: "主题 2", direction: 0, children: [] });
+  } else {
+    children.push({ id: "topic-1", topic: "主题 1", direction: 0, children: [] });
+    children.push({ id: "topic-2", topic: "主题 2", direction: 1, children: [] });
+  }
   return {
     nodeData: {
       id: "root",
       topic: "中心主题",
       root: true,
-      children: [
-        { id: "topic-1", topic: "主题 1", direction: 1, children: [] },
-        { id: "topic-2", topic: "主题 2", direction: 1, children: [] },
-      ],
+      direction,
+      children,
     },
-    direction: 1,
+    direction,
   };
 }
 
