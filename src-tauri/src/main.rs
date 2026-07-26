@@ -348,6 +348,7 @@ fn main() {
             write_config_file,
             get_command_line_file,
             read_readme_file,
+            open_external_url,
         ])
         .setup(move |app| {
             let window = app.get_webview_window("main").unwrap();
@@ -404,6 +405,26 @@ fn get_command_line_file() -> Result<Option<String>, String> {
         }
     }
     Ok(None)
+}
+
+#[tauri::command]
+fn open_external_url(url: String) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("cmd")
+            .args(["/C", "start", "", &url])
+            .creation_flags(CREATE_NO_WINDOW)
+            .spawn()
+            .map_err(|error| error.to_string())?;
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Command::new("open")
+            .arg(&url)
+            .spawn()
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]

@@ -53,7 +53,11 @@ export function createEditorExtensions(options) {
       openOnClick: false,
       autolink: true,
       linkOnPaste: true,
-      HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
+      HTMLAttributes: { 
+        rel: "noopener noreferrer", 
+        target: "_blank",
+        class: "external-link"
+      },
     }),
     TaskList,
     TaskItem.configure({ nested: true }),

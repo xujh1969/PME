@@ -1060,6 +1060,7 @@ function bindEvents() {
   document.querySelector(".editor-area")?.addEventListener("copy", handleCopy, { capture: true });
   document.querySelector(".editor-area")?.addEventListener("cut", handleCut, { capture: true });
   document.querySelector(".editor-area")?.addEventListener("keydown", handlePasteShortcut, { capture: true });
+  document.querySelector("#tiptapEditor")?.addEventListener("click", handleEditorClick, { capture: true });
   document.querySelector(".editor")?.addEventListener("scroll", () => updateTableBubbleToolbar());
   document.querySelector(".source-editor")?.addEventListener("input", handleSourceInput);
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleMathClick, { capture: true });
@@ -4691,11 +4692,6 @@ async function handleCopy(event) {
   }
   const sourceEditor = document.querySelector(".source-editor");
   if (sourceEditor) {
-    const selectedText = sourceEditor.value.substring(sourceEditor.selectionStart, sourceEditor.selectionEnd);
-    if (selectedText) {
-      event.preventDefault();
-      await navigator.clipboard.writeText(selectedText);
-    }
     return;
   }
 
@@ -4704,11 +4700,37 @@ async function handleCopy(event) {
   const { selection } = editor.state;
   if (selection.empty) return;
 
-  event.preventDefault();
   const slice = editor.state.doc.slice(selection.from, selection.to);
   const json = slice.toJSON();
   const markdown = serializeMarkdown(json);
-  await navigator.clipboard.writeText(markdown);
+  
+  try {
+    await navigator.clipboard.writeText(markdown);
+  } catch {
+  }
+}
+
+async function handleEditorClick(event) {
+  let target = event.target;
+  while (target && target.nodeName !== "A") {
+    target = target.parentElement;
+    if (!target || target.classList?.contains("ProseMirror")) break;
+  }
+  
+  if (!target || target.nodeName !== "A") return;
+  
+  const url = target.getAttribute("href");
+  if (!url || !url.startsWith("http")) return;
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("open_external_url", { url });
+  } catch {
+    window.open(url, "_blank");
+  }
 }
 
 async function handleCut(event) {
