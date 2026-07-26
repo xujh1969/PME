@@ -25,6 +25,9 @@ function createEditorStub(options = {}) {
     chain: () => chain,
     getAttributes: (name) => options.attributes?.[name] || {},
     isActive: (name) => Boolean(options.active?.[name]),
+    state: {
+      selection: options.selection || { from: 1, to: 1, empty: true },
+    },
     view: {
       dom: {
         querySelectorAll: () => options.detailsElements || [],
@@ -60,6 +63,29 @@ test("runs basic TipTap chain commands", () => {
     ["run"],
     ["focus"],
     ["toggleBold"],
+    ["run"],
+  ]);
+});
+
+test("inserts a visible inline code placeholder for an empty selection", () => {
+  const editor = createEditorStub();
+
+  runEditorCommand("code", { editor });
+
+  assert.equal(editor.calls[0][0], "focus");
+  assert.equal(editor.calls[1][0], "command");
+  assert.equal(typeof editor.calls[1][1], "function");
+  assert.deepEqual(editor.calls[2], ["run"]);
+});
+
+test("toggles inline code for selected text", () => {
+  const editor = createEditorStub({ selection: { from: 1, to: 5, empty: false } });
+
+  runEditorCommand("code", { editor });
+
+  assert.deepEqual(editor.calls, [
+    ["focus"],
+    ["toggleCode", { language: "plaintext" }],
     ["run"],
   ]);
 });

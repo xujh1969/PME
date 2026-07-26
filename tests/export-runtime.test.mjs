@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   getSvgPrintDimensions,
+  markPrintableImagesForPagination,
   prepareMindMapsForPrint,
+  prepareVideosForPrint,
 } from "../src/export/export-runtime.mjs";
 
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
@@ -103,6 +105,37 @@ test("does not force PDF Mermaid containers to avoid page breaks", () => {
   assert.equal(contentRule.includes("break-inside: avoid !important;"), false);
 });
 
+test("marks printable images to avoid splitting unless they are clearly long", () => {
+  assert.equal(runtimeSource.includes("markPrintableImagesForPagination(clone);"), true);
+  assert.equal(runtimeSource.includes("const pageHeight = 760;"), true);
+  assert.equal(runtimeSource.includes("const nearPageHeight = pageHeight * 1.2;"), true);
+  assert.equal(pdfExportSource.includes(".pdf-avoid-split"), true);
+  assert.equal(pdfExportSource.includes("page-break-inside: avoid;"), true);
+  assert.equal(pdfExportSource.includes(".pdf-fit-single-page"), true);
+  assert.equal(pdfExportSource.includes("max-height: 760px;"), true);
+  assert.equal(pdfExportSource.includes(".pdf-allow-split"), true);
+
+  const shortBlock = createPaginationBlock();
+  const nearPageBlock = createPaginationBlock();
+  const longBlock = createPaginationBlock();
+  const shortImage = createPaginationImage("500", shortBlock);
+  const nearPageImage = createPaginationImage("780", nearPageBlock);
+  const longImage = createPaginationImage("1200", longBlock);
+
+  markPrintableImagesForPagination({
+    querySelectorAll(selector) {
+      return selector === "img" ? [shortImage, nearPageImage, longImage] : [];
+    },
+  });
+
+  assert.equal(shortImage.classList.has("pdf-avoid-split"), true);
+  assert.equal(shortBlock.classList.has("pdf-avoid-split"), true);
+  assert.equal(nearPageImage.classList.has("pdf-fit-single-page"), true);
+  assert.equal(nearPageBlock.classList.has("pdf-avoid-split"), true);
+  assert.equal(longImage.classList.has("pdf-allow-split"), true);
+  assert.equal(longBlock.classList.has("pdf-allow-split"), true);
+});
+
 test("prepares mindmaps for static export before printable HTML is returned", () => {
   assert.equal(runtimeSource.includes("prepareMindMapsForPrint"), true);
   assert.equal(runtimeSource.includes('querySelectorAll(".mindmap-diagram")'), true);
@@ -111,6 +144,14 @@ test("prepares mindmaps for static export before printable HTML is returned", ()
   assert.equal(runtimeSource.includes("staticMap.width"), true);
   assert.equal(runtimeSource.includes("staticMap.height"), true);
   assert.equal(runtimeSource.includes("getBoundingClientRect"), false);
+});
+
+test("prepares videos as poster images before printable HTML is returned", () => {
+  assert.equal(runtimeSource.includes("await prepareVideosForPrint(clone);"), true);
+  assert.equal(runtimeSource.includes("export async function prepareVideosForPrint"), true);
+  assert.equal(runtimeSource.includes('root.querySelectorAll("video")'), true);
+  assert.equal(runtimeSource.includes("context.drawImage(video"), true);
+  assert.equal(runtimeSource.includes('canvas.toDataURL("image/png")'), true);
 });
 
 test("routes packaged HTML through the staticized clone without inlining package assets", () => {
@@ -194,3 +235,25 @@ test("exports static mindmaps with centered borderless styles", () => {
     assert.equal(imageRule.includes("border-radius: 0 !important;"), true);
   }
 });
+
+function createPaginationBlock() {
+  return {
+    classList: new Set(),
+    parentElement: null,
+  };
+}
+
+function createPaginationImage(height, block) {
+  return {
+    naturalHeight: 0,
+    parentElement: block,
+    style: {},
+    classList: new Set(),
+    getAttribute(name) {
+      return name === "height" ? height : null;
+    },
+    closest() {
+      return block;
+    },
+  };
+}

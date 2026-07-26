@@ -106,6 +106,7 @@ export async function getPrintableDocumentHtml(doc, { inlineImages = true } = {}
   });
   await prepareMermaidDiagramsForPrint(clone);
   await prepareMindMapsForPrint(clone);
+  await prepareVideosForPrint(clone);
   cleanupMathElementsForPrint(clone);
   if (inlineImages) {
     await inlinePrintableImages(clone);
@@ -113,6 +114,7 @@ export async function getPrintableDocumentHtml(doc, { inlineImages = true } = {}
   if (doc) {
     renderTableOfContentsForPrint(clone, doc);
   }
+  markPrintableImagesForPagination(clone);
   return clone.innerHTML;
 }
 
@@ -214,6 +216,100 @@ async function prepareMermaidDiagramsForPrint(root) {
   await Promise.all(promises);
 }
 
+export async function prepareVideosForPrint(root) {
+  const videos = [...root.querySelectorAll("video")];
+  await Promise.all(videos.map(async (video) => {
+    const source = video.currentSrc || video.getAttribute("src") || video.querySelector("source")?.getAttribute("src");
+    if (!source) {
+      return;
+    }
+
+    try {
+      const poster = await renderVideoPosterForPrint(source, video);
+      const image = document.createElement("img");
+      image.src = poster.dataUrl;
+      image.setAttribute("width", String(poster.width));
+      image.setAttribute("height", String(poster.height));
+      image.style.width = `${poster.width}px`;
+      image.style.maxWidth = "100%";
+      image.style.height = "auto";
+      image.style.display = "block";
+      image.style.margin = "0 auto";
+      image.style.borderRadius = "6px";
+      video.replaceWith(image);
+    } catch (error) {
+      console.warn("Failed to export video poster", error);
+    }
+  }));
+}
+
+async function renderVideoPosterForPrint(source, originalVideo) {
+  const video = await loadVideoForPoster(source);
+  const sourceWidth = video.videoWidth || originalVideo.videoWidth || getNumericAttribute(originalVideo, "width") || 640;
+  const sourceHeight = video.videoHeight || originalVideo.videoHeight || Math.round(sourceWidth * 9 / 16);
+  const maxWidth = 600;
+  const scale = Math.min(1, maxWidth / sourceWidth);
+  const width = Math.round(sourceWidth * scale);
+  const height = Math.round(sourceHeight * scale);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Canvas is unavailable.");
+  }
+  canvas.width = width * 2;
+  canvas.height = height * 2;
+  context.scale(2, 2);
+  context.fillStyle = "#111827";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(video, 0, 0, width, height);
+  return {
+    dataUrl: canvas.toDataURL("image/png"),
+    width,
+    height,
+  };
+}
+
+function loadVideoForPoster(source) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    const cleanup = () => {
+      clearTimeout(timeout);
+    };
+    const finish = () => {
+      cleanup();
+      resolve(video);
+    };
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Video poster capture timed out."));
+    }, 5000);
+
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.crossOrigin = "anonymous";
+    video.addEventListener("loadeddata", () => {
+      try {
+        video.currentTime = Math.min(0.1, video.duration || 0);
+      } catch {
+        finish();
+      }
+    }, { once: true });
+    video.addEventListener("seeked", finish, { once: true });
+    video.addEventListener("error", () => {
+      cleanup();
+      reject(new Error("Failed to load video poster."));
+    }, { once: true });
+    video.src = source;
+    video.load();
+  });
+}
+
+function getNumericAttribute(element, name) {
+  const value = Number.parseFloat(element.getAttribute(name) || "");
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
 export async function prepareMindMapsForPrint(root) {
   const maps = root.querySelectorAll(".mindmap-diagram");
   maps.forEach((map) => {
@@ -265,6 +361,48 @@ export function getSvgPrintDimensions(svg, maxWidth, maxHeight = Number.POSITIVE
     targetWidth: Math.round(sourceWidth * scale),
     targetHeight: Math.round(sourceHeight * scale),
   };
+}
+
+export function markPrintableImagesForPagination(root) {
+  root.querySelectorAll("img").forEach((image) => {
+    const height = getPrintableImageHeight(image);
+    const block = getPrintableImageBlock(image);
+    const pageHeight = 760;
+    const nearPageHeight = pageHeight * 1.2;
+
+    if (!height || height <= pageHeight) {
+      image.classList.add("pdf-avoid-split");
+      block?.classList.add("pdf-avoid-split");
+      return;
+    }
+
+    if (height <= nearPageHeight) {
+      image.classList.add("pdf-fit-single-page");
+      block?.classList.add("pdf-avoid-split");
+      return;
+    }
+
+    image.classList.add("pdf-allow-split");
+    block?.classList.add("pdf-allow-split");
+  });
+}
+
+function getPrintableImageBlock(image) {
+  return image.closest(".mermaid-diagram, .mindmap-diagram, figure, p, div") || image.parentElement;
+}
+
+function getPrintableImageHeight(image) {
+  const attributeHeight = getNumericAttribute(image, "height");
+  if (attributeHeight) {
+    return attributeHeight;
+  }
+
+  const styleHeight = getSvgLength(image.style.height);
+  if (styleHeight) {
+    return styleHeight;
+  }
+
+  return image.naturalHeight || 0;
 }
 
 function parseSvgViewBox(value) {

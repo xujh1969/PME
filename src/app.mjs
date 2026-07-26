@@ -109,6 +109,7 @@ import { buildPdfExportHtml, sanitizePdfFileName } from "./core/pdf-export.mjs";
 import { fileName, getSavedMarkdownWorkspacePath } from "./core/path-utils.mjs";
 import { buildMarkdownPackage, getMarkdownPackageFileName } from "./core/markdown-package.mjs";
 import { buildHtmlPackage, getHtmlPackageFileName } from "./core/html-package.mjs";
+import { buildWordDocumentBlob, getWordExportFileName, renderMindMapToSvgImage } from "./core/word-export.mjs";
 import { collectLocalMarkdownLinkTargets } from "./core/linked-markdown-package.mjs";
 import { loadImageResource } from "./core/image-resource-loader.mjs";
 import { hydrateDocumentMapLocalImages, hydrateLocalImagePreviews } from "./core/local-image-preview.mjs";
@@ -132,9 +133,10 @@ import { getClipboardHtmlImageUrl, getImageIntrinsicWidth, getVideoIntrinsicWidt
 import { createEditorExtensions } from "./editor/editor-extensions.mjs";
 import { headingCollapsePlugin } from "./editor/heading-collapse.mjs";
 import { AlignedTableCell, AlignedTableHeader, AssetImage, ParagraphWithIndent } from "./editor/custom-nodes.mjs";
-import { MermaidDiagram } from "./editor/mermaid-node.mjs";
+import { MermaidDiagram, renderMermaidStaticSvg } from "./editor/mermaid-node.mjs";
 import { flushMindMapEdits, MindMap } from "./editor/mindmap-node.mjs";
 import {
+  InlineCodeLanguage,
   SmartCodeBlockLowlight,
 } from "./editor/code-block-actions.mjs";
 import { openImageInsertModal } from "./ui/image-insert-modal.mjs";
@@ -622,6 +624,7 @@ function renderAppMenu() {
       menuSeparator(),
       menuItem("package-document", "打包当前文档"),
       menuItem("package-html-document", "以HTML格式打包"),
+      menuItem("export-word", "导出为Word文件"),
       menuItem("export-pdf", "导出 PDF"),
       menuItem("print-document", "打印", "Ctrl+P"),
       menuSeparator(),
@@ -1077,11 +1080,12 @@ function bindEvents() {
       event.preventDefault();
     });
     button.addEventListener("click", () => {
-        runEditorCommand(button.dataset.command);
-        if (button.closest("[data-table-bubble]")) {
-          closeTableBubbleMenu();
-          requestAnimationFrame(() => updateTableBubbleToolbar());
-        }
+      runEditorCommand(button.dataset.command);
+      closeToolbarDropdownPanel(button);
+      if (button.closest("[data-table-bubble]")) {
+        closeTableBubbleMenu();
+        requestAnimationFrame(() => updateTableBubbleToolbar());
+      }
       });
   });
   bindTableBubbleEvents();
@@ -1191,6 +1195,17 @@ function closeAppMenus() {
   });
 }
 
+function closeToolbarDropdownPanel(button) {
+  const group = button.closest?.(".tool-group--dropdown");
+  if (!group) {
+    return;
+  }
+  group.classList.add("is-panel-closed");
+  const reopen = () => group.classList.remove("is-panel-closed");
+  group.addEventListener("mouseleave", reopen, { once: true });
+  window.setTimeout(reopen, 600);
+}
+
 async function runMenuCommand(command) {
   try {
     await runAppCommand(command, {
@@ -1204,6 +1219,7 @@ async function runMenuCommand(command) {
       saveAsDocument,
       packageCurrentDocument,
       packageCurrentDocumentAsHtml,
+      exportCurrentDocumentAsWord,
       openPdfExportModal,
       closeDocumentTab,
       runClipboardMenuCommand,
@@ -2676,6 +2692,7 @@ function mountEditor() {
       customListItem: CustomListItem,
       delayedHeading: DelayedHeading,
       smartCodeBlockLowlight: SmartCodeBlockLowlight,
+      inlineCodeLanguage: InlineCodeLanguage,
       lowlight,
       alignedTableHeader: AlignedTableHeader,
       alignedTableCell: AlignedTableCell,
@@ -3044,7 +3061,7 @@ async function setCodeBlockLanguage() {
 
   const activeCodeBlock = getActiveCodeBlock();
   const currentLanguage = activeCodeBlock?.node.attrs.language || "";
-  const language = await openCodeLanguageModal(currentLanguage || "js");
+  const language = await openCodeLanguageModal(currentLanguage || "plaintext");
   if (language === null) {
     return;
   }
@@ -3103,6 +3120,23 @@ async function handleCodeBlockDoubleClick(event) {
     return;
   }
 
+  const inlineCode = event.target.closest?.('.ProseMirror :not(pre) > code[data-inline-code="true"]');
+  if (inlineCode) {
+    const codeInfo = findInlineCodePosition(inlineCode);
+    if (!codeInfo) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const language = await openCodeLanguageModal(codeInfo.mark.attrs.language || "plaintext");
+    if (language === null) {
+      return;
+    }
+    updateInlineCodeLanguage(codeInfo.from, codeInfo.to, codeInfo.mark, language.trim());
+    return;
+  }
+
   const codeBlock = event.target.closest?.(".ProseMirror pre");
   if (!codeBlock) {
     return;
@@ -3115,7 +3149,7 @@ async function handleCodeBlockDoubleClick(event) {
 
   event.preventDefault();
   event.stopPropagation();
-  const language = await openCodeLanguageModal(codeInfo.node.attrs.language || "js");
+  const language = await openCodeLanguageModal(codeInfo.node.attrs.language || "plaintext");
   if (language === null) {
     return;
   }
@@ -3182,6 +3216,50 @@ function findCodeBlockPosition(codeBlockElement) {
     }
   });
   return result;
+}
+
+function findInlineCodePosition(codeElement) {
+  const codes = [...document.querySelectorAll('#tiptapEditor .ProseMirror :not(pre) > code[data-inline-code="true"]')];
+  const targetIndex = codes.indexOf(codeElement);
+  if (targetIndex < 0) {
+    return null;
+  }
+
+  let currentIndex = -1;
+  let result = null;
+  editor.state.doc.descendants((node, pos) => {
+    if (!node.isText) {
+      return;
+    }
+
+    const mark = node.marks.find((candidate) => candidate.type.name === "code");
+    if (!mark) {
+      return;
+    }
+
+    currentIndex += 1;
+    if (currentIndex === targetIndex) {
+      result = { mark, from: pos, to: pos + node.nodeSize };
+      return false;
+    }
+  });
+  return result;
+}
+
+function updateInlineCodeLanguage(from, to, mark, language) {
+  const codeMark = editor.state.schema.marks.code;
+  if (!codeMark) {
+    return;
+  }
+
+  editor.chain().focus().command(({ tr }) => {
+    tr.removeMark(from, to, mark.type);
+    tr.addMark(from, to, codeMark.create({
+      ...mark.attrs,
+      language: language || "plaintext",
+    }));
+    return true;
+  }).run();
 }
 
 function updateCodeBlockLanguage(pos, language) {
@@ -3919,6 +3997,291 @@ async function packageCurrentDocument() {
   } finally {
     closeWait();
   }
+}
+
+async function exportCurrentDocumentAsWord() {
+  if (!state.selectedPath) {
+    openMessageModal({ title: "无法导出", message: "请先打开一个 Markdown 文档。" });
+    return;
+  }
+
+  syncSelectedDocumentToState();
+  const doc = structuredClone(getCurrentDocument());
+  const markdownName = fileName(state.selectedPath);
+  const closeWait = openWaitModal({ title: "导出中", message: "正在生成 Word 文件，请稍候..." });
+
+  try {
+    const blob = await buildWordDocumentBlob({
+      doc,
+      title: markdownName.replace(/\.(md|markdown)$/i, ""),
+      loadImageResource: (source) => loadImageResource(source, {
+        files: state.files,
+        isTauri: isTauriRuntime(),
+        loadLocalImageResource,
+        selectedPath: state.selectedPath,
+      }),
+      getImageDimensions: getWordImageDimensions,
+      renderMath: renderMathWordImage,
+      renderVideo: renderVideoWordPoster,
+      renderMermaidDiagram: renderMermaidWordImage,
+      renderMindMap: renderMindMapWordImage,
+    });
+    const savedPath = await saveBlobExport(getWordExportFileName(markdownName), blob);
+    if (savedPath) {
+      await openMessageModal({ title: "导出完成", message: "Word 文件已保存到：\n" + savedPath });
+    }
+  } catch (error) {
+    console.error("Word export error:", error);
+    await openMessageModal({ title: "导出失败", message: "Word 导出失败：\n" + (error.message || error) });
+  } finally {
+    closeWait();
+  }
+}
+
+async function renderMermaidWordImage(code) {
+  const rendered = findRenderedMermaidSvg(code) || await renderMermaidStaticSvg(code);
+  const svg = normalizeMermaidSvgForWord(rendered.svg);
+  return svgToPngImage(svg, rendered.width, rendered.height).catch(() => ({
+    data: new TextEncoder().encode(svg),
+    width: rendered.width,
+    height: rendered.height,
+    type: "svg",
+  }));
+}
+
+function findRenderedMermaidSvg(code) {
+  const diagrams = document.querySelectorAll("#tiptapEditor .mermaid-diagram");
+  for (const diagram of diagrams) {
+    if (diagram.dataset.code !== code) {
+      continue;
+    }
+    const svg = diagram.querySelector(".mermaid-diagram__content svg");
+    if (!svg) {
+      continue;
+    }
+    const width = svg.viewBox?.baseVal?.width || Number.parseFloat(svg.getAttribute("width") || "") || svg.getBoundingClientRect().width || 800;
+    const height = svg.viewBox?.baseVal?.height || Number.parseFloat(svg.getAttribute("height") || "") || svg.getBoundingClientRect().height || 600;
+    if (!svg.getAttribute("viewBox")) {
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    }
+    return {
+      svg: new XMLSerializer().serializeToString(svg),
+      width,
+      height,
+    };
+  }
+  return null;
+}
+
+async function renderVideoWordPoster(source) {
+  const blob = await loadImageResource(source, {
+    files: state.files,
+    isTauri: isTauriRuntime(),
+    loadLocalImageResource,
+    selectedPath: state.selectedPath,
+  });
+  const url = URL.createObjectURL(blob);
+  try {
+    const video = await loadVideoElement(url);
+    const sourceWidth = video.videoWidth || 640;
+    const sourceHeight = video.videoHeight || 360;
+    const maxWidth = 520;
+    const scale = Math.min(1, maxWidth / sourceWidth);
+    const width = Math.round(sourceWidth * scale);
+    const height = Math.round(sourceHeight * scale);
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Canvas is unavailable.");
+    }
+    canvas.width = width;
+    canvas.height = height;
+    context.fillStyle = "#111827";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(video, 0, 0, width, height);
+    const pngBlob = await canvasToBlob(canvas);
+    return {
+      data: new Uint8Array(await pngBlob.arrayBuffer()),
+      width,
+      height,
+      type: "png",
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function loadVideoElement(src) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.addEventListener("loadeddata", () => {
+      try {
+        video.currentTime = Math.min(0.1, video.duration || 0);
+      } catch {
+        resolve(video);
+      }
+    }, { once: true });
+    video.addEventListener("seeked", () => resolve(video), { once: true });
+    video.addEventListener("error", () => reject(new Error("Failed to load video poster.")), { once: true });
+    video.src = src;
+    video.load();
+  });
+}
+
+export function normalizeMermaidSvgForWord(svgText) {
+  if (typeof DOMParser === "undefined") {
+    return svgText;
+  }
+  const parser = new DOMParser();
+  const documentNode = parser.parseFromString(svgText, "image/svg+xml");
+  const svg = documentNode.querySelector("svg");
+  if (!svg) {
+    return svgText;
+  }
+
+  documentNode.querySelectorAll("foreignObject").forEach((foreignObject) => {
+    const label = foreignObject.textContent?.trim();
+    if (!label) {
+      foreignObject.remove();
+      return;
+    }
+    const x = Number.parseFloat(foreignObject.getAttribute("x") || "0");
+    const y = Number.parseFloat(foreignObject.getAttribute("y") || "0");
+    const width = Number.parseFloat(foreignObject.getAttribute("width") || "0");
+    const height = Number.parseFloat(foreignObject.getAttribute("height") || "0");
+    const text = documentNode.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", String(x + width / 2));
+    text.setAttribute("y", String(y + height / 2));
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("dominant-baseline", "middle");
+    text.setAttribute("font-family", "Microsoft YaHei, Arial, sans-serif");
+    text.setAttribute("font-size", "14");
+    text.setAttribute("fill", "#111827");
+    text.textContent = label;
+    foreignObject.replaceWith(text);
+  });
+
+  return new XMLSerializer().serializeToString(svg);
+}
+
+async function renderMindMapWordImage(data) {
+  const rendered = await renderMindMapToSvgImage(data);
+  const svg = new TextDecoder().decode(rendered.data);
+  return svgToPngImage(svg, rendered.width, rendered.height).catch(() => rendered);
+}
+
+async function renderMathWordImage(latex, options = {}) {
+  const fontSize = options.displayMode ? 22 : 18;
+  const width = Math.max(120, Math.min(520, String(latex || "").length * fontSize * 0.7 + 48));
+  const height = options.displayMode ? 64 : 36;
+  const text = escapeSvgText(formatMathText(latex || ""));
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(width)}" height="${height}" viewBox="0 0 ${Math.round(width)} ${height}">`,
+    `<rect width="100%" height="100%" fill="#ffffff"/>`,
+    `<text x="18" y="${Math.round(height / 2 + fontSize / 3)}" font-family="Cambria Math, Times New Roman, serif" font-size="${fontSize}" fill="#111827">${text}</text>`,
+    `</svg>`,
+  ].join("");
+  return svgToPngImage(svg, width, height).catch(() => ({
+    data: new TextEncoder().encode(svg),
+    width,
+    height,
+    type: "svg",
+  }));
+}
+
+function formatMathText(latex) {
+  return String(latex || "")
+    .replaceAll("\\times", "×")
+    .replaceAll("\\cdot", "·")
+    .replaceAll("\\leq", "≤")
+    .replaceAll("\\geq", "≥")
+    .replaceAll("\\neq", "≠")
+    .replaceAll("^2", "²")
+    .replaceAll("^3", "³")
+    .replaceAll("_1", "₁")
+    .replaceAll("_2", "₂")
+    .replaceAll("_3", "₃")
+    .replaceAll("{", "")
+    .replaceAll("}", "")
+    .replaceAll("\\", "");
+}
+
+function escapeSvgText(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+async function getWordImageDimensions(blob) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const image = await loadImageElement(url);
+    return {
+      width: image.naturalWidth || image.width || 520,
+      height: image.naturalHeight || image.height || 322,
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function svgToPngImage(svg, width, height) {
+  const sourceWidth = Number(width) || 800;
+  const sourceHeight = Number(height) || 600;
+  const maxWidth = 520;
+  const maxHeight = 720;
+  const scale = Math.min(1, maxWidth / sourceWidth, maxHeight / sourceHeight);
+  const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+  const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Canvas is unavailable.");
+  }
+  canvas.width = targetWidth * dpr;
+  canvas.height = targetHeight * dpr;
+  context.scale(dpr, dpr);
+
+  const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  try {
+    const image = await loadImageElement(url);
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, targetWidth, targetHeight);
+    context.drawImage(image, 0, 0, targetWidth, targetHeight);
+    const pngBlob = await canvasToBlob(canvas);
+    return {
+      data: new Uint8Array(await pngBlob.arrayBuffer()),
+      width: targetWidth,
+      height: targetHeight,
+      type: "png",
+    };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+function loadImageElement(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Failed to render SVG image."));
+    image.src = src;
+  });
+}
+
+function canvasToBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Failed to encode PNG image."));
+    }, "image/png");
+  });
 }
 
 async function packageCurrentDocumentAsHtml() {

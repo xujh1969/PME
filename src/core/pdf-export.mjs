@@ -282,6 +282,24 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       border-radius: var(--radius-xl);
       break-inside: avoid;
     }
+
+    .pdf-avoid-split {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    img.pdf-fit-single-page {
+      max-height: 760px;
+      width: auto;
+      object-fit: contain;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .pdf-allow-split {
+      break-inside: auto;
+      page-break-inside: auto;
+    }
     
     table {
       width: 100%;

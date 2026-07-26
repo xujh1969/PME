@@ -769,7 +769,7 @@ function getNextSerializedFootnoteId(options) {
 function parseInline(text, footnotes = {}) {
   const nodes = [];
   let index = 0;
-  const pattern = /(\[\^([^\]]+)\]|\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|~~([^~]+)~~|`([^`]+)`|\\\((.+?)\\\)|\$([^$\n]+)\$|\*([^*]+)\*|<span\s+style="([^"]+)">([^<]+)<\/span>|<mark\s+style="([^"]+)">([^<]+)<\/mark>|<u>([^<]+)<\/u>|<sup>([^<]+)<\/sup>|<sub>([^<]+)<\/sub>)/g;
+  const pattern = /(\[\^([^\]]+)\]|\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|~~([^~]+)~~|<code\s+(?:class="language-([^"]+)"|data-language="([^"]+)")[^>]*>([^<]+)<\/code>|`([^`]+)`|\\\((.+?)\\\)|\$([^$\n]+)\$|\*([^*]+)\*|<span\s+style="([^"]+)">([^<]+)<\/span>|<mark\s+style="([^"]+)">([^<]+)<\/mark>|<u>([^<]+)<\/u>|<sup>([^<]+)<\/sup>|<sub>([^<]+)<\/sub>)/g;
   let match;
 
   while ((match = pattern.exec(text)) !== null) {
@@ -786,26 +786,28 @@ function parseInline(text, footnotes = {}) {
       nodes.push(markedText(match[5], "bold"));
     } else if (match[6]) {
       nodes.push(markedText(match[6], "strike"));
-    } else if (match[7]) {
-      nodes.push(markedText(match[7], "code"));
-    } else if (match[8]) {
-      nodes.push({ type: "inlineMath", attrs: { latex: match[8].trim() } });
     } else if (match[9]) {
-      nodes.push({ type: "inlineMath", attrs: { latex: match[9].trim() } });
+      nodes.push(codeText(match[9], match[7] || match[8]));
     } else if (match[10]) {
-      nodes.push(markedText(match[10], "italic"));
+      nodes.push(markedText(match[10], "code"));
+    } else if (match[11]) {
+      nodes.push({ type: "inlineMath", attrs: { latex: match[11].trim() } });
     } else if (match[12]) {
-      const styles = parseInlineStyles(match[11]);
-      nodes.push({ type: "text", text: match[12], marks: styles });
-    } else if (match[14]) {
-      const styles = parseHighlightStyles(match[13]);
-      nodes.push({ type: "text", text: match[14], marks: styles });
+      nodes.push({ type: "inlineMath", attrs: { latex: match[12].trim() } });
+    } else if (match[13]) {
+      nodes.push(markedText(match[13], "italic"));
     } else if (match[15]) {
-      nodes.push(markedText(match[15], "underline"));
-    } else if (match[16]) {
-      nodes.push(markedText(match[16], "superscript"));
+      const styles = parseInlineStyles(match[14]);
+      nodes.push({ type: "text", text: match[15], marks: styles });
     } else if (match[17]) {
-      nodes.push(markedText(match[17], "subscript"));
+      const styles = parseHighlightStyles(match[16]);
+      nodes.push({ type: "text", text: match[17], marks: styles });
+    } else if (match[18]) {
+      nodes.push(markedText(match[18], "underline"));
+    } else if (match[19]) {
+      nodes.push(markedText(match[19], "superscript"));
+    } else if (match[20]) {
+      nodes.push(markedText(match[20], "subscript"));
     }
 
     index = pattern.lastIndex;
@@ -865,6 +867,14 @@ function markedText(text, type) {
   return { type: "text", text, marks: [{ type }] };
 }
 
+function codeText(text, language = "plaintext") {
+  return {
+    type: "text",
+    text,
+    marks: [{ type: "code", attrs: { language: language || "plaintext" } }],
+  };
+}
+
 function linkedText(text, href) {
   console.log("DEBUG: linkedText called, text:", text, ", href:", href);
   return { type: "text", text, marks: [{ type: "link", attrs: { href } }] };
@@ -886,6 +896,10 @@ function serializeText(node) {
       return `~~${text}~~`;
     }
     if (mark.type === "code") {
+      const language = mark.attrs?.language || "plaintext";
+      if (language !== "plaintext") {
+        return `<code class="language-${escapeHtmlAttribute(language)}">${escapeHtml(text)}</code>`;
+      }
       return `\`${text}\``;
     }
     if (mark.type === "link") {
@@ -933,4 +947,11 @@ function serializeText(node) {
     }
     return text;
   }, node.text || "");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }

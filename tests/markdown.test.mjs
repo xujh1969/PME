@@ -595,6 +595,29 @@ test("round trips inline marks for toolbar formatting", () => {
   assert.equal(serializeMarkdown(parseMarkdown(markdown)), `${markdown}\n`);
 });
 
+test("round trips inline code language marks", () => {
+  const markdown = 'Use <code class="language-javascript">const value = 1</code> here.';
+
+  assert.deepEqual(parseMarkdown(markdown), {
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "Use " },
+          {
+            type: "text",
+            text: "const value = 1",
+            marks: [{ type: "code", attrs: { language: "javascript" } }],
+          },
+          { type: "text", text: " here." },
+        ],
+      },
+    ],
+  });
+  assert.equal(serializeMarkdown(parseMarkdown(markdown)), `${markdown}\n`);
+});
+
 test("round trips inline links", () => {
   const markdown = "Open [PME](https://example.com/pme) now.";
 

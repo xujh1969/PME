@@ -25,3 +25,15 @@ test("bundles the help manual through Vite instead of loading a loose runtime as
   assert.equal(appSource.includes('fetch("assets/PME使用说明书.md")'), false);
   assert.equal(appSource.includes('invoke("read_readme_file")'), false);
 });
+
+test("closes toolbar dropdown panels after running panel commands", () => {
+  assert.equal(appSource.includes("function closeToolbarDropdownPanel"), true);
+  assert.equal(appSource.includes("closeToolbarDropdownPanel(button);"), true);
+});
+
+test("normalizes Mermaid foreignObject labels before Word export", () => {
+  assert.equal(appSource.includes("function normalizeMermaidSvgForWord"), true);
+  assert.equal(appSource.includes('querySelectorAll("foreignObject")'), true);
+  assert.equal(appSource.includes('createElementNS("http://www.w3.org/2000/svg", "text")'), true);
+  assert.equal(appSource.includes("foreignObject.replaceWith(text);"), true);
+});

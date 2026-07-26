@@ -22,6 +22,8 @@ function createContext(overrides = {}) {
     saveDocument: () => calls.push("save"),
     saveAsDocument: () => calls.push("save-as"),
     packageCurrentDocument: () => calls.push("package"),
+    packageCurrentDocumentAsHtml: () => calls.push("package-html"),
+    exportCurrentDocumentAsWord: () => calls.push("word"),
     openPdfExportModal: () => calls.push("pdf"),
     closeDocumentTab: (path) => calls.push(`close:${path}`),
     runClipboardMenuCommand: (command) => calls.push(`clipboard:${command}`),
@@ -36,7 +38,10 @@ function createContext(overrides = {}) {
       },
       querySelector: (selector) => {
         calls.push(`query:${selector}`);
-        return { focus: () => calls.push("focus") };
+        return {
+          focus: () => calls.push("focus"),
+          select: () => calls.push("select"),
+        };
       },
     },
     openMessageModal: (options) => calls.push(`modal:${options.title}`),
@@ -54,6 +59,8 @@ test("dispatches file and export menu commands to callbacks", () => {
     "save-document",
     "save-as-document",
     "package-document",
+    "package-html-document",
+    "export-word",
     "export-pdf",
     "close-current-tab",
   ].forEach((command) => runAppCommand(command, context));
@@ -65,6 +72,8 @@ test("dispatches file and export menu commands to callbacks", () => {
     "save",
     "save-as",
     "package",
+    "package-html",
+    "word",
     "pdf",
     "close:README.md",
   ]);
@@ -187,7 +196,8 @@ test("dispatches zoom search about and unknown editor commands", () => {
     "zoom:0.9",
     "query:[data-find-input]",
     "focus",
-    "modal:鍏充簬 PME",
+    "select",
+    "modal:关于 PME",
     "editor:bold",
   ]);
 });

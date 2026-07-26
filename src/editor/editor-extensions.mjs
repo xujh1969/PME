@@ -25,6 +25,7 @@ import { Video } from "./video-extension.mjs";
 export function createEditorExtensions(options) {
   return [
     StarterKit.configure({
+      code: false,
       codeBlock: false,
       heading: false,
       link: false,
@@ -40,6 +41,9 @@ export function createEditorExtensions(options) {
     options.smartCodeBlockLowlight.configure({
       lowlight: options.lowlight,
       defaultLanguage: "plaintext",
+    }),
+    options.inlineCodeLanguage.configure({
+      lowlight: options.lowlight,
     }),
     LinkExtension.extend({
       renderHTML({ mark, HTMLAttributes }) {

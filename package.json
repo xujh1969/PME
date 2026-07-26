@@ -43,6 +43,7 @@
     "@tiptap/extension-typography": "^3.27.3",
     "@tiptap/extension-underline": "^3.27.3",
     "@tiptap/starter-kit": "^3.27.3",
+    "docx": "^9.7.1",
     "fflate": "^0.8.3",
     "html2pdf.js": "^0.10.3",
     "katex": "^0.17.0",

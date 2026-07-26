@@ -1,5 +1,59 @@
 import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
+import Code from "@tiptap/extension-code";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { getCodeIndentUnit, getNextCodeLineIndent } from "../core/code-indent.mjs";
+
+const inlineCodeHighlightKey = new PluginKey("inlineCodeHighlight");
+
+export const InlineCodeLanguage = Code.extend({
+  addAttributes() {
+    return {
+      language: {
+        default: "plaintext",
+        parseHTML: (element) => (
+          element.getAttribute("data-language")
+          || [...element.classList].find((className) => className.startsWith("language-"))?.replace("language-", "")
+          || "plaintext"
+        ),
+        renderHTML: (attributes) => {
+          const language = attributes.language || "plaintext";
+          return {
+            "data-inline-code": "true",
+            "data-language": language,
+            class: `language-${language}`,
+          };
+        },
+      },
+    };
+  },
+
+  addCommands() {
+    return {
+      setCode: (attributes = {}) => ({ commands }) => commands.setMark(this.name, normalizeCodeAttributes(attributes)),
+      toggleCode: (attributes = {}) => ({ commands }) => commands.toggleMark(this.name, normalizeCodeAttributes(attributes)),
+      unsetCode: () => ({ commands }) => commands.unsetMark(this.name),
+    };
+  },
+
+  addProseMirrorPlugins() {
+    const lowlight = this.options.lowlight;
+    return [
+      new Plugin({
+        key: inlineCodeHighlightKey,
+        state: {
+          init: (_, state) => buildInlineCodeDecorations(state.doc, lowlight),
+          apply: (tr, decorations, _oldState, newState) => (
+            tr.docChanged ? buildInlineCodeDecorations(newState.doc, lowlight) : decorations
+          ),
+        },
+        props: {
+          decorations: (state) => inlineCodeHighlightKey.getState(state),
+        },
+      }),
+    ];
+  },
+});
 
 export const SmartCodeBlockLowlight = CodeBlockLowlight.extend({
   addKeyboardShortcuts() {
@@ -22,6 +76,86 @@ export const SmartCodeBlockLowlight = CodeBlockLowlight.extend({
     ];
   },
 });
+
+function normalizeCodeAttributes(attributes) {
+  return {
+    ...attributes,
+    language: attributes.language || "plaintext",
+  };
+}
+
+function buildInlineCodeDecorations(doc, lowlight) {
+  if (!lowlight) {
+    return DecorationSet.empty;
+  }
+
+  const decorations = [];
+  doc.descendants((node, pos) => {
+    if (!node.isText || !node.text) {
+      return;
+    }
+
+    const mark = node.marks.find((candidate) => candidate.type.name === "code");
+    const language = mark?.attrs?.language || "plaintext";
+    if (!mark || language === "plaintext") {
+      return;
+    }
+
+    const tokens = getInlineCodeTokens(node.text, language, lowlight);
+    tokens.forEach((token) => {
+      if (!token.className || token.from >= token.to) {
+        return;
+      }
+      decorations.push(Decoration.inline(
+        pos + token.from,
+        pos + token.to,
+        { class: token.className },
+      ));
+    });
+  });
+
+  return DecorationSet.create(doc, decorations);
+}
+
+function getInlineCodeTokens(text, language, lowlight) {
+  try {
+    const tree = lowlight.highlight(language, text);
+    const tokens = [];
+    collectLowlightTokens(tree.children || [], 0, "", tokens);
+    return tokens;
+  } catch {
+    return [];
+  }
+}
+
+function collectLowlightTokens(nodes, offset, inheritedClassName, tokens) {
+  let cursor = offset;
+  nodes.forEach((node) => {
+    if (node.type === "text") {
+      const value = node.value || "";
+      tokens.push({
+        from: cursor,
+        to: cursor + value.length,
+        className: inheritedClassName,
+      });
+      cursor += value.length;
+      return;
+    }
+
+    if (node.type !== "element") {
+      return;
+    }
+
+    const className = getLowlightClassName(node) || inheritedClassName;
+    cursor = collectLowlightTokens(node.children || [], cursor, className, tokens);
+  });
+  return cursor;
+}
+
+function getLowlightClassName(node) {
+  const className = node.properties?.className;
+  return Array.isArray(className) ? className.join(" ") : "";
+}
 
 export function handleCodeBlockEnter(currentEditor) {
   const { selection } = currentEditor.state;
@@ -103,4 +237,3 @@ function removeCodeLineIndent(line, indentSize) {
   const spacesToRemove = Math.min(line.match(/^ */)?.[0].length || 0, indentSize);
   return line.slice(spacesToRemove);
 }
-

@@ -327,6 +327,11 @@
   display: block;
 }
 
+.tool-group--dropdown.is-panel-closed:hover .insert-panel,
+.tool-group--dropdown.is-panel-closed:hover .format-panel {
+  display: none;
+}
+
 .insert-panel__row,
 .format-panel__row {
   display: flex;

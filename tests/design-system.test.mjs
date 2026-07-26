@@ -195,3 +195,18 @@ test("supports menu-driven view toggles and editor zoom", () => {
   assert.equal(styles.includes(".shell--status-hidden"), true);
   assert.equal(styles.includes("--editor-zoom"), true);
 });
+
+test("keeps editor caret and Mermaid cursor visible on light backgrounds", () => {
+  const proseMirrorRule = styles.match(/\.ProseMirror\s*\{[^}]+\}/)?.[0] || "";
+  const sourceEditorRule = styles.match(/\.source-editor\s*\{[^}]+\}/)?.[0] || "";
+  const mermaidViewportRule = styles.match(/\.ProseMirror \.mermaid-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
+  const mermaidSvgRule = styles.match(/\.ProseMirror \.mermaid-diagram svg\s*\{[^}]+\}/)?.[0] || "";
+
+  assert.equal(proseMirrorRule.includes("caret-color: var(--color-ink);"), true);
+  assert.equal(proseMirrorRule.includes("cursor: text;"), true);
+  assert.equal(sourceEditorRule.includes("caret-color: var(--color-ink);"), true);
+  assert.equal(mermaidViewportRule.includes("border: 1px solid var(--color-hairline-strong);"), true);
+  assert.equal(mermaidViewportRule.includes("cursor: default;"), true);
+  assert.equal(mermaidViewportRule.includes("cursor: grab;"), false);
+  assert.equal(mermaidSvgRule.includes("cursor: default;"), true);
+});

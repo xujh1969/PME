@@ -222,6 +222,32 @@ async function renderMermaidDiagram(element, code) {
   }
 }
 
+export async function renderMermaidStaticSvg(code) {
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.left = "-10000px";
+  container.style.top = "0";
+  document.body.appendChild(container);
+  try {
+    await renderMermaidDiagram(container, code);
+    const svg = container.querySelector("svg");
+    if (!svg) {
+      throw new Error("Mermaid SVG was not generated.");
+    }
+    const baseSize = getSvgBaseSize(svg);
+    if (!svg.getAttribute("viewBox")) {
+      svg.setAttribute("viewBox", `0 0 ${baseSize.width} ${baseSize.height}`);
+    }
+    return {
+      svg: new XMLSerializer().serializeToString(svg),
+      width: baseSize.width,
+      height: baseSize.height,
+    };
+  } finally {
+    container.remove();
+  }
+}
+
 
 
 function applyMermaidSvgThemeFallback(svg) {

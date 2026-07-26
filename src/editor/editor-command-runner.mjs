@@ -1,3 +1,5 @@
+import { TextSelection } from "@tiptap/pm/state";
+
 export function runEditorCommand(command, context) {
   if (command === "source-view") {
     context.toggleSourceView?.();
@@ -65,7 +67,7 @@ export function runEditorCommand(command, context) {
   } else if (command === "details") {
     context.createDetailsBlock?.(editor);
   } else if (command === "code") {
-    chain.toggleCode().run();
+    toggleInlineCode(editor, chain);
   } else if (command === "clear-format") {
     chain.unsetAllMarks().clearNodes().run();
   } else if (command === "link") {
@@ -201,4 +203,25 @@ export function runEditorCommand(command, context) {
       editor.view.dispatch(tr);
     }
   }
+}
+
+function toggleInlineCode(editor, chain) {
+  const { from, to, empty } = editor.state.selection;
+  if (!empty) {
+    chain.toggleCode({ language: "plaintext" }).run();
+    return;
+  }
+
+  chain.command(({ tr, state }) => {
+    const codeMark = state.schema.marks.code;
+    if (!codeMark) {
+      return false;
+    }
+
+    const text = "code";
+    tr.insertText(text, from);
+    tr.addMark(from, from + text.length, codeMark.create({ language: "plaintext" }));
+    tr.setSelection(TextSelection.create(tr.doc, from, from + text.length));
+    return true;
+  }).run();
 }

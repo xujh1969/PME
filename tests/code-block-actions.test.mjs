@@ -8,6 +8,12 @@ const languageModalSource = readFileSync(new URL("../src/ui/code-language-modal.
 
 test("owns code block keyboard behavior outside the app entry", () => {
   assert.equal(actionsSource.includes("export const SmartCodeBlockLowlight"), true);
+  assert.equal(actionsSource.includes("export const InlineCodeLanguage"), true);
+  assert.equal(actionsSource.includes("data-inline-code"), true);
+  assert.equal(actionsSource.includes("class: `language-${language}`"), true);
+  assert.equal(actionsSource.includes("Decoration.inline"), true);
+  assert.equal(actionsSource.includes("lowlight.highlight(language, text)"), true);
+  assert.equal(actionsSource.includes("innerHTML"), false);
   assert.equal(actionsSource.includes("export function handleCodeBlockEnter"), true);
   assert.equal(actionsSource.includes("export function handleCodeBlockIndent"), true);
   assert.equal(actionsSource.includes("export function handleCodeBlockOutdent"), true);
@@ -18,6 +24,8 @@ test("owns code block keyboard behavior outside the app entry", () => {
 
 test("owns the code language picker outside the app entry", () => {
   assert.equal(languageModalSource.includes("export function openCodeLanguageModal"), true);
+  assert.equal(appSource.includes('openCodeLanguageModal(currentLanguage || "plaintext")'), true);
+  assert.equal(appSource.includes('openCodeLanguageModal(codeInfo.mark.attrs.language || "plaintext")'), true);
   assert.equal(languageModalSource.includes('["javascript", "JavaScript"]'), true);
   assert.equal(appSource.includes("function openCodeLanguageModal"), false);
   assert.equal(appSource.includes("const codeLanguageOptions"), false);
