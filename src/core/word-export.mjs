@@ -42,6 +42,7 @@ export async function buildWordDocument({
   renderVideo,
   renderMermaidDiagram,
   renderMindMap,
+  renderSvg,
 } = {}) {
   const children = [];
   if (title) {
@@ -60,6 +61,7 @@ export async function buildWordDocument({
       renderVideo,
       renderMermaidDiagram,
       renderMindMap,
+      renderSvg,
     }));
   }
 
@@ -179,6 +181,14 @@ async function renderBlock(node, context) {
     const image = await renderDiagramImage(
       () => context.renderMindMap?.(node.attrs?.data || node.attrs?.raw || node.attrs),
       "Mind Map",
+    );
+    return [image];
+  }
+
+  if (node.type === "svgDiagram") {
+    const image = await renderDiagramImage(
+      () => context.renderSvg?.(node.attrs?.code || ""),
+      createTextSvgImage("SVG render failed"),
     );
     return [image];
   }

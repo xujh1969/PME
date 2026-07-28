@@ -340,6 +340,25 @@ function buildHtmlExportHtml({ title, documentHtml }) {
       margin: 0 auto !important;
     }
 
+    .svg-diagram {
+      width: 100%;
+      margin: 16px 0;
+      overflow: visible;
+    }
+
+    .svg-diagram__viewport,
+    .svg-diagram__content {
+      width: 100% !important;
+      overflow: visible !important;
+    }
+
+    .svg-diagram svg {
+      display: block !important;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 0 auto !important;
+    }
+
     .callout {
       margin: 1em 0;
       padding: 1em;

@@ -634,6 +634,27 @@
   width: auto;
 }
 
+.ProseMirror .svg-diagram {
+  width: min(100%, 100%);
+  margin: 1.5rem auto;
+}
+
+.ProseMirror .svg-diagram__viewport,
+.ProseMirror .svg-diagram__content {
+  width: 100%;
+}
+
+.ProseMirror .svg-diagram svg {
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.ProseMirror .svg-diagram__error {
+  color: var(--color-error);
+  text-align: center;
+}
+
 .ProseMirror .mermaid-diagram--error {
   color: var(--color-error);
   font-family: var(--font-mono);

@@ -18,6 +18,16 @@ test("marks internal block drags as move operations instead of file drops", () =
   assert.equal(appSource.includes('event.dataTransfer.dropEffect = "move";'), true);
 });
 
+test("opens dropped Markdown files through the shared document drop path", () => {
+  assert.equal(appSource.includes("async function openDroppedMarkdownFiles"), true);
+  assert.equal(appSource.includes("function bindDocumentFileDropEvents"), true);
+  assert.equal(appSource.includes('document.addEventListener("drop", handleDrop, { capture: true });'), true);
+  assert.equal(appSource.includes("getMarkdownFilesFromFileList(event.dataTransfer?.files)"), true);
+  assert.equal(appSource.includes("await openDroppedMarkdownFiles(markdownFiles);"), true);
+  assert.equal(appSource.includes('state.screen = "shell";'), true);
+  assert.equal(appSource.includes("state.tree = buildWorkspaceTree(state.paths);"), true);
+});
+
 test("bundles the help manual through Vite instead of loading a loose runtime asset", () => {
   assert.equal(appSource.includes('import helpManualMarkdown from "./assets/PME使用说明书.md?raw";'), true);
   assert.equal(appSource.includes("const markdown = helpManualMarkdown.trim()"), true);

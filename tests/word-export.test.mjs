@@ -34,6 +34,7 @@ test("embeds rendered diagram images into the docx package", async () => {
     type: "doc",
     content: [
       { type: "mermaidDiagram", attrs: { code: "graph TD\nA-->B" } },
+      { type: "svgDiagram", attrs: { code: '<svg viewBox="0 0 100 60"></svg>' } },
       { type: "mindMap", attrs: { data: { nodeData: { id: "root", topic: "中心", children: [] } } } },
     ],
   };
@@ -50,6 +51,12 @@ test("embeds rendered diagram images into the docx package", async () => {
       data: new Uint8Array([137, 80, 78, 71]),
       width: 320,
       height: 180,
+      type: "png",
+    }),
+    renderSvg: async () => ({
+      data: new Uint8Array([137, 80, 78, 71]),
+      width: 100,
+      height: 60,
       type: "png",
     }),
   });

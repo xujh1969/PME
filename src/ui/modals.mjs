@@ -154,7 +154,7 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true, 
       if (action === "apply") close(textarea.value);
       if (action === "ai" && onAiGenerate) {
         textarea.value = "AI 正在生成中...";
-        onAiGenerate((chunk) => {
+        Promise.resolve(onAiGenerate((chunk) => {
           if (textarea.value === "AI 正在生成中...") {
             textarea.value = chunk;
           } else {
@@ -162,6 +162,14 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true, 
           }
           textarea.focus();
           textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        })).then((result) => {
+          if (typeof result === "string") {
+            textarea.value = result;
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+          }
+        }).catch((error) => {
+          console.error("AI generation failed:", error);
         });
       }
     });
@@ -342,6 +350,106 @@ ${diagramInfo.syntax}
     document.body.appendChild(overlay);
     input.focus();
   });
+}
+
+export function openSvgAiModal({ onChunk }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "text-modal";
+    overlay.innerHTML = `
+      <div class="text-modal__dialog text-input-modal" role="dialog" aria-modal="true" aria-label="AI生成SVG">
+        <header class="text-modal__header"><strong>AI生成SVG</strong><button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button></header>
+        <section class="text-input-modal__body">
+          <label><span>SVG描述</span><textarea rows="6" data-svg-ai-input placeholder="描述需要生成的SVG图形"></textarea></label>
+        </section>
+        <footer class="text-modal__footer"><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">生成</button></footer>
+      </div>`;
+
+    const input = overlay.querySelector("[data-svg-ai-input]");
+    const applyButton = overlay.querySelector("[data-modal-action='apply']");
+    const close = () => { overlay.remove(); showTableBubbleToolbar(); };
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay || event.target.dataset.modalAction === "cancel") { close(); resolve(null); }
+      if (event.target.dataset.modalAction === "apply") {
+        handleApply();
+      }
+    });
+
+    overlay.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") { event.preventDefault(); close(); resolve(null); }
+      if (event.key === "Enter" && event.ctrlKey) { event.preventDefault(); handleApply(); }
+    });
+
+    async function handleApply() {
+      const description = input.value.trim();
+      if (!description) return;
+      applyButton.disabled = true;
+      close();
+
+      try {
+        const prompt = `你是专业SVG图表生成助手。根据以下描述生成完整、可直接渲染的SVG源码。
+
+描述：${description}
+
+要求：
+1. 只输出一个完整<svg>...</svg>，不要输出Markdown代码块或解释文字。
+2. SVG必须包含viewBox，宽度使用width="100%"，高度用viewBox比例自适应。
+3. 使用内联style或SVG属性表达颜色、字号、线条。
+4. 不要使用script、foreignObject、外链图片、事件属性。
+5. 中文文字直接写入text元素。`;
+
+        let streamedText = "";
+        const text = await generateText(buildSvgAiPrompt(description), (chunk) => {
+          streamedText += chunk;
+          onChunk?.(chunk);
+        }, {
+          systemPrompt: "You are a code generator. Always return only valid SVG code. Never include explanations, markdown fences, or natural language. If you cannot generate SVG, return nothing.",
+          maxTokens: 40960,
+          temperature: 0,
+          timeoutSeconds: 180,
+        });
+        const finalText = text || streamedText;
+        const svg = extractSvgFromAiText(finalText);
+        resolve(svg || finalText || formatSvgAiDiagnostic(finalText));
+      } catch (error) {
+        console.error("AI SVG generation failed:", error);
+        resolve(formatSvgAiError(error));
+      }
+    }
+
+    hideTableBubbleToolbar();
+    document.body.appendChild(overlay);
+    input.focus();
+  });
+}
+
+function extractSvgFromAiText(text) {
+  const value = String(text || "").trim();
+  const fenced = value.match(/```(?:svg|xml)?\s*([\s\S]*?)```/i)?.[1]?.trim();
+  const source = fenced || value;
+  return source.match(/<svg\b[\s\S]*<\/svg>/i)?.[0]?.trim() || "";
+}
+
+function buildSvgAiPrompt(description) {
+  return `Generate SVG code for "${description}".
+
+Return only raw SVG source starting with <svg and ending with </svg>. Do NOT wrap in Markdown fences. Do NOT include any text before or after. The SVG must include viewBox and width="100%". Do not use script, foreignObject, external images, or event attributes.`;
+}
+function formatSvgAiDiagnostic(text) {
+  return [
+    "<!-- SVG AI 没有提取到完整 <svg>...</svg>，以下是 AI 原始返回，方便排查：",
+    String(text ?? "") || "(空返回)",
+    "-->",
+  ].join("\n");
+}
+
+function formatSvgAiError(error) {
+  return [
+    "<!-- SVG AI 调用失败，以下是错误信息：",
+    error?.stack || error?.message || String(error),
+    "-->",
+  ].join("\n");
 }
 
 export function openMessageModal({ title, message, confirmLabel = "确定" }) {

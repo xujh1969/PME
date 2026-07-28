@@ -31,6 +31,16 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
+    if (/^\s*<svg\b/i.test(line)) {
+      const { svg, nextIndex } = collectSvgBlock(lines, index);
+      content.push({
+        type: "svgDiagram",
+        attrs: { code: svg },
+      });
+      index = nextIndex;
+      continue;
+    }
+
     if (isTableStart(lines, index)) {
       const { table, nextIndex } = parseTable(lines, index);
       content.push(table);
@@ -349,6 +359,10 @@ function serializeNode(node, options) {
     ].join("\n");
   }
 
+  if (node.type === "svgDiagram") {
+    return node.attrs?.code || "";
+  }
+
   if (node.type === "blockquote") {
     return `> ${plainText(node, options)}`;
   }
@@ -418,6 +432,22 @@ function serializeNode(node, options) {
   }
 
   return "";
+}
+
+function collectSvgBlock(lines, startIndex) {
+  const svgLines = [];
+  let index = startIndex;
+
+  while (index < lines.length) {
+    svgLines.push(lines[index]);
+    if (/<\/svg>\s*$/i.test(lines[index])) {
+      index += 1;
+      break;
+    }
+    index += 1;
+  }
+
+  return { svg: svgLines.join("\n").trim(), nextIndex: index };
 }
 
 function getLastSerializableNode(nodes) {

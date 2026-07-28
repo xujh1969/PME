@@ -90,6 +90,18 @@ test("toggles inline code for selected text", () => {
   ]);
 });
 
+test("inserts an SVG diagram block", () => {
+  const editor = createEditorStub();
+
+  runEditorCommand("svg", { editor });
+
+  assert.deepEqual(editor.calls, [
+    ["focus"],
+    ["insertSvgDiagram"],
+    ["run"],
+  ]);
+});
+
 test("runs the mindmap insert command", () => {
   const editor = createEditorStub();
 

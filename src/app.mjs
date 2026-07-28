@@ -135,6 +135,7 @@ import { headingCollapsePlugin } from "./editor/heading-collapse.mjs";
 import { AlignedTableCell, AlignedTableHeader, AssetImage, ParagraphWithIndent } from "./editor/custom-nodes.mjs";
 import { MermaidDiagram, renderMermaidStaticSvg } from "./editor/mermaid-node.mjs";
 import { flushMindMapEdits, MindMap } from "./editor/mindmap-node.mjs";
+import { getSvgDiagramDimensions, normalizeSvgCode, SvgDiagram } from "./editor/svg-node.mjs";
 import {
   InlineCodeLanguage,
   SmartCodeBlockLowlight,
@@ -168,6 +169,7 @@ import {
   openMessageModal,
   openMermaidAiModal,
   openSaveChangesModal,
+  openSvgAiModal,
   openTableInsertModal,
   openTextEditorModal,
   openTextInputModal,
@@ -306,6 +308,7 @@ const app = document.querySelector("#app");
 let editor = null;
 let dragDepth = 0;
 let isBlockDragInProgress = false;
+let documentFileDropBound = false;
 let blockDragNodePos = -1;
 let isMigratingMath = false;
 let objectDeselectBound = false;
@@ -600,6 +603,7 @@ function renderShell() {
               ${toolButton("emoji", "Smile", "表情")}
               ${toolButton("horizontal-rule", "Minus", "分割线")}
               ${toolButton("markdown-link", "FileInput", "插入 Markdown 文件")}
+              ${toolButton("svg", "SvgBox", "SVG")}
             </div>
           </div>
           </div>
@@ -768,6 +772,7 @@ function renderAppMenu() {
       menuItem("formula", "块级公式"),
       menuItem("inline-formula", "行内公式"),
       menuItem("mermaid", "Mermaid"),
+      menuItem("svg", "SVG"),
       menuItem("mindmap", "思维导图"),
       menuItem("code-block", "代码块"),
       menuItem("code", "行内代码"),
@@ -862,6 +867,9 @@ function toolButton(command, iconName, label) {
 }
 
 function icon(name) {
+  if (name === "SvgBox") {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><text x="12" y="14.5" text-anchor="middle" font-size="5.6" font-weight="700" fill="currentColor" stroke="none" font-family="Arial, sans-serif">SVG</text></svg>`;
+  }
   return `<i data-lucide="${name}" aria-hidden="true"></i>`;
 }
 
@@ -1098,10 +1106,7 @@ function bindEvents() {
     });
   });
   document.addEventListener("keydown", handleGlobalEscape);
-  document.querySelector(".editor-area")?.addEventListener("dragenter", handleDragEnter);
-  document.querySelector(".editor-area")?.addEventListener("dragover", handleDragOver);
-  document.querySelector(".editor-area")?.addEventListener("dragleave", handleDragLeave);
-  document.querySelector(".editor-area")?.addEventListener("drop", handleDrop);
+  bindDocumentFileDropEvents();
   document.querySelector(".editor-area")?.addEventListener("paste", handlePaste, { capture: true });
   document.querySelector(".editor-area")?.addEventListener("copy", handleCopy, { capture: true });
   document.querySelector(".editor-area")?.addEventListener("cut", handleCut, { capture: true });
@@ -1111,9 +1116,11 @@ function bindEvents() {
   document.querySelector(".source-editor")?.addEventListener("input", handleSourceInput);
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleMathClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleMermaidClick, { capture: true });
+  document.querySelector("#tiptapEditor")?.addEventListener("click", handleSvgClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleImageClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("dblclick", handleMathDoubleClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("dblclick", handleMermaidDoubleClick, { capture: true });
+  document.querySelector("#tiptapEditor")?.addEventListener("dblclick", handleSvgDoubleClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("dblclick", handleImageDoubleClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("dblclick", handleVideoDoubleClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("dblclick", handleCodeBlockDoubleClick, { capture: true });
@@ -1406,7 +1413,7 @@ async function pasteMarkdown() {
 
   try {
     const text = await navigator.clipboard.readText();
-    if (editor.isActive("codeBlock") || editor.isActive("mermaidDiagram") || editor.isActive("blockMath")) {
+    if (editor.isActive("codeBlock") || editor.isActive("mermaidDiagram") || editor.isActive("svgDiagram") || editor.isActive("blockMath")) {
       editor.chain().focus().insertContent(text).run();
     } else {
       const parsed = parseMarkdown(text);
@@ -2764,6 +2771,7 @@ function mountEditor() {
       tableOfContents: TableOfContents,
       mermaidDiagram: MermaidDiagram,
       mindMap: MindMap,
+      svgDiagram: SvgDiagram,
       assetImage: AssetImage,
       bubbleMenuElement: document.querySelector("#bubble-menu") || createBubbleMenuElement(),
       getEditor: () => editor,
@@ -2826,58 +2834,18 @@ function createBubbleMenuElement() {
 }
 
 function setupFileDragAndDrop() {
-  const documentArea = document.querySelector(".document");
-  if (!documentArea) return;
+  // File drops are handled once at document level so Markdown files, images, and source mode share one path.
+}
 
-  documentArea.addEventListener("dragover", (e) => {
-    if (!e.dataTransfer.types.includes("Files")) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-    documentArea.style.borderColor = "#10B981";
-    documentArea.style.backgroundColor = "rgba(16, 185, 129, 0.05)";
-  });
-
-  documentArea.addEventListener("dragleave", () => {
-    documentArea.style.borderColor = "";
-    documentArea.style.backgroundColor = "";
-  });
-
-  documentArea.addEventListener("drop", async (e) => {
-    if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
-    e.preventDefault();
-    documentArea.style.borderColor = "";
-    documentArea.style.backgroundColor = "";
-
-    const files = e.dataTransfer.files;
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.name.endsWith(".md") || file.name.endsWith(".markdown")) {
-        if (isTauriRuntime()) {
-          import("@tauri-apps/api/core").then(({ invoke }) => {
-            invoke("open_markdown_file_path", { filePath: file.path }).then((result) => {
-              if (result) {
-                const workspace = result;
-                if (state.screen === "shell" && state.selectedPath && state.openTabs.length > 0) {
-                  addMarkdownFileToWorkspace(workspace, createWorkspaceAdapter());
-                } else {
-                  openWorkspace(
-                    workspace.projectName,
-                    getWorkspacePaths(workspace.files, workspace.paths),
-                    workspace.files,
-                    workspace.paths,
-                    workspace.assetIndex || {}
-                  );
-                  if (workspace.filePath) {
-                    state.filePath = workspace.filePath;
-                  }
-                }
-              }
-            });
-          });
-        }
-      }
-    }
-  });
+function bindDocumentFileDropEvents() {
+  if (documentFileDropBound) {
+    return;
+  }
+  documentFileDropBound = true;
+  document.addEventListener("dragenter", handleDragEnter, { capture: true });
+  document.addEventListener("dragover", handleDragOver, { capture: true });
+  document.addEventListener("dragleave", handleDragLeave, { capture: true });
+  document.addEventListener("drop", handleDrop, { capture: true });
 }
 
 function openAiAssistant() {
@@ -3398,7 +3366,7 @@ function handleObjectKeydown(event) {
 }
 
 function isEditableObjectNode(node) {
-  return ["blockMath", "inlineMath", "mermaidDiagram", "image", "video"].includes(node.type.name);
+  return ["blockMath", "inlineMath", "mermaidDiagram", "svgDiagram", "image", "video"].includes(node.type.name);
 }
 
 function editSelectedObject(node, pos) {
@@ -3406,6 +3374,8 @@ function editSelectedObject(node, pos) {
     editMathNode(node.type.name, node, pos);
   } else if (node.type.name === "mermaidDiagram") {
     editMermaidNode(node, pos);
+  } else if (node.type.name === "svgDiagram") {
+    editSvgNode(node, pos);
   } else if (node.type.name === "image") {
     editImageSize(node, pos, getSelectedImageElement());
   } else if (node.type.name === "video") {
@@ -3657,6 +3627,93 @@ async function editMermaidNode(node, pos) {
   }
 
   editor.chain().focus().updateMermaidDiagram({ code, pos }).run();
+}
+
+function handleSvgClick(event) {
+  if (!editor) {
+    return;
+  }
+
+  const diagramElement = event.target.closest?.(".svg-diagram");
+  if (!diagramElement) {
+    return;
+  }
+
+  const pos = findSvgNodePosition(diagramElement);
+  const node = pos === null ? null : editor.state.doc.nodeAt(pos);
+  if (!node) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  selectEditorNode(pos);
+}
+
+function handleSvgDoubleClick(event) {
+  if (!editor) {
+    return;
+  }
+
+  const diagramElement = event.target.closest?.(".svg-diagram");
+  if (!diagramElement) {
+    return;
+  }
+
+  const pos = findSvgNodePosition(diagramElement);
+  const node = pos === null ? null : editor.state.doc.nodeAt(pos);
+  if (!node) {
+    return;
+  }
+
+  event.preventDefault();
+  event.stopPropagation();
+  editSvgNode(node, pos);
+}
+
+function findSvgNodePosition(diagramElement) {
+  const diagrams = [...document.querySelectorAll(".svg-diagram")];
+  const targetIndex = diagrams.indexOf(diagramElement);
+  if (targetIndex < 0) {
+    return null;
+  }
+
+  let currentIndex = -1;
+  let position = null;
+  editor.state.doc.descendants((node, candidate) => {
+    if (node.type.name !== "svgDiagram") {
+      return;
+    }
+
+    currentIndex += 1;
+    if (currentIndex === targetIndex) {
+      position = candidate;
+      return false;
+    }
+  });
+  return position;
+}
+
+async function editSvgNode(node, pos) {
+  const code = await openTextEditorModal({
+    title: "编辑 SVG",
+    value: node.attrs.code || "",
+    rows: 18,
+    monospace: true,
+    onAiGenerate: (onChunk) => {
+      return openSvgAiModal({ onChunk });
+    },
+  });
+  if (code === null) {
+    return;
+  }
+
+  if (!code.trim()) {
+    editor.chain().focus().deleteSvgDiagram({ pos }).run();
+    return;
+  }
+
+  editor.chain().focus().updateSvgDiagram({ code: normalizeSvgCode(code) || code, pos }).run();
 }
 
 function handleImageClick(event) {
@@ -4089,6 +4146,7 @@ async function exportCurrentDocumentAsWord() {
       renderVideo: renderVideoWordPoster,
       renderMermaidDiagram: renderMermaidWordImage,
       renderMindMap: renderMindMapWordImage,
+      renderSvg: renderSvgWordImage,
     });
     const savedPath = await saveBlobExport(getWordExportFileName(markdownName), blob);
     if (savedPath) {
@@ -4100,6 +4158,20 @@ async function exportCurrentDocumentAsWord() {
   } finally {
     closeWait();
   }
+}
+
+async function renderSvgWordImage(code) {
+  const svg = normalizeSvgCode(code);
+  if (!svg) {
+    throw new Error("Invalid SVG.");
+  }
+  const dimensions = getSvgDiagramDimensions(svg);
+  return svgToPngImage(svg, dimensions.width, dimensions.height).catch(() => ({
+    data: new TextEncoder().encode(svg),
+    width: dimensions.width,
+    height: dimensions.height,
+    type: "svg",
+  }));
 }
 
 async function renderMermaidWordImage(code) {
@@ -4634,7 +4706,7 @@ function handleDragEnter(event) {
   if (isBlockDragInProgress) {
     return;
   }
-  if (!hasImageFileItem(event.dataTransfer?.items)) {
+  if (!hasImageFileItem(event.dataTransfer?.items) && !hasMarkdownFileItem(event.dataTransfer?.items)) {
     return;
   }
   dragDepth += 1;
@@ -4649,10 +4721,13 @@ function handleDragOver(event) {
     }
     return;
   }
-  if (!hasImageFileItem(event.dataTransfer?.items)) {
+  if (!hasImageFileItem(event.dataTransfer?.items) && !hasMarkdownFileItem(event.dataTransfer?.items)) {
     return;
   }
   event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = "copy";
+  }
 }
 
 function handleDragLeave() {
@@ -4662,24 +4737,91 @@ function handleDragLeave() {
   }
 }
 
-function handleDrop(event) {
+async function handleDrop(event) {
   if (isBlockDragInProgress) {
     isBlockDragInProgress = false;
     return;
   }
-  if (!editor) {
+
+  const markdownFiles = getMarkdownFilesFromFileList(event.dataTransfer?.files);
+  if (markdownFiles.length) {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepth = 0;
+    document.querySelector(".editor-area")?.classList.remove("is-dragging-image");
+    await openDroppedMarkdownFiles(markdownFiles);
     return;
   }
 
-  const imageFiles = getImageFilesFromFileList(event.dataTransfer.files);
+  if (!editor && state.editorMode !== "source") {
+    return;
+  }
+
+  const imageFiles = getImageFilesFromFileList(event.dataTransfer?.files);
   if (!imageFiles.length) {
     return;
   }
 
   event.preventDefault();
+  event.stopPropagation();
   dragDepth = 0;
   document.querySelector(".editor-area")?.classList.remove("is-dragging-image");
   insertImageFiles(imageFiles);
+}
+
+function hasMarkdownFileItem(items) {
+  return [...(items || [])].some((item) => {
+    const file = item.kind === "file" ? item.getAsFile?.() : null;
+    return file ? isMarkdownFile(file) : item.kind === "file" || /markdown|plain/i.test(item.type || "");
+  });
+}
+
+function getMarkdownFilesFromFileList(files) {
+  return [...(files || [])].filter(isMarkdownFile);
+}
+
+function isMarkdownFile(file) {
+  return /\.(md|markdown)$/i.test(file?.name || "");
+}
+
+async function openDroppedMarkdownFiles(files) {
+  for (const file of files) {
+    if (isTauriRuntime() && file.path) {
+      const adapter = createWorkspaceAdapter();
+      const workspace = await adapter.openRecentMarkdownFile?.({ filePath: file.path });
+      if (workspace) {
+        await addMarkdownFileToWorkspace(workspace, adapter);
+        continue;
+      }
+    }
+
+    const path = getDroppedMarkdownPath(file.name);
+    const markdown = await file.text();
+    state.screen = "shell";
+    state.workspaceName ||= "Dropped Markdown";
+    state.files[path] = markdown;
+    state.documents[path] = hydrateImagePreviews(parseMarkdown(markdown), state.files, { basePath: path });
+    state.paths = [...new Set([...state.paths, path])];
+    state.tree = buildWorkspaceTree(state.paths);
+    if (!state.openTabs.some((tab) => tab.path === path)) {
+      state.openTabs.push({ name: fileName(path), path, modified: false });
+    }
+    selectDocumentPath(path);
+  }
+}
+
+function getDroppedMarkdownPath(name) {
+  const baseName = name || "Dropped.md";
+  if (!state.files[baseName]) {
+    return baseName;
+  }
+  const extension = baseName.match(/\.(md|markdown)$/i)?.[0] || ".md";
+  const stem = baseName.slice(0, -extension.length);
+  let index = 2;
+  while (state.files[`${stem}-${index}${extension}`]) {
+    index += 1;
+  }
+  return `${stem}-${index}${extension}`;
 }
 
 async function handlePaste(event) {
@@ -4736,7 +4878,7 @@ async function handlePaste(event) {
       } else {
         editor.chain().focus().insertContent(plainText).run();
       }
-    } else if (editor.isActive("codeBlock") || editor.isActive("mermaidDiagram") || editor.isActive("blockMath")) {
+    } else if (editor.isActive("codeBlock") || editor.isActive("mermaidDiagram") || editor.isActive("svgDiagram") || editor.isActive("blockMath")) {
       editor.chain().focus().insertContent(text).run();
     } else {
       const parsed = parseMarkdown(text);

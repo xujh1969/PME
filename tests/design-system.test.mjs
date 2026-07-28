@@ -227,6 +227,21 @@ test("preserves document scroll position across tab switches and saves", () => {
   assert.equal(savePathAdoption.includes("state.documentScrollPositions[state.selectedPath] = oldPosition;"), true);
 });
 
+test("exposes SVG insertion and editing controls", () => {
+  const markdownLinkButtonIndex = appSource.indexOf('toolButton("markdown-link", "FileInput"');
+  const svgButtonIndex = appSource.indexOf('toolButton("svg", "SvgBox", "SVG")');
+  assert.equal(appSource.includes('toolButton("svg", "SvgBox", "SVG")'), true);
+  assert.equal(appSource.includes('if (name === "SvgBox")'), true);
+  assert.equal(appSource.includes(">SVG</text>"), true);
+  assert.equal(markdownLinkButtonIndex >= 0, true);
+  assert.equal(svgButtonIndex > markdownLinkButtonIndex, true);
+  assert.equal(appSource.includes('menuItem("svg", "SVG")'), true);
+  assert.equal(appSource.includes("handleSvgDoubleClick"), true);
+  assert.equal(appSource.includes("openSvgAiModal"), true);
+  assert.equal(appSource.includes("return openSvgAiModal({ onChunk });"), true);
+  assert.equal(styles.includes(".svg-diagram"), true);
+});
+
 test("keeps editor caret and Mermaid cursor visible on light backgrounds", () => {
   const proseMirrorRule = styles.match(/\.ProseMirror\s*\{[^}]+\}/)?.[0] || "";
   const sourceEditorRule = styles.match(/\.source-editor\s*\{[^}]+\}/)?.[0] || "";

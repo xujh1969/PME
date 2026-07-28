@@ -46,7 +46,8 @@ async function callCloudApi(prompt, onChunk, settings, options) {
   const body = buildCloudRequestBody(prompt, finalModel, settings.platform, options);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), (timeout || 30) * 1000);
+  const timeoutSeconds = options.timeoutSeconds || timeout || 30;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutSeconds * 1000);
 
   try {
     const response = await fetch(`${baseUrl}/chat/completions`, {
@@ -79,32 +80,48 @@ async function callCloudApi(prompt, onChunk, settings, options) {
     const decoder = new TextDecoder();
     let fullText = "";
     let buffer = "";
+    let rawText = "";
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
+      const decoded = decoder.decode(value, { stream: true });
+      rawText += decoded;
+      buffer += decoded;
       const lines = buffer.split("\n");
       buffer = lines.pop() || "";
 
       for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith("data:")) continue;
-
-        const data = trimmed.slice(5).trim();
-        if (data === "[DONE]") continue;
-
-        try {
-          const parsed = JSON.parse(data);
-          const chunk = extractCloudStreamChunk(parsed, settings.platform);
-          if (chunk) {
-            fullText += chunk;
-            onChunk?.(chunk);
-          }
-        } catch {
+        const chunk = extractCloudStreamLine(line, settings.platform, options);
+        if (chunk) {
+          fullText += chunk;
+          onChunk?.(chunk);
         }
       }
+    }
+
+    const tail = decoder.decode();
+    if (tail) {
+      rawText += tail;
+      buffer += tail;
+    }
+
+    if (buffer.trim()) {
+      const chunk = extractCloudStreamLine(buffer, settings.platform, options);
+      if (chunk) {
+        fullText += chunk;
+        onChunk?.(chunk);
+      }
+    }
+
+    if (!fullText && rawText.trim()) {
+      const text = extractCloudTextFallback(rawText, settings.platform, options);
+      if (text) {
+        onChunk?.(text);
+        return text;
+      }
+      return rawText;
     }
 
     return fullText;
@@ -123,7 +140,8 @@ async function callOllamaApi(prompt, onChunk, settings, options) {
   const baseUrl = endpoint || "http://localhost:11434";
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), (timeout || 60) * 1000);
+  const timeoutSeconds = options.timeoutSeconds || timeout || 60;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutSeconds * 1000);
 
   try {
     const response = await fetch(`${baseUrl}/api/chat`, {
@@ -224,9 +242,13 @@ function getDefaultModel(platform) {
 }
 
 function buildCloudRequestBody(prompt, model, platform, options) {
+  const messages = [
+    ...(options.systemPrompt ? [{ role: "system", content: options.systemPrompt }] : []),
+    { role: "user", content: prompt },
+  ];
   const baseBody = {
     model,
-    messages: [{ role: "user", content: prompt }],
+    messages,
     stream: true,
     max_tokens: options.maxTokens || 2000,
     temperature: options.temperature || 0.7,
@@ -236,7 +258,7 @@ function buildCloudRequestBody(prompt, model, platform, options) {
     return {
       model,
       input: {
-        messages: [{ role: "user", content: prompt }],
+        messages,
       },
       parameters: {
         result_format: "message",
@@ -254,14 +276,45 @@ function extractCloudResponse(result, platform) {
   if (platform === "tongyi") {
     return result.output?.choices?.[0]?.message?.content || "";
   }
-  return result.choices?.[0]?.message?.content || "";
+  return result.choices?.[0]?.message?.content || result.choices?.[0]?.delta?.content || result.message?.content || result.content || "";
 }
 
 function extractCloudStreamChunk(parsed, platform) {
   if (platform === "tongyi") {
-    return parsed.output?.choices?.[0]?.message?.content || "";
+    return parsed.output?.choices?.[0]?.message?.content || parsed.output?.text || "";
   }
-  return parsed.choices?.[0]?.delta?.content || "";
+  return parsed.choices?.[0]?.delta?.content || parsed.choices?.[0]?.message?.content || parsed.message?.content || parsed.content || "";
+}
+
+function extractCloudStreamLine(line, platform, options = {}) {
+  const trimmed = line.trim();
+  if (!trimmed) return "";
+
+  const data = trimmed.startsWith("data:") ? trimmed.slice(5).trim() : trimmed;
+  if (data === "[DONE]") return "";
+
+  try {
+    return extractCloudStreamChunk(JSON.parse(data), platform, options);
+  } catch {
+    return "";
+  }
+}
+
+function extractCloudTextFallback(rawText, platform, options = {}) {
+  try {
+    const parsed = JSON.parse(rawText);
+    return extractCloudResponse(parsed, platform, options) || extractCloudStreamChunk(parsed, platform, options);
+  } catch {
+  }
+
+  let text = "";
+  for (const line of rawText.split(/\r?\n/)) {
+    const chunk = extractCloudStreamLine(line, platform, options);
+    if (chunk) {
+      text += chunk;
+    }
+  }
+  return text;
 }
 
 export async function testConnection(settings) {

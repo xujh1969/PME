@@ -105,6 +105,7 @@ export async function getPrintableDocumentHtml(doc, { inlineImages = true } = {}
     element.classList.remove("ProseMirror-selectednode");
   });
   await prepareMermaidDiagramsForPrint(clone);
+  prepareSvgDiagramsForPrint(clone);
   await prepareMindMapsForPrint(clone);
   await prepareVideosForPrint(clone);
   cleanupMathElementsForPrint(clone);
@@ -116,6 +117,25 @@ export async function getPrintableDocumentHtml(doc, { inlineImages = true } = {}
   }
   markPrintableImagesForPagination(clone);
   return clone.innerHTML;
+}
+
+function prepareSvgDiagramsForPrint(root) {
+  root.querySelectorAll(".svg-diagram").forEach((diagram) => {
+    const svg = diagram.querySelector("svg");
+    if (!svg) return;
+    const dimensions = getSvgPrintDimensions(svg, 600, 760);
+    if (!svg.getAttribute("viewBox")) {
+      svg.setAttribute("viewBox", `0 0 ${dimensions.sourceWidth} ${dimensions.sourceHeight}`);
+    }
+    svg.setAttribute("width", String(dimensions.targetWidth));
+    svg.setAttribute("height", String(dimensions.targetHeight));
+    svg.style.width = `${dimensions.targetWidth}px`;
+    svg.style.maxWidth = "100%";
+    svg.style.height = "auto";
+    svg.style.display = "block";
+    svg.style.margin = "0 auto";
+    diagram.classList.add(dimensions.targetHeight <= 760 ? "pdf-avoid-split" : "pdf-allow-split");
+  });
 }
 
 async function prepareMermaidDiagramsForPrint(root) {
@@ -388,7 +408,7 @@ export function markPrintableImagesForPagination(root) {
 }
 
 function getPrintableImageBlock(image) {
-  return image.closest(".mermaid-diagram, .mindmap-diagram, figure, p, div") || image.parentElement;
+  return image.closest(".mermaid-diagram, .mindmap-diagram, .svg-diagram, figure, p, div") || image.parentElement;
 }
 
 function getPrintableImageHeight(image) {

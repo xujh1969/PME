@@ -329,6 +329,21 @@ test("parses and serializes mermaid diagrams", () => {
   assert.equal(serializeMarkdown(doc), `${markdown}\n`);
 });
 
+test("parses and serializes inline SVG blocks", () => {
+  const markdown = [
+    '<svg viewBox="0 0 100 60" width="100%" role="img" xmlns="">',
+    "  <title>Demo</title>",
+    '  <rect x="10" y="10" width="80" height="40" fill="#fff"/>',
+    "</svg>",
+  ].join("\n");
+
+  const doc = parseMarkdown(markdown);
+
+  assert.equal(doc.content[0].type, "svgDiagram");
+  assert.equal(doc.content[0].attrs.code, markdown);
+  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
+});
+
 test("parses and serializes mindmap diagrams", () => {
   const markdown = [
     "```mindmap",
