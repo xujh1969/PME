@@ -17,6 +17,14 @@ export const SvgDiagram = Node.create({
         parseHTML: (element) => element.getAttribute("data-code") || element.innerHTML || SVG_FALLBACK,
         renderHTML: (attributes) => ({ "data-code": attributes.code }),
       },
+      scale: {
+        default: 100,
+        parseHTML: (element) => normalizeSvgScale(element.getAttribute("data-pme-scale")),
+        renderHTML: (attributes) => {
+          const scale = normalizeSvgScale(attributes.scale);
+          return { "data-pme-scale": scale, style: `--svg-scale-width: ${scale}%` };
+        },
+      },
     };
   },
 
@@ -31,10 +39,10 @@ export const SvgDiagram = Node.create({
   addCommands() {
     return {
       insertSvgDiagram: (options = {}) => ({ commands }) => (
-        commands.insertContent({ type: this.name, attrs: { code: options.code || SVG_FALLBACK } })
+        commands.insertContent({ type: this.name, attrs: { code: options.code || SVG_FALLBACK, scale: normalizeSvgScale(options.scale) } })
       ),
       updateSvgDiagram: (options) => ({ tr }) => {
-        tr.setNodeMarkup(options.pos, this.type, { code: options.code });
+        tr.setNodeMarkup(options.pos, this.type, { code: options.code, scale: normalizeSvgScale(options.scale) });
         return true;
       },
       deleteSvgDiagram: (options) => ({ tr, editor }) => {
@@ -57,6 +65,7 @@ export const SvgDiagram = Node.create({
       wrapper.className = "svg-diagram";
       wrapper.dataset.type = "svg-diagram";
       wrapper.dataset.code = node.attrs.code;
+      applySvgScale(wrapper, node.attrs.scale);
       viewport.className = "svg-diagram__viewport";
       content.className = "svg-diagram__content";
       viewport.appendChild(content);
@@ -71,6 +80,7 @@ export const SvgDiagram = Node.create({
             return false;
           }
           wrapper.dataset.code = updatedNode.attrs.code;
+          applySvgScale(wrapper, updatedNode.attrs.scale);
           renderSvgDiagram(content, updatedNode.attrs.code);
           return true;
         },
@@ -122,6 +132,17 @@ export function getSvgDiagramDimensions(code) {
 
 export function getDefaultSvgCode() {
   return SVG_FALLBACK;
+}
+
+export function normalizeSvgScale(scale) {
+  const value = Number.parseInt(scale, 10);
+  return [25, 50, 75, 100, 125, 150].includes(value) ? value : 100;
+}
+
+function applySvgScale(wrapper, scale) {
+  const normalized = normalizeSvgScale(scale);
+  wrapper.dataset.pmeScale = String(normalized);
+  wrapper.style.setProperty("--svg-scale-width", `${normalized}%`);
 }
 
 function sanitizeSvgCode(code) {

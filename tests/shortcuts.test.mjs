@@ -16,7 +16,10 @@ test("maps function-key shortcuts without requiring modifiers", () => {
 test("maps app view zoom shortcuts", () => {
   assert.equal(getAppShortcutCommand({ key: "9", ctrlKey: true, shiftKey: true }), "zoom-reset");
   assert.equal(getAppShortcutCommand({ key: "=", ctrlKey: true, shiftKey: true }), "zoom-in");
+  assert.equal(getAppShortcutCommand({ key: "+", code: "NumpadAdd", ctrlKey: true, shiftKey: true }), "zoom-in");
   assert.equal(getAppShortcutCommand({ key: "-", ctrlKey: true, shiftKey: true }), "zoom-out");
+  assert.equal(getAppShortcutCommand({ key: "_", code: "Minus", ctrlKey: true, shiftKey: true }), "zoom-out");
+  assert.equal(getAppShortcutCommand({ key: "Subtract", code: "NumpadSubtract", ctrlKey: true, shiftKey: true }), "zoom-out");
 });
 
 test("does not map shortcuts from modal text fields except save", () => {

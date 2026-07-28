@@ -75,7 +75,7 @@ export function openCodeLanguageModal(value) {
       input.select();
     });
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+      if (event.target.dataset.modalAction === "cancel") {
         close(null);
       }
       if (event.target.dataset.modalAction === "apply") {
@@ -99,4 +99,3 @@ export function openCodeLanguageModal(value) {
     input.select();
   });
 }
-

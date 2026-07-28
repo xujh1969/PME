@@ -101,7 +101,7 @@ export function openImageInsertModal() {
     };
 
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+      if (event.target.dataset.modalAction === "cancel") {
         close(null);
       } else if (event.target.matches?.("[data-image-url-select]")) {
         useImageUrl();

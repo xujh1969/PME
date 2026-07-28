@@ -464,14 +464,56 @@
   aspect-ratio: 1;
   border: 2px solid var(--color-hairline);
   border-radius: var(--radius-lg);
+  background: var(--color-swatch) !important;
   cursor: pointer;
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
 .color-item:hover {
+  background: var(--color-swatch) !important;
   border-color: var(--color-ink);
   transform: scale(1.05);
 }
+
+.color-item--0 { --color-swatch: #000000; }
+.color-item--1 { --color-swatch: #333333; }
+.color-item--2 { --color-swatch: #666666; }
+.color-item--3 { --color-swatch: #999999; }
+.color-item--4 { --color-swatch: #cccccc; }
+.color-item--5 { --color-swatch: #ffffff; }
+.color-item--6 { --color-swatch: #ff0000; }
+.color-item--7 { --color-swatch: #ff6600; }
+.color-item--8 { --color-swatch: #ffcc00; }
+.color-item--9 { --color-swatch: #33cc00; }
+.color-item--10 { --color-swatch: #00ccff; }
+.color-item--11 { --color-swatch: #0066ff; }
+.color-item--12 { --color-swatch: #9900ff; }
+.color-item--13 { --color-swatch: #ff0099; }
+.color-item--14 { --color-swatch: #ff66cc; }
+.color-item--15 { --color-swatch: #cc66ff; }
+.color-item--16 { --color-swatch: #66ccff; }
+.color-item--17 { --color-swatch: #00cc66; }
+
+.color-item--highlight-0 { --color-swatch: #ffff00; }
+.color-item--highlight-1 { --color-swatch: #ffcc00; }
+.color-item--highlight-2 { --color-swatch: #ff9900; }
+.color-item--highlight-3 { --color-swatch: #ff6600; }
+.color-item--highlight-4 { --color-swatch: #ff3300; }
+.color-item--highlight-5 { --color-swatch: #ffff99; }
+.color-item--highlight-6 { --color-swatch: #ffffcc; }
+.color-item--highlight-7 { --color-swatch: #ffcc99; }
+.color-item--highlight-8 { --color-swatch: #ff9999; }
+.color-item--highlight-9 { --color-swatch: #ffcccc; }
+.color-item--highlight-10 { --color-swatch: #99ff99; }
+.color-item--highlight-11 { --color-swatch: #ccffcc; }
+.color-item--highlight-12 { --color-swatch: #99ffff; }
+.color-item--highlight-13 { --color-swatch: #ccffff; }
+.color-item--highlight-14 { --color-swatch: #99ccff; }
+.color-item--highlight-15 { --color-swatch: #cc99ff; }
+.color-item--highlight-16 { --color-swatch: #ff99ff; }
+.color-item--highlight-17 { --color-swatch: #ffccff; }
+.color-item--highlight-18 { --color-swatch: #ccccff; }
+.color-item--highlight-19 { --color-swatch: #9999ff; }
 
 .color-picker-modal__body label {
   display: flex;

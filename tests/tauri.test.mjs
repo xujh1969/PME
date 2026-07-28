@@ -29,6 +29,20 @@ test("enables native file drag and drop on the Tauri window", () => {
   assert.equal(tauriConfig.app.windows[0].dragDropEnabled, true);
 });
 
+test("allows network resources in the packaged Tauri app CSP without remote scripts", () => {
+  const csp = tauriConfig.app.security.csp;
+
+  assert.match(csp, /img-src[^;]*https:/);
+  assert.match(csp, /img-src[^;]*http:/);
+  assert.match(csp, /connect-src[^;]*https:/);
+  assert.match(csp, /connect-src[^;]*http:/);
+  assert.match(csp, /media-src[^;]*https:/);
+  assert.match(csp, /media-src[^;]*http:/);
+  assert.match(csp, /script-src 'self'/);
+  assert.equal(/script-src[^;]*https:/.test(csp), false);
+  assert.equal(/script-src[^;]*http:/.test(csp), false);
+});
+
 test("defines a minimal Tauri 2 Rust application", () => {
   assert.equal(cargoToml.includes("tauri = { version = \"2\""), true);
   assert.equal(cargoToml.includes("tauri-build = { version = \"2\""), true);

@@ -55,7 +55,7 @@ export function openTableInsertModal() {
       withHeaderRow: headerInput.checked,
     });
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") close(null);
+      if (event.target.dataset.modalAction === "cancel") close(null);
       if (event.target.dataset.modalAction === "apply") apply();
     });
     overlay.addEventListener("keydown", (event) => {
@@ -89,7 +89,7 @@ export function openImageSizeModal(value) {
     const input = overlay.querySelector("[data-image-scale]");
     const close = (result) => { overlay.remove(); showTableBubbleToolbar(); resolve(result); };
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") close(undefined);
+      if (event.target.dataset.modalAction === "cancel") close(undefined);
       if (event.target.dataset.modalAction === "apply") close(normalizeImageScale(input.value));
     });
     overlay.addEventListener("keydown", (event) => {
@@ -116,7 +116,7 @@ export function openTextInputModal({ title, label, value = "", placeholder = "" 
     const input = overlay.querySelector("[data-text-input]");
     const close = (result) => { overlay.remove(); showTableBubbleToolbar(); resolve(result); };
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") close(null);
+      if (event.target.dataset.modalAction === "cancel") close(null);
       if (event.target.dataset.modalAction === "apply") close(input.value);
     });
     overlay.addEventListener("keydown", (event) => {
@@ -130,28 +130,34 @@ export function openTextInputModal({ title, label, value = "", placeholder = "" 
   });
 }
 
-export function openTextEditorModal({ title, value, rows = 8, monospace = true, onAiGenerate }) {
+export function openTextEditorModal({ title, value, rows = 8, monospace = true, onAiGenerate, scale }) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "text-modal";
+    const hasScale = scale !== undefined;
     overlay.innerHTML = `
-      <div class="text-modal__dialog" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+      <div class="text-modal__dialog ${hasScale ? "text-modal__dialog--with-field" : ""}" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
         <header class="text-modal__header">
           <strong>${escapeHtml(title)}</strong>
           ${onAiGenerate ? `<button class="icon-button ai-magic-button" data-modal-action="ai" title="AI助手" aria-label="AI助手">${wand2Icon()}</button>` : ""}
           <button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button>
         </header>
+        ${hasScale ? `<label class="text-modal__field text-modal__field--inline"><span>显示比例</span><select data-text-editor-scale><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option><option value="100">100%</option><option value="125">125%</option><option value="150">150%</option></select></label>` : ""}
         <textarea class="${monospace ? "is-monospace" : ""}" rows="${rows}" spellcheck="false"></textarea>
         <footer class="text-modal__footer"><span>按 Ctrl+Enter 确定</span><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
       </div>`;
     const textarea = overlay.querySelector("textarea");
+    const scaleSelect = overlay.querySelector("[data-text-editor-scale]");
+    if (scaleSelect) {
+      scaleSelect.value = String(normalizeModalScale(scale));
+    }
     const close = (result) => { overlay.remove(); showTableBubbleToolbar(); resolve(result); };
     overlay.addEventListener("click", (event) => {
       const targetButton = event.target.closest("[data-modal-action]");
       const action = targetButton?.dataset.modalAction;
       
-      if (event.target === overlay || action === "cancel") close(null);
-      if (action === "apply") close(textarea.value);
+      if (action === "cancel") close(null);
+      if (action === "apply") close(getTextEditorResult(textarea, scaleSelect));
       if (action === "ai" && onAiGenerate) {
         textarea.value = "AI 正在生成中...";
         Promise.resolve(onAiGenerate((chunk) => {
@@ -175,7 +181,7 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true, 
     });
     overlay.addEventListener("keydown", (event) => {
       if (event.key === "Escape") { event.preventDefault(); close(null); }
-      if (event.key === "Enter" && event.ctrlKey) { event.preventDefault(); close(textarea.value); }
+      if (event.key === "Enter" && event.ctrlKey) { event.preventDefault(); close(getTextEditorResult(textarea, scaleSelect)); }
     });
     hideTableBubbleToolbar();
     document.body.appendChild(overlay);
@@ -183,6 +189,15 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true, 
     textarea.focus();
     textarea.setSelectionRange(0, textarea.value.length);
   });
+}
+
+function getTextEditorResult(textarea, scaleSelect) {
+  return scaleSelect ? { code: textarea.value, scale: normalizeModalScale(scaleSelect.value) } : textarea.value;
+}
+
+function normalizeModalScale(scale) {
+  const value = Number.parseInt(scale, 10);
+  return [25, 50, 75, 100, 125, 150].includes(value) ? value : 100;
 }
 
 const DIAGRAM_ICONS = {
@@ -276,7 +291,7 @@ export function openMermaidAiModal({ onChunk }) {
     });
 
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") { close(); resolve(null); }
+      if (event.target.dataset.modalAction === "cancel") { close(); resolve(null); }
       if (event.target.dataset.modalAction === "apply") {
         handleApply();
       }
@@ -370,7 +385,7 @@ export function openSvgAiModal({ onChunk }) {
     const close = () => { overlay.remove(); showTableBubbleToolbar(); };
 
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") { close(); resolve(null); }
+      if (event.target.dataset.modalAction === "cancel") { close(); resolve(null); }
       if (event.target.dataset.modalAction === "apply") {
         handleApply();
       }
@@ -502,7 +517,7 @@ function openDecisionModal({ title, message, buttons, resolveAction, defaultActi
       </div>`;
     const close = (action) => { overlay.remove(); showTableBubbleToolbar(); resolve(resolveAction(action)); };
     overlay.addEventListener("click", (event) => {
-      const action = event.target === overlay ? defaultAction : event.target.dataset.modalAction;
+      const action = event.target.dataset.modalAction;
       if (action) close(action);
     });
     overlay.addEventListener("keydown", (event) => {

@@ -1,5 +1,6 @@
 export function getAppShortcutCommand(event) {
   const key = event.key?.toLowerCase();
+  const code = event.code?.toLowerCase();
   const primary = Boolean(event.ctrlKey || event.metaKey);
   const fromTextInput = isTextInputTarget(event.target);
 
@@ -90,10 +91,10 @@ export function getAppShortcutCommand(event) {
   if (primary && event.shiftKey && key === "9") {
     return "zoom-reset";
   }
-  if (primary && event.shiftKey && (key === "=" || key === "+")) {
+  if (primary && event.shiftKey && (key === "=" || key === "+" || code === "equal" || code === "numpadadd")) {
     return "zoom-in";
   }
-  if (primary && event.shiftKey && key === "-") {
+  if (primary && event.shiftKey && (key === "-" || key === "_" || code === "minus" || code === "numpadsubtract")) {
     return "zoom-out";
   }
   if (primary && key === "\\") {

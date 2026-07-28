@@ -7,6 +7,8 @@ import {
   normalizeDocumentResourcePath,
 } from "./package-resources.mjs";
 import { getTableOfContentsItems } from "./toc-extension.mjs";
+import { getCurrentFonts } from "./config.mjs";
+import { buildDisplayFontStack, buildEditorFontStack } from "./font-utils.mjs";
 
 export async function buildHtmlPackage({
   doc,
@@ -43,6 +45,9 @@ export async function buildHtmlPackage({
             pathMappings.set(previewSrc, assetPath);
           }
         } catch {
+          if (preserveRemoteResource(pathMappings, resolvedSource, originalSrc, previewSrc)) {
+            continue;
+          }
           missing.push(resolvedSource);
           continue;
         }
@@ -69,6 +74,9 @@ export async function buildHtmlPackage({
             pathMappings.set(previewSrc, assetPath);
           }
         } catch {
+          if (preserveRemoteResource(pathMappings, resolvedSource, originalSrc, previewSrc)) {
+            continue;
+          }
           missing.push(resolvedSource);
           continue;
         }
@@ -123,6 +131,10 @@ function renderTableOfContentsHtml(items) {
 }
 
 function buildHtmlExportHtml({ title, documentHtml }) {
+  const fonts = getCurrentFonts();
+  const editorFontStack = buildEditorFontStack(fonts);
+  const displayFontStack = buildDisplayFontStack(fonts);
+
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -147,9 +159,9 @@ function buildHtmlExportHtml({ title, documentHtml }) {
       --color-code-tag: #dc2626;
       --radius-sm: 6px;
       --radius-xl: 16px;
-      --font-display: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
-      --font-editor: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
-      --font-mono: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+      --font-display: ${displayFontStack};
+      --font-editor: ${editorFontStack};
+      --font-mono: ${fonts.code};
     }
 
     * { box-sizing: border-box; }
@@ -341,7 +353,7 @@ function buildHtmlExportHtml({ title, documentHtml }) {
     }
 
     .svg-diagram {
-      width: 100%;
+      width: min(100%, var(--svg-scale-width, 100%));
       margin: 16px 0;
       overflow: visible;
     }
@@ -435,10 +447,25 @@ function escapeHtml(text) {
 }
 
 function resolveResourcePath(path, sourcePath) {
-  if (/^(https?:|data:|blob:)/i.test(path) || isLocalAbsolutePath(path) || !sourcePath) {
+  if (/^(https?:|data:|blob:)/i.test(path)) {
+    return path;
+  }
+  if (isLocalAbsolutePath(path) || !sourcePath) {
     return canonicalPath(path);
   }
   return canonicalPath(normalizeDocumentResourcePath(path, canonicalPath(sourcePath)));
+}
+
+function preserveRemoteResource(pathMappings, resolvedSource, originalSrc, previewSrc) {
+  if (!/^https?:\/\//i.test(resolvedSource)) {
+    return false;
+  }
+  pathMappings.set(resolvedSource, resolvedSource);
+  pathMappings.set(originalSrc, resolvedSource);
+  if (previewSrc && previewSrc !== originalSrc) {
+    pathMappings.set(previewSrc, resolvedSource);
+  }
+  return true;
 }
 
 function canonicalPath(path) {

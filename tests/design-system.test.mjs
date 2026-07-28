@@ -11,6 +11,9 @@ const styles = readdirSync(stylesDir)
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
 const modalSource = readFileSync(new URL("../src/ui/modals.mjs", import.meta.url), "utf8");
 const imageInsertModalSource = readFileSync(new URL("../src/ui/image-insert-modal.mjs", import.meta.url), "utf8");
+const editorPopoversSource = readFileSync(new URL("../src/ui/editor-popovers.mjs", import.meta.url), "utf8");
+const configSource = readFileSync(new URL("../src/core/config.mjs", import.meta.url), "utf8");
+const settingsModalSource = readFileSync(new URL("../src/ui/settings-modal.mjs", import.meta.url), "utf8");
 const paragraphActionsSource = readFileSync(new URL("../src/editor/paragraph-actions.mjs", import.meta.url), "utf8");
 const editorCommandRunnerSource = readFileSync(new URL("../src/editor/editor-command-runner.mjs", import.meta.url), "utf8");
 const workspaceSessionSource = readFileSync(new URL("../src/core/workspace-session.mjs", import.meta.url), "utf8");
@@ -64,6 +67,34 @@ test("keeps image insert modal focused on local and network sources", () => {
   assert.equal(sourcesRule.includes("min-height: 0;"), true);
   assert.equal(imageInsertModalSource.includes("data-asset-index"), false);
   assert.equal(imageInsertModalSource.includes("getImageAssetEntries"), false);
+});
+
+test("keeps large editor images from stretching the shell layout", () => {
+  const workspaceRule = styles.match(/\.workspace\s*\{[^}]+\}/)?.[0] || "";
+  const editorAreaRule = styles.match(/\.editor-area\s*\{[^}]+\}/)?.[0] || "";
+  const tabsRule = styles.match(/\.tabs\s*\{[^}]+\}/)?.[0] || "";
+  const editorRule = styles.match(/\.editor\s*\{[^}]+\}/)?.[0] || "";
+
+  assert.equal(workspaceRule.includes("height: 100%;"), true);
+  assert.equal(workspaceRule.includes("overflow: hidden;"), true);
+  assert.equal(editorAreaRule.includes("grid-template-rows: 44px minmax(0, 1fr);"), true);
+  assert.equal(editorAreaRule.includes("overflow: hidden;"), true);
+  assert.equal(tabsRule.includes("min-height: 44px;"), true);
+  assert.equal(editorRule.includes("overflow: auto;"), true);
+  assert.equal(editorRule.includes("contain: layout paint;"), true);
+});
+
+test("renders color picker swatches from bundled CSS instead of inline styles", () => {
+  const colorItemRule = styles.match(/\.color-item\s*\{[^}]+\}/)?.[0] || "";
+  const colorItemHoverRule = styles.match(/\.color-item:hover\s*\{[^}]+\}/)?.[0] || "";
+
+  assert.equal(editorPopoversSource.includes('style="background-color:'), false);
+  assert.equal(editorPopoversSource.includes("color-item--${index}"), true);
+  assert.equal(editorPopoversSource.includes("color-item--highlight-${index}"), true);
+  assert.equal(colorItemRule.includes("background: var(--color-swatch) !important;"), true);
+  assert.equal(colorItemHoverRule.includes("background: var(--color-swatch) !important;"), true);
+  assert.equal(styles.includes(".color-item--6 { --color-swatch: #ff0000; }"), true);
+  assert.equal(styles.includes(".color-item--highlight-0 { --color-swatch: #ffff00; }"), true);
 });
 
 test("prevents button labels from wrapping", () => {
@@ -185,15 +216,40 @@ test("exposes Markdown file insertion in the Insert menu and toolbar", () => {
 });
 
 test("supports menu-driven view toggles and editor zoom", () => {
+  const proseMirrorRule = styles.match(/\.ProseMirror\s*\{[^}]+\}/)?.[0] || "";
+  const sourceEditorRule = styles.match(/\.source-editor\s*\{[^}]+\}/)?.[0] || "";
+
   assert.equal(appSource.includes("showSidebar: true"), true);
   assert.equal(appSource.includes("showFileTree: false"), true);
   assert.equal(appSource.includes("showOutline: true"), true);
   assert.equal(appSource.includes("showStatusbar: true"), true);
   assert.equal(appSource.includes("editorZoom: 1"), true);
   assert.equal(appSource.includes("function setEditorZoom"), true);
+  assert.equal(appSource.includes('style.setProperty("--editor-zoom"'), true);
+  assert.equal(appSource.includes("function refreshZoomMenuState"), true);
   assert.equal(styles.includes(".workspace--sidebar-hidden"), true);
   assert.equal(styles.includes(".shell--status-hidden"), true);
   assert.equal(styles.includes("--editor-zoom"), true);
+  assert.equal(proseMirrorRule.includes("zoom: var(--editor-zoom);"), true);
+  assert.equal(proseMirrorRule.includes("font-size: calc("), false);
+  assert.equal(sourceEditorRule.includes("zoom: var(--editor-zoom);"), true);
+  assert.equal(sourceEditorRule.includes("font: calc("), false);
+});
+
+test("applies selected editor fonts with English first and code isolated", () => {
+  const proseMirrorRule = styles.match(/\.ProseMirror\s*\{[^}]+\}/)?.[0] || "";
+  const headingRule = styles.match(/\.ProseMirror h1,[\s\S]+?\.ProseMirror h3\s*\{[^}]+\}/)?.[0] || "";
+  const inlineCodeRule = styles.match(/\.ProseMirror :not\(pre\) > code\s*\{[^}]+\}/)?.[0] || "";
+  const blockCodeRule = styles.match(/\.ProseMirror pre code\s*\{[^}]+\}/)?.[0] || "";
+
+  assert.equal(proseMirrorRule.includes("font-family: var(--font-family-editor-configured, var(--font-editor));"), true);
+  assert.equal(headingRule.includes("font-family: var(--font-family-display-configured, var(--font-display));"), true);
+  assert.equal(inlineCodeRule.includes("font-family: var(--font-family-code, var(--font-mono));"), true);
+  assert.equal(blockCodeRule.includes("font-family: var(--font-family-code, var(--font-mono));"), true);
+  assert.equal(configSource.includes("--font-family-editor-configured"), true);
+  assert.equal(configSource.includes("--font-family-display-configured"), true);
+  assert.equal(configSource.includes("font-family: var(--font-family-code) !important;"), true);
+  assert.equal(settingsModalSource.includes("buildEditorFontStack"), true);
 });
 
 test("uses synchronous clipboardData for editor copy events", () => {
@@ -239,6 +295,8 @@ test("exposes SVG insertion and editing controls", () => {
   assert.equal(appSource.includes("handleSvgDoubleClick"), true);
   assert.equal(appSource.includes("openSvgAiModal"), true);
   assert.equal(appSource.includes("return openSvgAiModal({ onChunk });"), true);
+  assert.equal(appSource.includes("scale: node.attrs.scale || 100"), true);
+  assert.equal(styles.includes("var(--svg-scale-width, 100%)"), true);
   assert.equal(styles.includes(".svg-diagram"), true);
 });
 

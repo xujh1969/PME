@@ -13,6 +13,7 @@ import { testConnection } from "../core/ai-service.mjs";
 import { hideTableBubbleToolbar, showTableBubbleToolbar } from "./modals.mjs";
 import { updateMermaidTheme } from "../editor/mermaid-node.mjs";
 import { updateMindMapTheme } from "../editor/mindmap-node.mjs";
+import { buildEditorFontStack } from "../core/font-utils.mjs";
 
 const THEMES = [
   { value: "light", label: "浅色主题" },
@@ -245,7 +246,10 @@ export function openSettingsModal() {
         english: englishSelect.value,
         code: codeSelect.value,
       });
-      previewSection.style.fontFamily = `${chineseSelect.value}, ${englishSelect.value}`;
+      previewSection.style.fontFamily = buildEditorFontStack({
+        chinese: chineseSelect.value,
+        english: englishSelect.value,
+      });
       previewSection.querySelectorAll("code, pre").forEach(el => {
         el.style.fontFamily = codeSelect.value;
       });
@@ -335,7 +339,7 @@ export function openSettingsModal() {
     });
 
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+      if (event.target.dataset.modalAction === "cancel") {
         close(false);
       }
       if (event.target.dataset.modalAction === "apply") {

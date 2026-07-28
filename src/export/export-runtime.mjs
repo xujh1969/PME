@@ -129,6 +129,9 @@ function prepareSvgDiagramsForPrint(root) {
     }
     svg.setAttribute("width", String(dimensions.targetWidth));
     svg.setAttribute("height", String(dimensions.targetHeight));
+    const scale = normalizeSvgPrintScale(diagram.getAttribute("data-pme-scale") || diagram.dataset?.pmeScale);
+    diagram.style.setProperty("--svg-scale-width", `${scale}%`);
+    diagram.style.width = `min(100%, ${scale}%)`;
     svg.style.width = `${dimensions.targetWidth}px`;
     svg.style.maxWidth = "100%";
     svg.style.height = "auto";
@@ -136,6 +139,11 @@ function prepareSvgDiagramsForPrint(root) {
     svg.style.margin = "0 auto";
     diagram.classList.add(dimensions.targetHeight <= 760 ? "pdf-avoid-split" : "pdf-allow-split");
   });
+}
+
+function normalizeSvgPrintScale(scale) {
+  const value = Number.parseInt(scale, 10);
+  return [25, 50, 75, 100, 125, 150].includes(value) ? value : 100;
 }
 
 async function prepareMermaidDiagramsForPrint(root) {

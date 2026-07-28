@@ -27,6 +27,8 @@ test("owns environment-specific export helpers outside the app entry", () => {
 test("owns the PDF options modal outside the app entry", () => {
   assert.equal(modalSource.includes("export function openPdfExportOptionsModal"), true);
   assert.equal(modalSource.includes("data-pdf-orientation"), true);
+  assert.equal(modalSource.includes("data-pdf-title"), false);
+  assert.equal(modalSource.includes("includeTitle"), false);
   assert.equal(appSource.includes("function openPdfExportOptionsModal"), false);
 });
 
@@ -164,6 +166,13 @@ test("routes packaged HTML through the staticized clone without inlining package
     false,
   );
   assert.equal(runtimeSource.includes("if (inlineImages)"), true);
+});
+
+test("uses configured font stacks in packaged HTML export", () => {
+  assert.equal(htmlPackageSource.includes("getCurrentFonts"), true);
+  assert.equal(htmlPackageSource.includes("buildEditorFontStack(fonts)"), true);
+  assert.equal(htmlPackageSource.includes("buildDisplayFontStack(fonts)"), true);
+  assert.equal(htmlPackageSource.includes("--font-mono: ${fonts.code};"), true);
 });
 
 test("replaces Mind Elixir custom DOM with a static image", async () => {

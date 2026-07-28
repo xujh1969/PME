@@ -36,6 +36,28 @@ test("opens Markdown files dropped through Tauri native file events", () => {
   assert.equal(appSource.includes("handleCliFileOpen(filePath);"), true);
 });
 
+test("saves absolute Markdown tabs through the native file path command before close", () => {
+  const saveAllBlock = appSource.match(/async function saveAllModifiedTabs\(\) \{[\s\S]+?\n\}/)?.[0] || "";
+  assert.equal(appSource.includes("function getPersistedMarkdownFilePath"), true);
+  assert.equal(appSource.includes("async function trySaveMarkdownPath"), true);
+  assert.equal(appSource.includes('workspaceInfo?.kind === "tauri-file"'), true);
+  assert.equal(appSource.includes("path === fileName(workspaceInfo.filePath)"), true);
+  assert.equal(appSource.includes("writeTextFilePath(persistedFilePath"), true);
+  assert.equal(appSource.includes("writeTextFile(path"), true);
+  assert.equal(saveAllBlock.includes("trySaveMarkdownPath(tab.path"), true);
+});
+
+test("does not close modals by clicking the backdrop", () => {
+  assert.equal(appSource.includes("event.target === overlay"), false);
+});
+
+test("shows a clear permission message when saving is denied", () => {
+  assert.equal(appSource.includes("function formatSaveFailureMessage"), true);
+  assert.equal(appSource.includes("没有权限写入这个 Markdown 文件。"), true);
+  assert.equal(appSource.includes("os error 5"), true);
+  assert.equal(appSource.includes("文件 > 另存为"), true);
+});
+
 test("bundles the help manual through Vite instead of loading a loose runtime asset", () => {
   assert.equal(appSource.includes('import helpManualMarkdown from "./assets/PME使用说明书.md?raw";'), true);
   assert.equal(appSource.includes("const markdown = helpManualMarkdown.trim()"), true);

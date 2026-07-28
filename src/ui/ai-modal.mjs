@@ -621,7 +621,7 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
     insertBelowButton.addEventListener("click", handleInsertBelow);
 
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.aiAction === "cancel") {
+      if (event.target.dataset.aiAction === "cancel") {
         close(null);
       }
     });

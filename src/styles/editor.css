@@ -8,8 +8,10 @@
  * ============================================================ */
 
 .editor {
+  position: relative;
   min-height: 0;
   overflow: auto;
+  contain: layout paint;
   padding: 0;
   background: var(--color-canvas);
 }
@@ -48,7 +50,8 @@
   color: var(--color-ink);
   caret-color: var(--color-ink);
   background: var(--color-canvas);
-  font: calc(0.95rem * var(--editor-zoom)) / 1.65 var(--font-mono);
+  zoom: var(--editor-zoom);
+  font: 0.95rem / 1.65 var(--font-mono);
   letter-spacing: 0;
 }
 
@@ -124,9 +127,10 @@
   margin: 0 auto;
   outline: none;
   padding: 64px 24px 96px;
-  font-size: calc(1rem * var(--editor-zoom));
+  zoom: var(--editor-zoom);
+  font-size: 1rem;
   line-height: 1.7;
-  font-family: var(--font-family-chinese, var(--font-editor)), var(--font-family-english, var(--font-editor));
+  font-family: var(--font-family-editor-configured, var(--font-editor));
   letter-spacing: 0.16px;
   color: var(--color-slate);
   caret-color: var(--color-ink);
@@ -140,7 +144,7 @@
   line-height: 1.2;
   color: var(--color-ink);
   font-weight: 500;
-  font-family: var(--font-family-chinese, var(--font-display)), var(--font-family-english, var(--font-display));
+  font-family: var(--font-family-display-configured, var(--font-display));
   letter-spacing: -0.32px;
 }
 
@@ -635,7 +639,7 @@
 }
 
 .ProseMirror .svg-diagram {
-  width: min(100%, 100%);
+  width: min(100%, var(--svg-scale-width, 100%));
   margin: 1.5rem auto;
 }
 

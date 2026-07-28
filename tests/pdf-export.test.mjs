@@ -39,3 +39,15 @@ test("omits PDF title heading when includeTitle is false", () => {
   assert.equal(html.includes('<h1 class="pdf-title">'), false);
   assert.match(html, /@page \{[\s\S]*size: A4 portrait;/);
 });
+
+test("uses configured font helpers in PDF export HTML", () => {
+  const html = buildPdfExportHtml({
+    title: "Doc",
+    documentHtml: "<p>Body</p>",
+    options: { includeTitle: false },
+  });
+
+  assert.match(html, /--font-editor:\s*"Inter"[\s\S]*Noto Sans SC/);
+  assert.match(html, /--font-display:\s*"Inter"[\s\S]*Noto Sans SC/);
+  assert.match(html, /--font-mono:\s*"JetBrains Mono"/);
+});

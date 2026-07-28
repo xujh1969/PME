@@ -34,7 +34,7 @@ export function openMarkdownLinkModal(adapter) {
     };
 
     overlay.addEventListener("click", async (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+      if (event.target.dataset.modalAction === "cancel") {
         close(null);
       } else if (event.target.matches?.("[data-markdown-link-pick]")) {
         const path = await adapter.pickMarkdownLinkFile?.();

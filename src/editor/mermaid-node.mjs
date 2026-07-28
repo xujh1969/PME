@@ -67,7 +67,38 @@ function wrapMermaidCodeWithTheme(code) {
     theme: "base",
     themeVariables: safeVariables,
   };
-  return `%%{init: ${JSON.stringify(initConfig)}}%%\n${code}`;
+  return `%%{init: ${JSON.stringify(initConfig)}}%%\n${normalizeMermaidStyleDirectives(code)}`;
+}
+
+function normalizeMermaidStyleDirectives(code) {
+  return String(code || "").replace(/^(\s*)Style\b/gm, "$1style");
+}
+
+function parseMermaidStyleDirectives(code) {
+  const directives = [];
+  const normalizedCode = normalizeMermaidStyleDirectives(code);
+  for (const line of normalizedCode.split(/\r?\n/)) {
+    const match = line.match(/^\s*style\s+([^\s]+)\s+(.+?)\s*$/);
+    if (!match) {
+      continue;
+    }
+    const styles = {};
+    for (const part of match[2].split(",")) {
+      const separator = part.indexOf(":");
+      if (separator <= 0) {
+        continue;
+      }
+      const property = part.slice(0, separator).trim();
+      const value = part.slice(separator + 1).trim();
+      if (property && value) {
+        styles[property] = value;
+      }
+    }
+    if (Object.keys(styles).length) {
+      directives.push({ id: match[1], styles });
+    }
+  }
+  return directives;
 }
 
 initMermaidTheme();
@@ -207,6 +238,7 @@ async function renderMermaidDiagram(element, code) {
     const renderedSvg = element.querySelector("svg");
     if (renderedSvg) {
       applyMermaidSvgThemeFallback(renderedSvg);
+      applyMermaidDirectiveStyles(renderedSvg, code);
       renderedSvg.style.setProperty("max-width", "none", "important");
     }
     element.closest(".mermaid-diagram")?.classList.remove("mermaid-diagram--error");
@@ -287,8 +319,80 @@ function applyMermaidSvgThemeFallback(svg) {
 }
 
 function setMermaidSvgPaint(element, property, value) {
+  if (element.hasAttribute(property) || element.style.getPropertyValue(property)) {
+    return;
+  }
   element.setAttribute(property, value);
-  element.style.setProperty(property, value, "important");
+  element.style.setProperty(property, value);
+}
+
+function applyMermaidDirectiveStyles(svg, code) {
+  for (const directive of parseMermaidStyleDirectives(code)) {
+    const node = findMermaidSvgNode(svg, directive.id);
+    if (!node) {
+      continue;
+    }
+    const shapeStyles = {
+      fill: directive.styles.fill,
+      stroke: directive.styles.stroke,
+      "stroke-width": directive.styles["stroke-width"],
+    };
+    node.querySelectorAll(":scope > rect, :scope > circle, :scope > ellipse, :scope > polygon, :scope > path").forEach((shape) => {
+      if (shape.closest(".edgePath, .edgePaths, .flowchart-link")) {
+        return;
+      }
+      applySvgStyles(shape, shapeStyles);
+    });
+
+    const textColor = directive.styles.color || directive.styles["text-color"];
+    if (textColor) {
+      node.querySelectorAll("text, tspan").forEach((text) => {
+        applySvgStyles(text, { fill: textColor, color: textColor });
+      });
+      node.querySelectorAll("foreignObject, foreignObject *").forEach((label) => {
+        label.style.setProperty("color", textColor, "important");
+        label.style.setProperty("fill", textColor, "important");
+      });
+    }
+  }
+}
+
+function findMermaidSvgNode(svg, nodeId) {
+  const escapedId = cssEscape(nodeId);
+  const idPrefixes = [
+    ...(svg.id ? [`${svg.id}-flowchart-${nodeId}-`] : []),
+    `flowchart-${nodeId}-`,
+  ];
+  return svg.querySelector(`g.node[data-id="${escapedId}"]`)
+    || svg.querySelector(`g.node#${escapedId}`)
+    || Array.from(svg.querySelectorAll("g.node")).find((node) => {
+      const id = node.getAttribute("id") || "";
+      const dataId = node.getAttribute("data-id") || "";
+      const className = node.getAttribute("class") || "";
+      return dataId === nodeId
+        || idPrefixes.some((prefix) => (
+          id.startsWith(prefix) && /^\d+$/.test(id.slice(prefix.length))
+        ))
+        || id === nodeId
+        || className.split(/\s+/).includes(nodeId);
+    });
+}
+
+function applySvgStyles(element, styles, priority = "") {
+  for (const [property, value] of Object.entries(styles)) {
+    if (!value) {
+      continue;
+    }
+    element.setAttribute(property, value);
+    element.style.setProperty(property, value, priority);
+  }
+}
+
+function cssEscape(value) {
+  if (typeof CSS !== "undefined" && CSS.escape) {
+    return CSS.escape(value);
+  }
+  return String(value).replace(/["\\]/g, "\\$&");
 }
 
 function createMermaidZoomButton(label, title) {

@@ -47,7 +47,7 @@ export function openLinkModal(value) {
     });
 
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+      if (event.target.dataset.modalAction === "cancel") {
         close(null);
       }
       if (event.target.dataset.modalAction === "apply") {
@@ -102,8 +102,8 @@ export function openTextColorPicker(editor) {
       </header>
       <section class="color-picker-modal__body">
         <div class="color-grid">
-          ${colors.map((color) => `
-            <button class="color-item" data-color="${color}" style="background-color: ${color}" title="${color}"></button>
+          ${colors.map((color, index) => `
+            <button class="color-item color-item--${index}" data-color="${color}" title="${color}"></button>
           `).join("")}
         </div>
         <label>
@@ -126,7 +126,7 @@ export function openTextColorPicker(editor) {
   };
 
   overlay.addEventListener("click", (event) => {
-    if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+    if (event.target.dataset.modalAction === "cancel") {
       close();
     }
     const colorButton = event.target.closest?.(".color-item");
@@ -169,8 +169,8 @@ export function openHighlightColorPicker(editor) {
       </header>
       <section class="color-picker-modal__body">
         <div class="color-grid">
-          ${colors.map((color) => `
-            <button class="color-item" data-color="${color}" style="background-color: ${color}" title="${color}"></button>
+          ${colors.map((color, index) => `
+            <button class="color-item color-item--highlight-${index}" data-color="${color}" title="${color}"></button>
           `).join("")}
         </div>
         <label>
@@ -193,7 +193,7 @@ export function openHighlightColorPicker(editor) {
   };
 
   overlay.addEventListener("click", (event) => {
-    if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+    if (event.target.dataset.modalAction === "cancel") {
       close();
     }
     const colorButton = event.target.closest?.(".color-item");
@@ -266,7 +266,7 @@ export function openEmojiPicker(editor) {
   };
 
   overlay.addEventListener("click", (event) => {
-    if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+    if (event.target.dataset.modalAction === "cancel") {
       close();
     }
     const emojiButton = event.target.closest?.(".emoji-item");
@@ -285,4 +285,3 @@ export function openEmojiPicker(editor) {
   hideTableBubbleToolbar();
   document.body.appendChild(overlay);
 }
-

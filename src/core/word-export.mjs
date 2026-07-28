@@ -17,6 +17,8 @@ import {
 } from "docx";
 
 import { buildMindMapStaticSvg, getStaticMindMapDimensions } from "./mindmap-data.mjs";
+import { getCurrentFonts } from "./config.mjs";
+import { getPrimaryFontFamily } from "./font-utils.mjs";
 
 export const WORD_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const MAX_IMAGE_WIDTH = 520;
@@ -44,10 +46,11 @@ export async function buildWordDocument({
   renderMindMap,
   renderSvg,
 } = {}) {
+  const wordFonts = getWordFonts();
   const children = [];
   if (title) {
     children.push(new Paragraph({
-      text: title,
+      children: [new TextRun({ text: title, font: pickTextFont(title, wordFonts) })],
       heading: HeadingLevel.TITLE,
       spacing: { after: 240 },
     }));
@@ -62,6 +65,7 @@ export async function buildWordDocument({
       renderMermaidDiagram,
       renderMindMap,
       renderSvg,
+      wordFonts,
     }));
   }
 
@@ -145,7 +149,7 @@ async function renderBlock(node, context) {
 
   if (node.type === "codeBlock") {
     return [new Paragraph({
-      children: renderCodeBlockRuns(getNodeText(node)),
+      children: renderCodeBlockRuns(getNodeText(node), context),
       shading: { type: ShadingType.CLEAR, fill: "F0EFED" },
       spacing: { before: 120, after: 120 },
     })];
@@ -187,7 +191,7 @@ async function renderBlock(node, context) {
 
   if (node.type === "svgDiagram") {
     const image = await renderDiagramImage(
-      () => context.renderSvg?.(node.attrs?.code || ""),
+      () => context.renderSvg?.(node.attrs?.code || "", { scale: node.attrs?.scale }),
       createTextSvgImage("SVG render failed"),
     );
     return [image];
@@ -220,7 +224,7 @@ async function renderInlineChildren(node, context) {
   const children = [];
   for (const child of node.content || []) {
     if (child.type === "text") {
-      children.push(renderTextRun(child));
+      children.push(renderTextRun(child, context));
     } else if (child.type === "inlineMath") {
       const image = await renderInlineMath(child, context);
       children.push(image || imageRun(createTextSvgImage("Formula")));
@@ -228,7 +232,7 @@ async function renderInlineChildren(node, context) {
       children.push(...await renderInlineChildren(child, context));
     }
   }
-  return children.length ? children : [new TextRun("")];
+  return children.length ? children : [new TextRun({ text: "", font: context.wordFonts?.english })];
 }
 
 async function renderInlineMath(node, context) {
@@ -240,14 +244,15 @@ async function renderInlineMath(node, context) {
   }
 }
 
-function renderTextRun(node) {
-  const options = { text: node.text || "" };
+function renderTextRun(node, context = {}) {
+  const wordFonts = context.wordFonts || getWordFonts();
+  const options = { text: node.text || "", font: pickTextFont(node.text || "", wordFonts) };
   for (const mark of node.marks || []) {
     if (mark.type === "bold") options.bold = true;
     if (mark.type === "italic") options.italics = true;
     if (mark.type === "underline") options.underline = {};
     if (mark.type === "strike") options.strike = true;
-    if (mark.type === "code") options.font = "Consolas";
+    if (mark.type === "code") options.font = wordFonts.code;
     if (mark.type === "link" && mark.attrs?.href) {
       return new ExternalHyperlink({
         link: mark.attrs.href,
@@ -428,13 +433,27 @@ function isImageDescriptor(value) {
   return Boolean(value && typeof value === "object" && value.data);
 }
 
-function renderCodeBlockRuns(code) {
+function getWordFonts() {
+  const fonts = getCurrentFonts();
+  return {
+    chinese: getPrimaryFontFamily(fonts.chinese, "Microsoft YaHei"),
+    english: getPrimaryFontFamily(fonts.english, "Arial"),
+    code: getPrimaryFontFamily(fonts.code, "Consolas"),
+  };
+}
+
+function pickTextFont(text, fonts) {
+  return /[\u3400-\u9fff\uf900-\ufaff]/.test(String(text || "")) ? fonts.chinese : fonts.english;
+}
+
+function renderCodeBlockRuns(code, context = {}) {
+  const codeFont = context.wordFonts?.code || getWordFonts().code;
   const lines = String(code || "").split(/\r?\n/);
   const runs = [];
   lines.forEach((line, index) => {
     runs.push(new TextRun({
       text: line || " ",
-      font: "Consolas",
+      font: codeFont,
       size: 20,
       color: codeColor(line),
     }));

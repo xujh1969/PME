@@ -3,11 +3,14 @@ import assert from "node:assert/strict";
 import JSZip from "jszip";
 
 import { parseMarkdown } from "../src/core/markdown.mjs";
+import { readFileSync } from "node:fs";
 import {
   WORD_MIME_TYPE,
   buildWordDocumentBlob,
   getWordExportFileName,
 } from "../src/core/word-export.mjs";
+
+const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
 
 test("builds a docx file with native document content", async () => {
   const doc = parseMarkdown([
@@ -27,6 +30,31 @@ test("builds a docx file with native document content", async () => {
 
   assert.equal(blob.type, WORD_MIME_TYPE);
   assert.equal(blob.size > 1000, true);
+});
+
+test("uses configured fonts for Word text and code", async () => {
+  const doc = parseMarkdown([
+    "中文内容 English text `code`",
+    "",
+    "```js",
+    "const value = 1",
+    "```",
+  ].join("\n"));
+
+  const blob = await buildWordDocumentBlob({ doc, title: "Title" });
+  const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+  const xml = await zip.file("word/document.xml").async("string");
+
+  assert.equal(xml.includes('w:ascii="Inter"'), true);
+  assert.equal(xml.includes('w:ascii="Noto Sans SC"'), true);
+  assert.equal(xml.includes('w:ascii="JetBrains Mono"'), true);
+});
+
+test("does not add the Markdown file name as a Word title", () => {
+  const exportFunction = appSource.match(/async function exportCurrentDocumentAsWord\(\)[\s\S]+?async function renderSvgWordImage/)?.[0] || "";
+
+  assert.equal(exportFunction.includes('title: "",'), true);
+  assert.equal(exportFunction.includes("markdownName.replace"), false);
 });
 
 test("embeds rendered diagram images into the docx package", async () => {
@@ -65,6 +93,30 @@ test("embeds rendered diagram images into the docx package", async () => {
   const text = new TextDecoder("latin1").decode(bytes);
 
   assert.equal(text.includes("word/media/"), true);
+});
+
+test("passes SVG display scale to the Word renderer", async () => {
+  const calls = [];
+  const doc = {
+    type: "doc",
+    content: [{ type: "svgDiagram", attrs: { code: '<svg viewBox="0 0 100 60"></svg>', scale: 75 } }],
+  };
+
+  await buildWordDocumentBlob({
+    doc,
+    title: "",
+    renderSvg: async (code, options) => {
+      calls.push({ code, options });
+      return {
+        data: new Uint8Array([137, 80, 78, 71]),
+        width: 75,
+        height: 45,
+        type: "png",
+      };
+    },
+  });
+
+  assert.deepEqual(calls[0].options, { scale: 75 });
 });
 
 test("does not export Mermaid source text when rendering fails", async () => {

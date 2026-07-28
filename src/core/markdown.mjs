@@ -31,11 +31,21 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
+    if (/^\s*<div\b[^>]*data-type=["']svg-diagram["']/i.test(line)) {
+      const { code, scale, nextIndex } = collectSvgDiagramBlock(lines, index);
+      content.push({
+        type: "svgDiagram",
+        attrs: { code, scale },
+      });
+      index = nextIndex;
+      continue;
+    }
+
     if (/^\s*<svg\b/i.test(line)) {
       const { svg, nextIndex } = collectSvgBlock(lines, index);
       content.push({
         type: "svgDiagram",
-        attrs: { code: svg },
+        attrs: { code: svg, scale: 100 },
       });
       index = nextIndex;
       continue;
@@ -360,7 +370,11 @@ function serializeNode(node, options) {
   }
 
   if (node.type === "svgDiagram") {
-    return node.attrs?.code || "";
+    const scale = normalizeSvgScale(node.attrs?.scale);
+    if (scale === 100) {
+      return node.attrs?.code || "";
+    }
+    return `<div data-type="svg-diagram" data-pme-scale="${scale}">\n${node.attrs?.code || ""}\n</div>`;
   }
 
   if (node.type === "blockquote") {
@@ -448,6 +462,30 @@ function collectSvgBlock(lines, startIndex) {
   }
 
   return { svg: svgLines.join("\n").trim(), nextIndex: index };
+}
+
+function collectSvgDiagramBlock(lines, startIndex) {
+  const blockLines = [];
+  let index = startIndex;
+
+  while (index < lines.length) {
+    blockLines.push(lines[index]);
+    if (/<\/div>\s*$/i.test(lines[index])) {
+      index += 1;
+      break;
+    }
+    index += 1;
+  }
+
+  const block = blockLines.join("\n").trim();
+  const scale = normalizeSvgScale(block.match(/\bdata-pme-scale=["']([^"']+)["']/i)?.[1]);
+  const svg = block.match(/<svg\b[\s\S]*<\/svg>/i)?.[0]?.trim() || "";
+  return { code: svg, scale, nextIndex: index };
+}
+
+function normalizeSvgScale(scale) {
+  const value = Number.parseInt(scale, 10);
+  return [25, 50, 75, 100, 125, 150].includes(value) ? value : 100;
 }
 
 function getLastSerializableNode(nodes) {

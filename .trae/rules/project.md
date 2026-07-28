@@ -28,7 +28,49 @@
 
 ---
 
-## 二、AI开发输出标准流程（固定顺序，不可跳过）
+
+## 二、Tauri 调试环境与正式 exe 一致性检查（强制）
+
+> 每次修改涉及网络资源、媒体、导出、帮助文档、文件拖拽、AI 接口、Tauri 配置、资源路径时，必须检查本节，防止 `npm run tauri dev` 正常但正式 exe 异常。
+
+### 1. CSP 白名单检查
+- 修改或新增网络图片时，检查 `src-tauri/tauri.conf.json` 的 `img-src` 是否允许所需来源，例如 `https:`、必要时 `http:`。
+- 修改或新增网络视频、音频、视频封面截取时，检查 `media-src` 是否允许所需来源，例如 `https:`、必要时 `http:`。
+- 修改或新增 AI/API/资源下载请求时，检查 `connect-src` 是否允许所需来源。不要只验证 localhost；也要考虑用户配置的 `https://...` 或内网 `http://...`。
+- 禁止为了省事放开远程脚本。`script-src` 默认必须保持 `'self'`，除非用户明确要求并说明安全风险。
+- 修改 CSP 后必须补充或更新 `tests/tauri.test.mjs`，让测试明确覆盖正式版允许的资源类型和仍然禁止的远程脚本。
+
+### 2. 资源路径检查
+- 不要假设开发服务器路径等于正式版路径。`/assets/...`、相对路径、`asset:`、`http://asset.localhost`、`convertFileSrc` 在 dev/exe 下行为不同，必须分别验证。
+- 帮助文档、内置视频、内置图片等资源，优先通过 Vite import 或明确打包资源读取，不要只依赖 dev server middleware。
+- 新增 `src/assets` 文件后，检查 `npm run build` 的 `dist/assets` 中是否真实存在。
+
+### 3. Tauri 权限与能力检查
+- 新增 Tauri JS API、插件 API、窗口事件、拖拽、剪贴板、外部链接、文件读写能力时，检查 `src-tauri/capabilities/*.json` 是否需要新增权限。
+- 新增 Rust `#[tauri::command]` 后，必须确认已加入 `invoke_handler`，并补测试检查命令名存在。
+- 文件拖拽打开 Markdown 时，同时检查浏览器 `drop` 事件和 Tauri `onDragDropEvent`，首页和编辑页都要覆盖。
+
+### 4. 正式版验证流程
+- 至少运行：
+```bash
+npm run build
+npm run tauri build
+```
+- 涉及 CSP/资源/权限时，额外运行相关测试，例如：
+```bash
+node --test tests\tauri.test.mjs
+```
+- 发现 dev 正常、exe 异常时，优先排查：CSP、asset protocol、资源是否被打进 `dist`、Tauri capabilities、Windows 文件权限、路径编码、工作目录差异。
+
+### 5. 交付前自查
+- [ ] 是否新增网络图片、视频、音频、字体、AI/API 请求？
+- [ ] 是否同步检查 `img-src`、`media-src`、`connect-src`？
+- [ ] 是否保持 `script-src 'self'`，没有误放开远程脚本？
+- [ ] 是否新增或更新 `tests/tauri.test.mjs`？
+- [ ] 是否运行 `npm run build` 和 `npm run tauri build`？
+- [ ] 是否确认正式 exe 中资源显示、预览、插入、导出逻辑与 dev 一致？
+
+## 三、AI开发输出标准流程（固定顺序，不可跳过）
 
 1. **Karpathy原则前置校验**：梳理需求假设、列出多方案、标记模糊点提问
 2. **输出目标验证清单**：明确本次开发完成后的校验标准
@@ -55,7 +97,7 @@
   4. 异步初始化顺序问题（确保配置在渲染前完成）
 ---
 
-## 三、CSS 与样式硬规则（防止样式污染与开发/生产不一致）
+## 四、CSS 与样式硬规则（防止样式污染与开发/生产不一致）
 
 > 本章节为强制规范，每次涉及 UI/样式修改时必须遵守。
 

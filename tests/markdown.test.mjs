@@ -344,6 +344,22 @@ test("parses and serializes inline SVG blocks", () => {
   assert.equal(serializeMarkdown(doc), `${markdown}\n`);
 });
 
+test("parses and serializes SVG display scale", () => {
+  const markdown = [
+    '<div data-type="svg-diagram" data-pme-scale="75">',
+    '<svg viewBox="0 0 100 60" width="100%">',
+    '  <rect x="10" y="10" width="80" height="40" fill="#fff"/>',
+    "</svg>",
+    "</div>",
+  ].join("\n");
+
+  const doc = parseMarkdown(markdown);
+
+  assert.equal(doc.content[0].type, "svgDiagram");
+  assert.equal(doc.content[0].attrs.scale, 75);
+  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
+});
+
 test("parses and serializes mindmap diagrams", () => {
   const markdown = [
     "```mindmap",

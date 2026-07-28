@@ -1317,7 +1317,7 @@ async function runMenuCommand(command) {
     console.error(error);
     await openMessageModal({
       title: "操作失败",
-      message: error?.message || "命令执行失败，请稍后重试。",
+      message: getErrorMessage(error, "命令执行失败，请稍后重试。"),
     });
   }
 }
@@ -1329,7 +1329,7 @@ async function handleSaveDocumentRequest() {
     console.error(error);
     await openMessageModal({
       title: "保存失败",
-      message: error?.message || "无法保存当前 Markdown 文件。",
+      message: getErrorMessage(error, "无法保存当前 Markdown 文件。"),
     });
   }
 }
@@ -1563,8 +1563,24 @@ function focusCurrentEditable() {
 }
 
 function setEditorZoom(value) {
-  state.editorZoom = Math.min(1.6, Math.max(0.7, Number(value.toFixed(2))));
-  render();
+  const nextZoom = Math.min(1.6, Math.max(0.7, Number(value.toFixed(2))));
+  if (state.editorZoom === nextZoom) {
+    return;
+  }
+  state.editorZoom = nextZoom;
+  document.querySelector(".shell")?.style.setProperty("--editor-zoom", String(nextZoom));
+  refreshZoomMenuState();
+}
+
+function refreshZoomMenuState() {
+  document.querySelectorAll('[data-menu-command="zoom-reset"]').forEach((button) => {
+    const isActualSize = state.editorZoom === 1;
+    button.classList.toggle("is-checked", isActualSize);
+    const check = button.querySelector(".app-menu__check");
+    if (check) {
+      check.textContent = isActualSize ? "✓" : "";
+    }
+  });
 }
 
 function handleSourceInput(event) {
@@ -2501,11 +2517,8 @@ async function saveDocument() {
   }
 
   syncSelectedDocumentToState();
-  if (isLocalAbsolutePath(state.selectedPath) && state.workspaceAdapter?.writeTextFilePath) {
-    await state.workspaceAdapter.writeTextFilePath(state.selectedPath, state.files[state.selectedPath]);
-  } else if (canSaveSelectedPathDirectly()) {
-    await state.workspaceAdapter.writeTextFile(state.selectedPath, state.files[state.selectedPath]);
-  } else {
+  const savedDirectly = await trySaveMarkdownPath(state.selectedPath, state.files[state.selectedPath]);
+  if (!savedDirectly) {
     const savedPath = await saveTextExport(fileName(state.selectedPath), state.files[state.selectedPath]);
     if (!savedPath) {
       return;
@@ -2518,6 +2531,120 @@ async function saveDocument() {
 
 function canSaveSelectedPathDirectly() {
   return canSaveMarkdownPathDirectly(state.selectedPath, state.workspaceAdapter);
+}
+
+async function trySaveMarkdownPath(path, content) {
+  const attempts = [];
+  const persistedFilePath = getPersistedMarkdownFilePath(path);
+  if (persistedFilePath && state.workspaceAdapter?.writeTextFilePath) {
+    attempts.push({
+      label: `writeTextFilePath(${persistedFilePath})`,
+      run: () => state.workspaceAdapter.writeTextFilePath(persistedFilePath, content),
+    });
+  }
+  if (canSaveMarkdownPathDirectly(path, state.workspaceAdapter)) {
+    attempts.push({
+      label: `writeTextFile(${path})`,
+      run: () => state.workspaceAdapter.writeTextFile(path, content),
+    });
+  }
+  if (!attempts.length) {
+    return false;
+  }
+
+  const failures = [];
+  for (const attempt of attempts) {
+    try {
+      await attempt.run();
+      return true;
+    } catch (error) {
+      failures.push({
+        label: attempt.label,
+        message: getErrorMessage(error, "unknown error"),
+      });
+      console.error("Markdown save attempt failed:", attempt.label, error);
+    }
+  }
+  throw new Error(formatSaveFailureMessage(failures));
+}
+
+function formatSaveFailureMessage(failures) {
+  const permissionFailure = failures.find((failure) => isPermissionDeniedError(failure.message));
+  if (permissionFailure) {
+    return [
+      "没有权限写入这个 Markdown 文件。",
+      "",
+      extractSaveTarget(permissionFailure.label),
+      "",
+      `系统返回：${permissionFailure.message}`,
+      "",
+      "请使用“文件 > 另存为”保存到桌面、文档或其他可写目录；微信/临时缓存目录里的文件有时会被系统或应用锁定，PME 不能直接覆盖。",
+    ].join("\n");
+  }
+
+  const missingFailure = failures.find((failure) => isMissingFileError(failure.message));
+  if (missingFailure) {
+    return [
+      "原始 Markdown 文件已经不存在，无法覆盖保存。",
+      "",
+      extractSaveTarget(missingFailure.label),
+      "",
+      `系统返回：${missingFailure.message}`,
+      "",
+      "请使用“文件 > 另存为”重新选择保存位置。",
+    ].join("\n");
+  }
+
+  return [
+    "保存失败，所有可用保存方式都没有成功。",
+    "",
+    ...failures.map((failure) => `${failure.label}: ${failure.message}`),
+  ].join("\n");
+}
+
+function isPermissionDeniedError(message) {
+  return /拒绝访问|access is denied|permission denied|os error 5/i.test(message || "");
+}
+
+function isMissingFileError(message) {
+  return /no such file|not found|不存在|no longer exists/i.test(message || "");
+}
+
+function extractSaveTarget(label) {
+  const match = String(label || "").match(/\((.*)\)$/);
+  return match?.[1] ? `目标文件：${match[1]}` : "";
+}
+
+function getPersistedMarkdownFilePath(path) {
+  if (isLocalAbsolutePath(path)) {
+    return path;
+  }
+  const workspaceInfo = state.workspaceAdapter?.getWorkspaceInfo?.();
+  if (
+    workspaceInfo?.kind === "tauri-file"
+    && workspaceInfo.filePath
+    && path === fileName(workspaceInfo.filePath)
+  ) {
+    return workspaceInfo.filePath;
+  }
+  return "";
+}
+
+function getErrorMessage(error, fallback) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
+  if (error && typeof error === "object") {
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
 }
 
 function adoptSavedMarkdownPath(savedPath) {
@@ -3636,19 +3763,22 @@ function findMermaidNodePosition(diagramElement) {
 }
 
 async function editMermaidNode(node, pos) {
-  const code = await openTextEditorModal({
+  const result = await openTextEditorModal({
     title: "编辑 Mermaid 图表",
     value: node.attrs.code || "",
     rows: 18,
     monospace: true,
+    scale: node.attrs.scale || 100,
     onAiGenerate: (onChunk) => {
       openMermaidAiModal({ onChunk });
     },
   });
-  if (code === null) {
+  if (result === null) {
     return;
   }
 
+  const code = typeof result === "object" ? result.code : result;
+  const scale = typeof result === "object" ? result.scale : node.attrs.scale;
   if (!code.trim()) {
     editor.chain().focus().deleteMermaidDiagram({ pos }).run();
     return;
@@ -3723,25 +3853,28 @@ function findSvgNodePosition(diagramElement) {
 }
 
 async function editSvgNode(node, pos) {
-  const code = await openTextEditorModal({
+  const result = await openTextEditorModal({
     title: "编辑 SVG",
     value: node.attrs.code || "",
     rows: 18,
     monospace: true,
+    scale: node.attrs.scale || 100,
     onAiGenerate: (onChunk) => {
       return openSvgAiModal({ onChunk });
     },
   });
-  if (code === null) {
+  if (result === null) {
     return;
   }
 
+  const code = typeof result === "object" ? result.code : result;
+  const scale = typeof result === "object" ? result.scale : node.attrs.scale;
   if (!code.trim()) {
     editor.chain().focus().deleteSvgDiagram({ pos }).run();
     return;
   }
 
-  editor.chain().focus().updateSvgDiagram({ code: normalizeSvgCode(code) || code, pos }).run();
+  editor.chain().focus().updateSvgDiagram({ code: normalizeSvgCode(code) || code, scale, pos }).run();
 }
 
 function handleImageClick(event) {
@@ -3916,7 +4049,7 @@ function openCreateWorkspaceModal() {
     });
 
     overlay.addEventListener("click", async (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+      if (event.target.dataset.modalAction === "cancel") {
         close(null);
       }
       if (event.target.dataset.modalAction === "apply") {
@@ -4162,7 +4295,7 @@ async function exportCurrentDocumentAsWord() {
   try {
     const blob = await buildWordDocumentBlob({
       doc,
-      title: markdownName.replace(/\.(md|markdown)$/i, ""),
+      title: "",
       loadImageResource: (source) => loadImageResource(source, {
         files: state.files,
         isTauri: isTauriRuntime(),
@@ -5269,11 +5402,9 @@ window.addEventListener("beforeunload", (event) => {
 async function saveAllModifiedTabs() {
   syncSelectedDocumentToState();
   const modifiedTabs = state.openTabs.filter((tab) => tab.modified);
-  const canPersist = Boolean(state.workspaceAdapter?.canPersist && state.workspaceAdapter?.getWorkspaceInfo?.());
   for (const tab of modifiedTabs) {
     try {
-      if (canPersist) {
-        await state.workspaceAdapter.writeTextFile(tab.path, state.files[tab.path]);
+      if (await trySaveMarkdownPath(tab.path, state.files[tab.path])) {
         tab.modified = false;
       } else {
         if (tab.path === state.selectedPath) {
@@ -5286,6 +5417,11 @@ async function saveAllModifiedTabs() {
         }
       }
     } catch (e) {
+      console.error("Failed to save modified tab:", e);
+      await openMessageModal({
+        title: "保存失败",
+        message: getErrorMessage(e, "无法保存当前 Markdown 文件。"),
+      });
       return false;
     }
   }

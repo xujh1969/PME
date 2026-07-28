@@ -24,10 +24,6 @@ export function openPdfExportOptionsModal() {
               <option value="landscape">横向</option>
             </select>
           </label>
-          <label class="pdf-export-modal__checkbox">
-            <input data-pdf-title type="checkbox" checked />
-            <span>包含文档标题</span>
-          </label>
           <p>桌面版会直接生成并保存 PDF 文件，不会添加打印页眉页脚。</p>
         </section>
         <footer class="text-modal__footer">
@@ -44,17 +40,17 @@ export function openPdfExportOptionsModal() {
     };
 
     overlay.addEventListener("click", (event) => {
-      if (event.target === overlay || event.target.dataset.modalAction === "cancel") {
+      if (event.target.dataset.modalAction === "cancel") {
         close(null);
       }
       if (event.target.dataset.modalAction === "apply") {
         close({
           paper: overlay.querySelector("[data-pdf-paper]").value,
           orientation: overlay.querySelector("[data-pdf-orientation]").value,
-          includeTitle: overlay.querySelector("[data-pdf-title]").checked,
         });
       }
     });
+
     overlay.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -71,4 +67,3 @@ export function openPdfExportOptionsModal() {
     overlay.querySelector("[data-pdf-orientation]")?.focus();
   });
 }
-

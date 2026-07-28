@@ -1,4 +1,5 @@
 import { getCurrentFonts } from "./config.mjs";
+import { buildDisplayFontStack, buildEditorFontStack } from "./font-utils.mjs";
 
 let katexCss = "";
 
@@ -19,6 +20,8 @@ export function sanitizePdfFileName(name) {
 
 export function buildPdfExportHtml({ title, documentHtml, options }) {
   const fonts = getCurrentFonts();
+  const editorFontStack = buildEditorFontStack(fonts);
+  const displayFontStack = buildDisplayFontStack(fonts);
   const pageSize = `${options.paper || "A4"} ${options.orientation || "portrait"}`;
   const titleHtml = options.includeTitle ? `<h1 class="pdf-title">${escapeHtml(title)}</h1>` : "";
   
@@ -46,8 +49,8 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       --color-code-tag: #dc2626;
       --radius-sm: 6px;
       --radius-xl: 16px;
-      --font-display: ${fonts.chinese}, "EB Garamond", "Times New Roman", serif;
-      --font-editor: ${fonts.chinese}, ${fonts.english};
+      --font-display: ${displayFontStack};
+      --font-editor: ${editorFontStack};
       --font-mono: ${fonts.code};
     }
     
@@ -396,7 +399,7 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
     }
 
     .svg-diagram {
-      width: 100%;
+      width: min(100%, var(--svg-scale-width, 100%));
       margin: 16px 0;
       overflow: visible;
     }

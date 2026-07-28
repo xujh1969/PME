@@ -1,3 +1,5 @@
+import { buildDisplayFontStack, buildEditorFontStack } from "./font-utils.mjs";
+
 export const DEFAULT_CONFIG = {
   fonts: {
     chinese: "Noto Sans SC, \"Microsoft YaHei\", \"PingFang SC\", sans-serif",
@@ -174,6 +176,8 @@ function applyFontsToEditor() {
   document.documentElement.style.setProperty("--font-family-chinese", config.fonts.chinese);
   document.documentElement.style.setProperty("--font-family-english", config.fonts.english);
   document.documentElement.style.setProperty("--font-family-code", config.fonts.code);
+  document.documentElement.style.setProperty("--font-family-editor-configured", buildEditorFontStack(config.fonts));
+  document.documentElement.style.setProperty("--font-family-display-configured", buildDisplayFontStack(config.fonts));
   
   let style = document.getElementById("pme-font-styles");
   if (!style) {
@@ -183,7 +187,7 @@ function applyFontsToEditor() {
   }
   style.textContent = `
     .ProseMirror {
-      font-family: var(--font-family-chinese), var(--font-family-english) !important;
+      font-family: var(--font-family-editor-configured) !important;
     }
     .ProseMirror code,
     .ProseMirror pre {
@@ -195,11 +199,11 @@ function applyFontsToEditor() {
     .ProseMirror h4,
     .ProseMirror h5,
     .ProseMirror h6 {
-      font-family: var(--font-family-chinese), var(--font-family-english) !important;
+      font-family: var(--font-family-display-configured) !important;
     }
     .ProseMirror th,
     .ProseMirror td {
-      font-family: var(--font-family-chinese), var(--font-family-english) !important;
+      font-family: var(--font-family-editor-configured) !important;
     }
   `;
 }
