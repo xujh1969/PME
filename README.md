@@ -2,20 +2,21 @@
 
 PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 TipTap v3 构建。
 
-**当前版本**: 0.2.0
+**当前版本**: 0.2.1
 
 ## 功能特性
 
 ### 核心编辑功能
 
 - **所见即所得编辑**：基于 TipTap / ProseMirror 实现流畅的富文本编辑体验
-- **Markdown 支持**：支持标题、列表、任务列表、引用、分割线、链接、图片、表格、公式、代码块
+- **Markdown 支持**：支持标题、列表、任务列表、引用、分割线、链接、图片、表格、公式、代码块、SVG
 - **代码高亮**：支持多种编程语言语法高亮（基于 lowlight）
 - **Mermaid 图表**：支持 Mermaid 17 种图表类型（流程图、时序图、甘特图、用户旅程图、状态图、ER图、UML类图、Git分支图、饼图、思维导图、需求图、C4架构图、看板图、时间线图、架构图、XY数据图表、力导向网络图），支持 AI 助手生成图表代码（流式输出，通过 3x6 网格选择图表类型），支持主题适配和缩放拖拽
 - **思维导图**：支持可视化思维导图编辑，基于 MindElixir 实现，支持拖拽、上下文菜单、工具栏操作，支持导出为静态 SVG，默认右侧展开模式
 - **KaTeX 公式**：支持 LaTeX 数学公式渲染，支持 `$...$`、`$$...$$`、`\(...\)`、`\[...\]` 四种格式
 - **图片处理**：支持拖入、粘贴、网络 URL 插入和百分比缩放
 - **视频插入**：支持插入本地视频文件并播放
+- **SVG 矢量图形**：支持插入本地 SVG 文件、拖入 SVG 文件、粘贴 SVG 代码和网络 SVG URL 四种方式；支持双击打开编辑窗口修改 SVG 源代码；支持 AI 助手根据文字描述生成 SVG 代码（流式输出，实时预览）
 - **源码模式**：可切换到 Markdown 源码编辑
 
 ### 折叠功能
@@ -28,6 +29,7 @@ PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 Ti
 ### 文档管理
 
 - **Workspace 模式**：支持多文件标签页和文件树管理
+- **拖拽打开**：支持将 `.md` / `.markdown` 文件直接拖入 PME 窗口自动打开，支持多文件同时拖入，每个文件在新标签页中打开
 - **搜索功能**：支持全文搜索和替换，支持区分大小写和全字匹配，查找时光标自动跳转到匹配位置，按"下一个"/"上一个"光标跟随移动
 - **最近打开文件**：文件菜单中显示最近6个打开的文件列表，包含文件名和路径，点击在新标签页打开
 - **大纲视图**：文档结构自动生成，支持点击跳转，点击被折叠标题下的子标题时自动展开父标题
@@ -60,13 +62,16 @@ PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 Ti
 - **自定义功能**：可通过配置添加自定义 AI 功能按钮，每个功能包含名称和提示词模板
 - **补充命令**：在执行任何 AI 功能时，可添加额外指令与选中文本一起发送
 - **操作模式**：支持复制结果、插入下方、替换原文三种操作
+- **Mermaid AI 助手**：在 Mermaid 图表编辑窗口中内置 AI 助手，支持通过 3x6 网格选择 17 种图表类型，输入描述后以流式输出生成 Mermaid 代码
+- **SVG AI 助手**：在 SVG 编辑窗口中内置 AI 助手，根据文字描述（如图标、装饰图案、logo 等）以流式输出生成 SVG 代码，支持实时预览和继续编辑
 
 ### 导出与打印
 
-- **PDF 导出**：支持导出为 PDF 文件，使用配置的字体渲染，支持数学公式和代码块渲染
-- **Word 导出**：支持导出为 DOCX 文件，支持标题、段落、粗体、斜体、下划线、删除线、代码、链接、引用、列表、任务列表、表格、图片、分割线、Mermaid 图表、思维导图、数学公式、视频等元素的转换
+- **PDF 导出**：支持导出为 PDF 文件，使用配置的字体渲染，支持数学公式、代码块、Mermaid 图表、思维导图和 SVG 渲染
+- **Word 导出**：支持导出为 DOCX 文件，支持标题、段落、粗体、斜体、下划线、删除线、代码、链接、引用、列表、任务列表、表格、图片、分割线、Mermaid 图表、思维导图、SVG 图形、数学公式、视频等元素的转换
+- **HTML 打包**：支持将文档转换为 HTML 格式并打包为 ZIP 文件，自动收集图片、视频和 SVG 资源到 `assets/` 目录，解压后可直接用浏览器打开
 - **打印功能**：支持打印到打印机，包含打印预览，修复了打印预览重复弹出问题
-- **ZIP 打包**：支持将文档及相关资源打包为 ZIP 文件，Base64 嵌入图片会自动提取保存为单独文件，使用相对路径引用，保持与其他 Markdown 工具的兼容性
+- **ZIP 打包**：支持将文档及相关资源打包为 ZIP 文件，Base64 嵌入图片会自动提取保存为单独文件，图片、视频和 SVG 资源统一收集到 `assets/` 目录，使用相对路径引用，保持与其他 Markdown 工具的兼容性
 
 ### 交互体验
 
@@ -75,6 +80,10 @@ PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 Ti
 - **深色主题优化**：下拉框、输入框等控件适配深色主题，接近 VS Code 深色主题风格
 - **中文字体扩展**：中文字体配置增加楷体 (KaiTi) 和仿宋体 (FangSong) 选项
 - **工具栏面板**：格式和插入工具栏采用悬停展开面板设计，直接显示4个常用按钮，悬停时展开完整面板
+- **文件拖拽**：支持将 Markdown 文件直接拖入窗口打开，支持 SVG 文件拖入插入
+- **AI 流式输出**：AI 助手在 Mermaid 和 SVG 编辑窗口中支持流式输出，实时预览生成效果
+- **弹窗联动**：表格工具条在弹出其他编辑窗口（公式、图片、Mermaid 等）时自动收起
+- **全局快捷键**：Ctrl+F、Ctrl+H、Ctrl+/ 无论焦点位置都能触发
 
 ## 技术栈
 
@@ -86,8 +95,10 @@ PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 Ti
 - **代码高亮**：lowlight
 - **数学公式**：KaTeX
 - **图表渲染**：Mermaid、MindElixir（思维导图）
+- **SVG 处理**：原生 SVG 支持、SVG 节点编辑、AI 生成 SVG
 - **PDF 生成**：html2pdf.js
 - **Word 生成**：docx
+- **HTML 打包**：Archiver（ZIP 压缩）、自定义 HTML 转换
 
 ## 快速开始
 
@@ -122,8 +133,8 @@ npm run tauri:build
 ### 构建产物
 
 - 可执行文件：`src-tauri/target/release/pme.exe`
-- NSIS 安装包：`src-tauri/target/release/bundle/nsis/PME_0.2.0_x64-setup.exe`
-- MSI 安装包：`src-tauri/target/release/bundle/msi/PME_0.2.0_x64_en-US.msi`
+- NSIS 安装包：`src-tauri/target/release/bundle/nsis/PME_0.2.1_x64-setup.exe`
+- MSI 安装包：`src-tauri/target/release/bundle/msi/PME_0.2.1_x64_en-US.msi`
 
 ## 项目结构
 
@@ -131,31 +142,65 @@ npm run tauri:build
 PME_Trae/
 ├── src/                      # 前端源代码
 │   ├── app.mjs               # 主应用入口（状态管理、生命周期）
-│   ├── styles.css            # 全局样式（包含浅色/深色主题变量）
+│   ├── styles/               # 样式文件（按模块拆分）
+│   │   ├── index.css         # 样式入口
+│   │   ├── variables.css     # CSS 变量（浅色/深色主题）
+│   │   ├── editor.css        # 编辑器样式
+│   │   ├── app-shell.css     # 应用外壳样式
+│   │   ├── modals.css        # 弹窗通用样式
+│   │   ├── ai-modal.css      # AI 助手弹窗样式
+│   │   ├── settings.css      # 设置面板样式
+│   │   ├── forms.css         # 表单控件样式
+│   │   ├── welcome.css       # 首页欢迎页样式
+│   │   ├── tree-outline.css # 文件树/大纲样式
+│   │   └── utilities.css    # 工具类样式（.is-hidden 等）
 │   ├── core/                 # 核心模块
 │   │   ├── config.mjs        # 配置管理（字体、主题）
 │   │   ├── markdown.mjs      # Markdown 解析与序列化
-│   │   ├── ordered-list-extension.mjs  # 自定义有序列表扩展
-│   │   ├── workspace-session.mjs       # Workspace 会话管理
-│   │   ├── pdf-export.mjs    # PDF 导出逻辑
-│   │   ├── mindmap-data.mjs  # 思维导图数据处理与静态 SVG 生成
+│   │   ├── shortcuts.mjs     # 快捷键定义
 │   │   ├── source-mode.mjs   # 源码模式切换
-│   │   └── shortcuts.mjs     # 快捷键定义
+│   │   ├── pdf-export.mjs    # PDF 导出逻辑
+│   │   ├── word-export.mjs   # Word 导出逻辑
+│   │   ├── html-package.mjs  # HTML 格式打包逻辑
+│   │   ├── package-resources.mjs # 资源打包处理
+│   │   ├── mindmap-data.mjs  # 思维导图数据处理与静态 SVG 生成
+│   │   ├── workspace-session.mjs # Workspace 会话管理
+│   │   ├── workspace.mjs     # 工作区核心逻辑
+│   │   ├── search.mjs        # 搜索与替换功能
+│   │   ├── outline.mjs       # 大纲生成
+│   │   ├── tabs.mjs          # 多标签页管理
+│   │   ├── recent-workspaces.mjs # 最近打开文件管理
+│   │   ├── ai-service.mjs    # AI 服务调用
+│   │   ├── toc-extension.mjs # 目录扩展
+│   │   ├── text-align.mjs    # 段落对齐
+│   │   ├── code-indent.mjs   # 代码自动缩进
+│   │   ├── path-utils.mjs    # 路径工具函数
+│   │   └── ...               # 其他核心模块
 │   ├── editor/               # 编辑器相关
-│   │   ├── editor-extensions.mjs       # TipTap 扩展配置
-│   │   ├── document-link.mjs          # 文档链接处理
-│   │   ├── mermaid-node.mjs           # Mermaid 图表节点
-│   │   ├── mindmap-node.mjs           # 思维导图节点
-│   │   ├── heading-collapse.mjs       # 标题折叠插件
-│   │   ├── callout-extension.mjs      # 警告框扩展
-│   │   └── video-extension.mjs        # 视频扩展
-│   └── ui/                   # UI 组件
-│       ├── settings-modal.mjs         # 配置对话框
-│       ├── image-insert-modal.mjs     # 图片插入对话框
-│       ├── ai-modal.mjs               # AI 助手对话框
-│       └── app-command-runner.mjs     # 应用命令处理
+│   │   ├── editor-extensions.mjs # TipTap 扩展配置
+│   │   ├── mermaid-node.mjs  # Mermaid 图表节点
+│   │   ├── mindmap-node.mjs  # 思维导图节点
+│   │   ├── svg-node.mjs      # SVG 矢量图形节点
+│   │   ├── video-extension.mjs # 视频扩展
+│   │   ├── heading-collapse.mjs # 标题折叠插件
+│   │   ├── callout-extension.mjs # 警告框扩展
+│   │   ├── custom-nodes.mjs  # 自定义节点
+│   │   └── ...               # 其他编辑器模块
+│   ├── export/               # 导出模块
+│   │   └── export-runtime.mjs # 导出运行时
+│   ├── ui/                   # UI 组件
+│   │   ├── ai-modal.mjs      # AI 助手对话框
+│   │   ├── settings-modal.mjs # 配置对话框
+│   │   ├── image-insert-modal.mjs # 图片插入对话框
+│   │   ├── video-insert-modal.mjs # 视频插入对话框
+│   │   ├── modals.mjs        # 通用弹窗（含等待动画）
+│   │   ├── app-command-runner.mjs # 应用命令处理
+│   │   └── ...               # 其他 UI 模块
+│   └── assets/               # 静态资源
+│       ├── PME使用说明书.md  # 内置使用说明书
+│       └── hero.mp4          # 首页背景视频
 ├── src-tauri/                # Tauri 后端代码
-│   ├── src/main.rs           # Rust 主程序（配置文件读写命令）
+│   ├── src/main.rs           # Rust 主程序（配置文件读写、视频对话框等命令）
 │   ├── capabilities/         # 权限配置
 │   ├── Cargo.toml            # Rust 依赖配置
 │   └── tauri.conf.json       # Tauri 配置
@@ -274,11 +319,12 @@ PME_Trae/
 
 - **新建文件** (Ctrl+N)：创建新的 Markdown 文件
 - **打开文件** (Ctrl+O)：打开本地 Markdown 文件
+- **拖拽打开**：将 `.md` 文件拖入 PME 窗口即可自动打开，支持多文件
 - **最近打开**：显示最近6个打开的文件列表，包含文件名和完整路径，点击在新标签页打开
 - **保存** (Ctrl+S)：保存当前文件
 - **另存为** (Ctrl+Shift+S)：保存当前文件为新文件
-- **打包当前文档**：将文档及相关资源打包为 ZIP 文件
-- **以 HTML 格式打包**：将文档转换为 HTML 格式并打包为 ZIP 文件
+- **打包当前文档**：将文档及相关资源打包为 ZIP 文件（含图片、视频、SVG 资源）
+- **以 HTML 格式打包**：将文档转换为 HTML 格式并打包为 ZIP 文件（含图片、视频、SVG 资源）
 - **导出为 Word 文件**：导出为 DOCX 文件
 - **导出 PDF**：导出为 PDF 文件
 - **配置**：打开配置对话框，设置字体和主题
@@ -310,6 +356,7 @@ PME_Trae/
 
 - `DEVELOPMENT.md`：开发指南和架构说明
 - `PME UI详细设计 v1.0.md`：UI 设计规范
+- `PME使用说明书.md`：用户使用说明书（也内置在程序帮助菜单中）
 
 ## 许可证
 

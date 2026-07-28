@@ -28,6 +28,14 @@ test("opens dropped Markdown files through the shared document drop path", () =>
   assert.equal(appSource.includes("state.tree = buildWorkspaceTree(state.paths);"), true);
 });
 
+test("opens Markdown files dropped through Tauri native file events", () => {
+  assert.equal(appSource.includes("function setupTauriFileDropHandler"), true);
+  assert.equal(appSource.includes("getCurrentWindow().onDragDropEvent"), true);
+  assert.equal(appSource.includes('payload?.type !== "drop"'), true);
+  assert.equal(appSource.includes("(payload.paths || []).filter(isMarkdownPath)"), true);
+  assert.equal(appSource.includes("handleCliFileOpen(filePath);"), true);
+});
+
 test("bundles the help manual through Vite instead of loading a loose runtime asset", () => {
   assert.equal(appSource.includes('import helpManualMarkdown from "./assets/PME使用说明书.md?raw";'), true);
   assert.equal(appSource.includes("const markdown = helpManualMarkdown.trim()"), true);

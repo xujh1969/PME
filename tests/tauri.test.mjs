@@ -25,6 +25,10 @@ test("uses a dark native window background during startup", () => {
   assert.equal(tauriConfig.app.windows[0].backgroundColor, "#050505");
 });
 
+test("enables native file drag and drop on the Tauri window", () => {
+  assert.equal(tauriConfig.app.windows[0].dragDropEnabled, true);
+});
+
 test("defines a minimal Tauri 2 Rust application", () => {
   assert.equal(cargoToml.includes("tauri = { version = \"2\""), true);
   assert.equal(cargoToml.includes("tauri-build = { version = \"2\""), true);

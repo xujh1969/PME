@@ -309,6 +309,7 @@ let editor = null;
 let dragDepth = 0;
 let isBlockDragInProgress = false;
 let documentFileDropBound = false;
+let tauriFileDropBound = false;
 let blockDragNodePos = -1;
 let isMigratingMath = false;
 let objectDeselectBound = false;
@@ -325,6 +326,7 @@ startApp();
 
 async function startApp() {
   await setupCommandLineFileHandler();
+  setupTauriFileDropHandler();
   render();
 }
 
@@ -359,6 +361,32 @@ async function setupCommandLineFileHandler() {
   } catch (error) {
     console.error("Failed to open file from command line:", error);
   }
+}
+
+function setupTauriFileDropHandler() {
+  if (!isTauriRuntime() || tauriFileDropBound) return;
+  tauriFileDropBound = true;
+
+  import("@tauri-apps/api/window")
+    .then(({ getCurrentWindow }) => {
+      getCurrentWindow().onDragDropEvent((event) => {
+        const payload = event?.payload || event;
+        if (payload?.type !== "drop") {
+          return;
+        }
+        const markdownPaths = (payload.paths || []).filter(isMarkdownPath);
+        markdownPaths.forEach((filePath) => {
+          handleCliFileOpen(filePath);
+        });
+      });
+    })
+    .catch((error) => {
+      console.error("Failed to register Tauri file drop handler:", error);
+    });
+}
+
+function isMarkdownPath(path) {
+  return /\.(md|markdown)$/i.test(path || "");
 }
 
 function render(options = {}) {
@@ -431,7 +459,7 @@ function renderWelcome() {
       </video>
       <section class="welcome-hero">
         <div class="welcome-hero__content">
-          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.2.0</span></p>
+          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.2.1</span></p>
           <h1>PME</h1>
           <p class="welcome-hero__copy">为长文档、图表、公式和素材而生的本地 Markdown 工作台。</p>
           <div class="welcome-hero__actions">
