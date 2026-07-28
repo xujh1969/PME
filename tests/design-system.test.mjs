@@ -196,6 +196,37 @@ test("supports menu-driven view toggles and editor zoom", () => {
   assert.equal(styles.includes("--editor-zoom"), true);
 });
 
+test("uses synchronous clipboardData for editor copy events", () => {
+  const copyHandler = appSource.match(/async function handleCopy\(event\)[\s\S]+?async function handleEditorClick/)?.[0] || "";
+  const selectionSerializer = appSource.match(/function serializeEditorSelection\(selection, state\)[\s\S]+?async function handleEditorClick/)?.[0] || "";
+
+  assert.equal(copyHandler.includes("event.clipboardData"), true);
+  assert.equal(copyHandler.includes('event.clipboardData.setData("text/plain", markdown);'), true);
+  assert.equal(copyHandler.includes("event.preventDefault();"), true);
+  assert.equal(copyHandler.includes("navigator.clipboard.writeText(markdown);"), true);
+  assert.equal(copyHandler.includes("serializeEditorSelection(selection, editor.state)"), true);
+  assert.equal(selectionSerializer.includes("parent?.type?.inlineContent"), true);
+  assert.equal(selectionSerializer.includes("type: parent.type.name"), true);
+});
+
+test("preserves document scroll position across tab switches and saves", () => {
+  const renderFunction = appSource.match(/function render\(options = \{\}\)[\s\S]+?function renderWelcome/)?.[0] || "";
+  const tabBinding = appSource.match(/document\.querySelectorAll\("\[data-tab\]"\)[\s\S]+?function bindTableBubbleEvents/)?.[0] || "";
+  const addUntitledTab = appSource.match(/function addNewUntitledTab\(\)[\s\S]+?async function openRecentWorkspace/)?.[0] || "";
+  const savePathAdoption = appSource.match(/function adoptSavedMarkdownPath\(savedPath\)[\s\S]+?async function createDetailsBlock/)?.[0] || "";
+
+  assert.equal(appSource.includes("documentScrollPositions: {}"), true);
+  assert.equal(appSource.includes("function saveSelectedDocumentScrollPosition()"), true);
+  assert.equal(appSource.includes("function restoreSelectedDocumentScrollPosition()"), true);
+  assert.equal(renderFunction.includes("saveSelectedDocumentScrollPosition();"), true);
+  assert.equal(renderFunction.includes("restoreSelectedDocumentScrollPosition();"), true);
+  assert.equal(tabBinding.includes("selectDocumentPath(button.dataset.tab);"), true);
+  assert.equal(addUntitledTab.includes("saveSelectedDocumentScrollPosition();"), true);
+  assert.equal(addUntitledTab.includes("render({ saveScroll: false });"), true);
+  assert.equal(appSource.includes("render({ saveScroll: false });"), true);
+  assert.equal(savePathAdoption.includes("state.documentScrollPositions[state.selectedPath] = oldPosition;"), true);
+});
+
 test("keeps editor caret and Mermaid cursor visible on light backgrounds", () => {
   const proseMirrorRule = styles.match(/\.ProseMirror\s*\{[^}]+\}/)?.[0] || "";
   const sourceEditorRule = styles.match(/\.source-editor\s*\{[^}]+\}/)?.[0] || "";

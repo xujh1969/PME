@@ -299,6 +299,7 @@ const state = {
   showOutline: true,
   showStatusbar: true,
   editorZoom: 1,
+  documentScrollPositions: {},
 };
 
 const app = document.querySelector("#app");
@@ -357,7 +358,10 @@ async function setupCommandLineFileHandler() {
   }
 }
 
-function render() {
+function render(options = {}) {
+  if (options.saveScroll !== false) {
+    saveSelectedDocumentScrollPosition();
+  }
   destroyEditor();
   app.innerHTML = state.screen === "welcome" ? renderWelcome() : renderShell();
   requestAnimationFrame(() => document.body.classList.remove("is-booting"));
@@ -366,11 +370,53 @@ function render() {
   mountEditor();
   refreshToolbarState();
   updateFindState(state.searchQuery, true);
+  restoreSelectedDocumentScrollPosition();
   if (state.screen !== "welcome") {
     setTimeout(() => {
       editor?.view?.dom?.focus();
+      restoreSelectedDocumentScrollPosition();
     }, 300);
   }
+}
+
+function saveSelectedDocumentScrollPosition() {
+  if (!state.selectedPath) {
+    return;
+  }
+
+  const editorScroll = document.querySelector("article.editor");
+  const sourceEditor = document.querySelector(".source-editor");
+  state.documentScrollPositions[state.selectedPath] = {
+    editorTop: editorScroll?.scrollTop || 0,
+    editorLeft: editorScroll?.scrollLeft || 0,
+    sourceTop: sourceEditor?.scrollTop || 0,
+    sourceLeft: sourceEditor?.scrollLeft || 0,
+  };
+}
+
+function restoreSelectedDocumentScrollPosition() {
+  if (!state.selectedPath) {
+    return;
+  }
+
+  const position = state.documentScrollPositions[state.selectedPath];
+  if (!position) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const editorScroll = document.querySelector("article.editor");
+    if (editorScroll) {
+      editorScroll.scrollTop = position.editorTop || 0;
+      editorScroll.scrollLeft = position.editorLeft || 0;
+    }
+
+    const sourceEditor = document.querySelector(".source-editor");
+    if (sourceEditor) {
+      sourceEditor.scrollTop = position.sourceTop || 0;
+      sourceEditor.scrollLeft = position.sourceLeft || 0;
+    }
+  });
 }
 
 function renderWelcome() {
@@ -1102,8 +1148,7 @@ function bindEvents() {
 
   document.querySelectorAll("[data-tab]").forEach((button) => {
     button.addEventListener("click", () => {
-      state.selectedPath = button.dataset.tab;
-      render();
+      selectDocumentPath(button.dataset.tab);
     });
   });
 }
@@ -1319,10 +1364,12 @@ async function copyEditorSelectionAsMarkdown() {
   const { selection } = editor.state;
   if (selection.empty) return;
 
-  const slice = editor.state.doc.slice(selection.from, selection.to);
-  const json = slice.toJSON();
-  const markdown = serializeMarkdown(json);
-  await navigator.clipboard.writeText(markdown);
+  const markdown = serializeEditorSelection(selection, editor.state);
+  try {
+    await navigator.clipboard.writeText(markdown);
+  } catch {
+    document.execCommand?.("copy");
+  }
 }
 
 async function cutEditorSelectionAsMarkdown() {
@@ -1341,9 +1388,7 @@ async function cutEditorSelectionAsMarkdown() {
   const { selection } = editor.state;
   if (selection.empty) return;
 
-  const slice = editor.state.doc.slice(selection.from, selection.to);
-  const json = slice.toJSON();
-  const markdown = serializeMarkdown(json);
+  const markdown = serializeEditorSelection(selection, editor.state);
   await navigator.clipboard.writeText(markdown);
   editor.chain().focus().deleteSelection().run();
 }
@@ -1562,8 +1607,7 @@ async function handleDocumentLinkClick(event) {
 
   restoreDocumentLinkPressTabState();
   if (state.openTabs.some((tab) => tab.path === path)) {
-    state.selectedPath = path;
-    render();
+    selectDocumentPath(path);
     return;
   }
 
@@ -1577,8 +1621,7 @@ async function handleDocumentLinkClick(event) {
       : parsed;
     state.paths = [...new Set([...state.paths, path])];
     state.openTabs.push({ name: fileName(path), path, modified: false });
-    state.selectedPath = path;
-    render();
+    selectDocumentPath(path);
   } catch {
     await openMessageModal({ title: "无法打开链接", message: "无法读取 Markdown 文件：\n" + path });
   }
@@ -2138,8 +2181,9 @@ function createStandaloneMarkdownDocument() {
 }
 
 function addNewUntitledTab() {
+  saveSelectedDocumentScrollPosition();
   addUntitledMarkdownSession(state, { getNextUntitledPath, parseMarkdown });
-  render();
+  render({ saveScroll: false });
 }
 
 async function openRecentWorkspace(index) {
@@ -2369,13 +2413,24 @@ function rememberWorkspace(workspaceInfo) {
 }
 
 function openDocument(path) {
+  saveSelectedDocumentScrollPosition();
   openMarkdownDocumentSession(state, path, {
     openTab,
     parseMarkdown,
     hydrateImagePreviews,
     fileName,
   });
-  render();
+  render({ saveScroll: false });
+}
+
+function selectDocumentPath(path) {
+  if (!path || path === state.selectedPath) {
+    return;
+  }
+
+  saveSelectedDocumentScrollPosition();
+  state.selectedPath = path;
+  render({ saveScroll: false });
 }
 
 async function closeDocumentTab(path) {
@@ -2395,13 +2450,14 @@ async function closeDocumentTab(path) {
   }
 
   if (state.selectedPath === path) {
+    saveSelectedDocumentScrollPosition();
     syncSelectedDocumentToState();
   }
 
   const result = closeOpenTab(state.openTabs, state.selectedPath, path);
   state.openTabs = result.openTabs;
   state.selectedPath = result.selectedPath;
-  render();
+  render({ saveScroll: false });
 }
 
 async function saveDocument() {
@@ -2430,13 +2486,20 @@ function canSaveSelectedPathDirectly() {
 }
 
 function adoptSavedMarkdownPath(savedPath) {
-  adoptSavedMarkdownSession(state, savedPath, {
+  saveSelectedDocumentScrollPosition();
+  const oldPath = state.selectedPath;
+  const oldPosition = state.documentScrollPositions[oldPath];
+  const adopted = adoptSavedMarkdownSession(state, savedPath, {
     getSavedMarkdownWorkspacePath,
     replaceWorkspacePath,
     renameSourceDraftPath,
     renameTabPath,
     fileName,
   });
+  if (adopted && oldPosition) {
+    state.documentScrollPositions[state.selectedPath] = oldPosition;
+    delete state.documentScrollPositions[oldPath];
+  }
 }
 
 async function createDetailsBlock(editorInstance) {
@@ -4700,14 +4763,40 @@ async function handleCopy(event) {
   const { selection } = editor.state;
   if (selection.empty) return;
 
-  const slice = editor.state.doc.slice(selection.from, selection.to);
-  const json = slice.toJSON();
-  const markdown = serializeMarkdown(json);
-  
+  const markdown = serializeEditorSelection(selection, editor.state);
+
+  if (event.clipboardData) {
+    event.preventDefault();
+    event.clipboardData.setData("text/plain", markdown);
+    return;
+  }
+
   try {
     await navigator.clipboard.writeText(markdown);
-  } catch {
+  } catch (error) {
+    console.warn("Failed to copy editor selection", error);
   }
+}
+
+function serializeEditorSelection(selection, state) {
+  const slice = state.doc.slice(selection.from, selection.to);
+  const json = slice.toJSON();
+  const content = json.content || [];
+  const isInlineOnly = content.length > 0 && content.every((node) => node.type === "text" || node.type === "hardBreak");
+  const parent = selection.$from?.parent;
+
+  if (isInlineOnly && parent?.type?.inlineContent && parent.type.name !== "doc") {
+    return serializeMarkdown({
+      type: "doc",
+      content: [{
+        type: parent.type.name,
+        attrs: parent.attrs,
+        content,
+      }],
+    });
+  }
+
+  return serializeMarkdown(json);
 }
 
 async function handleEditorClick(event) {
