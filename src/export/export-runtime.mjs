@@ -101,6 +101,7 @@ export async function getPrintableDocumentHtml(doc, { inlineImages = true } = {}
 
   const clone = documentElement.cloneNode(true);
   clone.querySelectorAll(".mermaid-diagram__controls").forEach((element) => element.remove());
+  clone.querySelectorAll(".video-node__controls").forEach((element) => element.remove());
   clone.querySelectorAll(".ProseMirror-selectednode").forEach((element) => {
     element.classList.remove("ProseMirror-selectednode");
   });
@@ -171,12 +172,13 @@ async function prepareMermaidDiagramsForPrint(root) {
       const promise = new Promise((resolve) => {
         const pageMaxWidth = 600;
         const pageMaxHeight = 760;
+        const displayScale = diagram.getAttribute("data-pme-scale") || diagram.dataset?.pmeScale;
         const {
           sourceWidth: svgWidth,
           sourceHeight: svgHeight,
           targetWidth,
           targetHeight,
-        } = getSvgPrintDimensions(svg, pageMaxWidth, pageMaxHeight);
+        } = getMermaidPrintDimensions(svg, displayScale, pageMaxWidth, pageMaxHeight);
 
         if (!svg.getAttribute("viewBox")) {
           svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
@@ -198,7 +200,7 @@ async function prepareMermaidDiagramsForPrint(root) {
           const img = new Image();
           const timeout = setTimeout(() => {
             URL.revokeObjectURL(url);
-            fallbackToSvg(svg, content, svgWidth, svgHeight, pageMaxWidth, pageMaxHeight);
+            fallbackToSvg(svg, content, svgWidth, svgHeight, targetWidth, targetHeight);
             resolve();
           }, 5000);
 
@@ -221,19 +223,19 @@ async function prepareMermaidDiagramsForPrint(root) {
               content.innerHTML = "";
               content.appendChild(imgElement);
             } catch {
-              fallbackToSvg(svg, content, svgWidth, svgHeight, pageMaxWidth, pageMaxHeight);
+              fallbackToSvg(svg, content, svgWidth, svgHeight, targetWidth, targetHeight);
             }
             resolve();
           };
           img.onerror = () => {
             clearTimeout(timeout);
             URL.revokeObjectURL(url);
-            fallbackToSvg(svg, content, svgWidth, svgHeight, pageMaxWidth, pageMaxHeight);
+            fallbackToSvg(svg, content, svgWidth, svgHeight, targetWidth, targetHeight);
             resolve();
           };
           img.src = url;
         } catch {
-          fallbackToSvg(svg, content, svgWidth, svgHeight, pageMaxWidth, pageMaxHeight);
+          fallbackToSvg(svg, content, svgWidth, svgHeight, targetWidth, targetHeight);
           resolve();
         }
       });
@@ -254,11 +256,15 @@ export async function prepareVideosForPrint(root) {
 
     try {
       const poster = await renderVideoPosterForPrint(source, video);
+      const scale = video.getAttribute("data-pme-scale")
+        || video.closest(".video-node")?.getAttribute("data-pme-scale");
+      const dimensions = getVideoPrintDimensions(poster.width, poster.height, scale, 600);
       const image = document.createElement("img");
       image.src = poster.dataUrl;
-      image.setAttribute("width", String(poster.width));
-      image.setAttribute("height", String(poster.height));
-      image.style.width = `${poster.width}px`;
+      image.setAttribute("width", String(dimensions.width));
+      image.setAttribute("height", String(dimensions.height));
+      image.setAttribute("data-pme-scale", String(normalizeVideoPrintScale(scale)));
+      image.style.width = `${dimensions.width}px`;
       image.style.maxWidth = "100%";
       image.style.height = "auto";
       image.style.display = "block";
@@ -275,10 +281,9 @@ async function renderVideoPosterForPrint(source, originalVideo) {
   const video = await loadVideoForPoster(source);
   const sourceWidth = video.videoWidth || originalVideo.videoWidth || getNumericAttribute(originalVideo, "width") || 640;
   const sourceHeight = video.videoHeight || originalVideo.videoHeight || Math.round(sourceWidth * 9 / 16);
-  const maxWidth = 600;
-  const scale = Math.min(1, maxWidth / sourceWidth);
-  const width = Math.round(sourceWidth * scale);
-  const height = Math.round(sourceHeight * scale);
+  const dimensions = getVideoPrintDimensions(sourceWidth, sourceHeight, 100, 600);
+  const width = dimensions.width;
+  const height = dimensions.height;
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   if (!context) {
@@ -391,6 +396,42 @@ export function getSvgPrintDimensions(svg, maxWidth, maxHeight = Number.POSITIVE
   };
 }
 
+export function getVideoPrintDimensions(sourceWidth, sourceHeight, scale = 100, maxWidth = 600) {
+  const baseWidth = Math.min(sourceWidth, maxWidth);
+  const width = Math.round(Math.min(maxWidth, baseWidth * normalizeVideoPrintScale(scale) / 100));
+  return {
+    width,
+    height: Math.round(width * sourceHeight / sourceWidth),
+  };
+}
+
+function normalizeVideoPrintScale(value) {
+  const scale = Number.parseInt(value, 10);
+  return Number.isFinite(scale) ? Math.min(300, Math.max(10, scale)) : 100;
+}
+
+export function getMermaidPrintDimensions(svg, displayScale, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
+  const viewBox = parseSvgViewBox(svg.getAttribute("viewBox"));
+  const sourceWidth = viewBox?.width || getSvgLength(svg.getAttribute("width")) || getSvgLength(svg.style.width) || 800;
+  const sourceHeight = viewBox?.height || getSvgLength(svg.getAttribute("height")) || getSvgLength(svg.style.height) || 600;
+  const requestedScale = normalizeMermaidPrintScale(displayScale) / 100;
+  const requestedWidth = sourceWidth * requestedScale;
+  const requestedHeight = sourceHeight * requestedScale;
+  const pageScale = Math.min(1, maxWidth / requestedWidth, maxHeight / requestedHeight);
+
+  return {
+    sourceWidth,
+    sourceHeight,
+    targetWidth: Math.round(requestedWidth * pageScale),
+    targetHeight: Math.round(requestedHeight * pageScale),
+  };
+}
+
+function normalizeMermaidPrintScale(scale) {
+  const value = Number.parseInt(scale, 10);
+  return Number.isFinite(value) ? Math.min(250, Math.max(10, value)) : 100;
+}
+
 export function markPrintableImagesForPagination(root) {
   root.querySelectorAll("img").forEach((image) => {
     const height = getPrintableImageHeight(image);
@@ -458,14 +499,10 @@ function getSvgLength(value) {
   return Number.isFinite(length) && length > 0 ? length : 0;
 }
 
-function fallbackToSvg(svg, content, svgWidth, svgHeight, maxWidth, maxHeight = Number.POSITIVE_INFINITY) {
+function fallbackToSvg(svg, content, svgWidth, svgHeight, targetWidth, targetHeight) {
   if (!svg.getAttribute("viewBox")) {
     svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
   }
-
-  const scale = Math.min(1, maxWidth / svgWidth, maxHeight / svgHeight);
-  const targetWidth = Math.round(svgWidth * scale);
-  const targetHeight = Math.round(svgHeight * scale);
 
   svg.setAttribute("width", targetWidth.toString());
   svg.setAttribute("height", targetHeight.toString());

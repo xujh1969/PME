@@ -17,6 +17,8 @@ const settingsModalSource = readFileSync(new URL("../src/ui/settings-modal.mjs",
 const paragraphActionsSource = readFileSync(new URL("../src/editor/paragraph-actions.mjs", import.meta.url), "utf8");
 const editorCommandRunnerSource = readFileSync(new URL("../src/editor/editor-command-runner.mjs", import.meta.url), "utf8");
 const workspaceSessionSource = readFileSync(new URL("../src/core/workspace-session.mjs", import.meta.url), "utf8");
+const textCursorSource = readFileSync(new URL("../src/cursors/text.svg", import.meta.url), "utf8");
+const handCursorSource = readFileSync(new URL("../src/cursors/hand.svg", import.meta.url), "utf8");
 
 test("defines the Notion-inspired design tokens used by PME", () => {
   assert.equal(styles.includes("--color-primary: #292524;"), true);
@@ -110,6 +112,25 @@ test("keeps app icon sizing from leaking into rendered Mermaid SVGs", () => {
   assert.equal(styles.includes(".ProseMirror .mermaid-diagram__content > svg"), true);
 });
 
+test("keeps same-level outline titles aligned regardless of child toggles", () => {
+  const toggleRule = styles.match(/\.outline-item-toggle\s*\{[^}]+\}/)?.[0] || "";
+
+  assert.equal(appSource.includes("outline-item-toggle--placeholder"), true);
+  assert.equal(toggleRule.includes("flex: 0 0 16px;"), true);
+  assert.equal(toggleRule.includes("min-height: 16px;"), true);
+});
+
+test("indents outline arrows together with deeper heading titles", () => {
+  assert.equal(appSource.includes("outline-item-row--level-${level}"), true);
+  assert.equal(styles.includes(".outline-item-row--level-2 {\n  padding-left: 16px;"), true);
+  assert.equal(styles.includes(".outline-item-row--level-3 {\n  padding-left: 32px;"), true);
+  assert.equal(styles.includes(".outline-item-row--level-4 {\n  padding-left: 48px;"), true);
+  assert.equal(styles.includes(".outline-item-row--level-5 {\n  padding-left: 64px;"), true);
+  assert.equal(styles.includes(".outline-item-row--level-6 {\n  padding-left: 80px;"), true);
+  assert.equal(styles.includes(".tree .outline-group {\n  display: block;\n  margin: 0;\n  padding: 0;"), true);
+  assert.equal(styles.includes(".outline-item--level-3 {\n  padding-left:"), false);
+});
+
 test("keeps Mermaid and mind map blocks extended beyond editor content column", () => {
   for (const selector of [".ProseMirror .mermaid-diagram", ".ProseMirror .mindmap-diagram"]) {
     const escapedSelector = selector.replaceAll(".", "\\.");
@@ -125,6 +146,12 @@ test("uses compact form controls inside editor dialogs", () => {
   const compactRule = styles.match(/\.image-modal__url-row input,[\s\S]+?\.code-language-modal__body select\s*\{[^}]+\}/)?.[0] || "";
 
   assert.equal(compactRule.includes("min-height: 44px;"), true);
+});
+
+test("preserves custom Mermaid zoom values in the editor scale selector", () => {
+  assert.equal(modalSource.includes("buildTextEditorScaleOptions(scale)"), true);
+  assert.equal(modalSource.includes("if (!values.includes(normalized))"), true);
+  assert.equal(modalSource.includes("Math.min(250, Math.max(10, value))"), true);
 });
 
 test("keeps the image scale dialog input at a usable size", () => {
@@ -252,6 +279,34 @@ test("applies selected editor fonts with English first and code isolated", () =>
   assert.equal(settingsModalSource.includes("buildEditorFontStack"), true);
 });
 
+test("keeps H4 through H6 editor headings at least as large as body text", () => {
+  const headingRules = [...styles.matchAll(/\.ProseMirror h[4-6]\s*\{[^}]+\}/g)]
+    .map((match) => match[0]);
+
+  assert.equal(headingRules.some((rule) => rule.includes(".ProseMirror h4") && rule.includes("font-size: 1.25rem;")), true);
+  assert.equal(headingRules.some((rule) => rule.includes(".ProseMirror h5") && rule.includes("font-size: 1.125rem;")), true);
+  assert.equal(headingRules.some((rule) => rule.includes(".ProseMirror h6") && rule.includes("font-size: 1rem;")), true);
+});
+
+test("uses one default weight and color for all editor heading levels", () => {
+  const headingRule = styles.match(/\.ProseMirror h1,[\s\S]+?\.ProseMirror h6\s*\{[^}]+\}/)?.[0] || "";
+  const individualHeadingRules = [...styles.matchAll(/([^{}]+)\{([^}]+)\}/g)]
+    .filter((match) => /^\.ProseMirror h[1-6]$/.test(match[1].trim()))
+    .map((match) => match[2]);
+
+  assert.equal(headingRule.includes("font-weight: 500;"), true);
+  assert.equal(headingRule.includes("color: var(--color-ink);"), true);
+  assert.equal(individualHeadingRules.some((rule) => rule.includes("font-weight:")), false);
+});
+
+test("matches native cursor contrast to the active app theme", () => {
+  const rootRule = styles.match(/:root\s*\{[^}]+\}/)?.[0] || "";
+  const darkRule = styles.match(/\[data-theme="dark"\]\s*\{[^}]+\}/)?.[0] || "";
+
+  assert.equal(rootRule.includes("color-scheme: light;"), true);
+  assert.equal(darkRule.includes("color-scheme: dark;"), true);
+});
+
 test("uses synchronous clipboardData for editor copy events", () => {
   const copyHandler = appSource.match(/async function handleCopy\(event\)[\s\S]+?async function handleEditorClick/)?.[0] || "";
   const selectionSerializer = appSource.match(/function serializeEditorSelection\(selection, state\)[\s\S]+?async function handleEditorClick/)?.[0] || "";
@@ -294,7 +349,7 @@ test("exposes SVG insertion and editing controls", () => {
   assert.equal(appSource.includes('menuItem("svg", "SVG")'), true);
   assert.equal(appSource.includes("handleSvgDoubleClick"), true);
   assert.equal(appSource.includes("openSvgAiModal"), true);
-  assert.equal(appSource.includes("return openSvgAiModal({ onChunk });"), true);
+  assert.equal(appSource.includes("return openSvgAiModal({ onChunk, onStart });"), true);
   assert.equal(appSource.includes("scale: node.attrs.scale || 100"), true);
   assert.equal(styles.includes("var(--svg-scale-width, 100%)"), true);
   assert.equal(styles.includes(".svg-diagram"), true);
@@ -305,12 +360,36 @@ test("keeps editor caret and Mermaid cursor visible on light backgrounds", () =>
   const sourceEditorRule = styles.match(/\.source-editor\s*\{[^}]+\}/)?.[0] || "";
   const mermaidViewportRule = styles.match(/\.ProseMirror \.mermaid-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
   const mermaidSvgRule = styles.match(/\.ProseMirror \.mermaid-diagram svg\s*\{[^}]+\}/)?.[0] || "";
+  const mathRule = styles.match(/\.ProseMirror \.tiptap-mathematics-render\s*\{[^}]+\}/)?.[0] || "";
+  const dragHandleRule = styles.match(/\.drag-handle\s*\{[^}]+\}/)?.[0] || "";
+  const dragHandleActiveRule = styles.match(/\.drag-handle:active\s*\{[^}]+\}/)?.[0] || "";
+  const mermaidPanningRule = styles.match(/\.ProseMirror \.mermaid-diagram__viewport\.is-panning\s*\{[^}]+\}/)?.[0] || "";
+  const mindMapDragRule = styles.match(/\.ProseMirror \.mindmap-diagram\.is-drag-mode \.mindmap-diagram__viewport\s*\{[^}]+\}/)?.[0] || "";
+  const mindMapDraggingRule = styles.match(/\.ProseMirror \.mindmap-diagram\.is-drag-mode \.mindmap-diagram__viewport:active\s*\{[^}]+\}/)?.[0] || "";
 
   assert.equal(proseMirrorRule.includes("caret-color: var(--color-ink);"), true);
-  assert.equal(proseMirrorRule.includes("cursor: text;"), true);
+  assert.equal(styles.includes('--cursor-text: url("../cursors/text.svg") 12 12, text;'), true);
+  assert.equal(styles.includes('--cursor-grab: url("../cursors/hand.svg") 12 10, grab;'), true);
+  assert.equal(styles.includes('--cursor-grabbing: url("../cursors/hand.svg") 12 10, grabbing;'), true);
+  assert.equal(proseMirrorRule.includes("cursor: var(--cursor-text);"), true);
   assert.equal(sourceEditorRule.includes("caret-color: var(--color-ink);"), true);
+  assert.equal(sourceEditorRule.includes("cursor: var(--cursor-text);"), true);
+  assert.equal(mathRule.includes("cursor: var(--cursor-text);"), true);
+  assert.equal(dragHandleRule.includes("cursor: var(--cursor-grab);"), true);
+  assert.equal(dragHandleActiveRule.includes("cursor: var(--cursor-grabbing);"), true);
+  assert.equal(mermaidPanningRule.includes("cursor: var(--cursor-grabbing);"), true);
+  assert.equal(mindMapDragRule.includes("cursor: var(--cursor-grab);"), true);
+  assert.equal(mindMapDraggingRule.includes("cursor: var(--cursor-grabbing);"), true);
   assert.equal(mermaidViewportRule.includes("border: 1px solid var(--color-hairline-strong);"), true);
   assert.equal(mermaidViewportRule.includes("cursor: default;"), true);
   assert.equal(mermaidViewportRule.includes("cursor: grab;"), false);
   assert.equal(mermaidSvgRule.includes("cursor: default;"), true);
+});
+
+test("uses the requested hand silhouette and a slender text cursor", () => {
+  assert.equal(handCursorSource.includes("M870.4 204.8c-18.6368"), true);
+  assert.equal(handCursorSource.includes('fill="#272636"'), true);
+  assert.equal(textCursorSource.includes('stroke-width="3"'), true);
+  assert.equal(textCursorSource.includes('stroke-width="1.2"'), true);
+  assert.equal(textCursorSource.includes("M9 4h6M12 4v16M9 20h6"), true);
 });

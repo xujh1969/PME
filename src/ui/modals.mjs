@@ -142,7 +142,7 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true, 
           ${onAiGenerate ? `<button class="icon-button ai-magic-button" data-modal-action="ai" title="AI助手" aria-label="AI助手">${wand2Icon()}</button>` : ""}
           <button class="icon-button" data-modal-action="cancel" title="取消" aria-label="取消">&times;</button>
         </header>
-        ${hasScale ? `<label class="text-modal__field text-modal__field--inline"><span>显示比例</span><select data-text-editor-scale><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option><option value="100">100%</option><option value="125">125%</option><option value="150">150%</option></select></label>` : ""}
+        ${hasScale ? `<label class="text-modal__field text-modal__field--inline"><span>显示比例</span><select data-text-editor-scale>${buildTextEditorScaleOptions(scale)}</select></label>` : ""}
         <textarea class="${monospace ? "is-monospace" : ""}" rows="${rows}" spellcheck="false"></textarea>
         <footer class="text-modal__footer"><span>按 Ctrl+Enter 确定</span><button data-modal-action="cancel">取消</button><button class="primary" data-modal-action="apply">确定</button></footer>
       </div>`;
@@ -159,13 +159,21 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true, 
       if (action === "cancel") close(null);
       if (action === "apply") close(getTextEditorResult(textarea, scaleSelect));
       if (action === "ai" && onAiGenerate) {
-        textarea.value = "AI 正在生成中...";
+        const originalValue = textarea.value;
+        let generationStarted = false;
+        let hasReceivedAiChunk = false;
         Promise.resolve(onAiGenerate((chunk) => {
-          if (textarea.value === "AI 正在生成中...") {
+          if (!hasReceivedAiChunk) {
             textarea.value = chunk;
+            hasReceivedAiChunk = true;
           } else {
             textarea.value += chunk;
           }
+          textarea.focus();
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }, (message) => {
+          generationStarted = true;
+          textarea.value = message;
           textarea.focus();
           textarea.setSelectionRange(textarea.value.length, textarea.value.length);
         })).then((result) => {
@@ -173,9 +181,14 @@ export function openTextEditorModal({ title, value, rows = 8, monospace = true, 
             textarea.value = result;
             textarea.focus();
             textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+          } else if (result === null && generationStarted) {
+            textarea.value = originalValue;
           }
         }).catch((error) => {
           console.error("AI generation failed:", error);
+          if (generationStarted) {
+            textarea.value = originalValue;
+          }
         });
       }
     });
@@ -197,7 +210,17 @@ function getTextEditorResult(textarea, scaleSelect) {
 
 function normalizeModalScale(scale) {
   const value = Number.parseInt(scale, 10);
-  return [25, 50, 75, 100, 125, 150].includes(value) ? value : 100;
+  return Number.isFinite(value) ? Math.min(250, Math.max(10, value)) : 100;
+}
+
+function buildTextEditorScaleOptions(scale) {
+  const normalized = normalizeModalScale(scale);
+  const values = [25, 50, 75, 100, 125, 150];
+  if (!values.includes(normalized)) {
+    values.push(normalized);
+    values.sort((left, right) => left - right);
+  }
+  return values.map((value) => `<option value="${value}">${value}%</option>`).join("");
 }
 
 const DIAGRAM_ICONS = {
@@ -254,7 +277,7 @@ function createDiagramGrid() {
   }).join("");
 }
 
-export function openMermaidAiModal({ onChunk }) {
+export function openMermaidAiModal({ onChunk, onStart }) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "text-modal";
@@ -310,6 +333,7 @@ export function openMermaidAiModal({ onChunk }) {
       }
 
       applyButton.disabled = true;
+      onStart?.("AI 正在生成 Mermaid 代码...");
       close();
 
       try {
@@ -344,17 +368,27 @@ export function openMermaidAiModal({ onChunk }) {
 3. 使用清晰的节点命名和连线
 4. 添加适当的注释说明关键步骤
 5. 确保代码可以直接复制粘贴到Mermaid编辑器中运行
+6. 主动使用少量有语义的颜色区分阶段、角色、状态、分类或重点；对于支持节点样式的图表，优先使用classDef/class或style复用配色，其他图表只使用对应语法支持的合法配色方式
+7. 避免只使用灰白色，也不要给每个节点随机配色；保持整体配色协调，并保证文字与背景有足够对比度
 
 示例格式：
 ${diagramInfo.syntax}
   %% 注释说明
   节点定义和连线`;
 
-        await generateText(prompt, (chunk) => {
+        let streamedText = "";
+        const text = await generateText(prompt, (chunk) => {
+          streamedText += chunk;
           onChunk?.(chunk);
+        }, {
+          systemPrompt: "You are a Mermaid code generator. Return only valid raw Mermaid source. Never include Markdown fences, explanations, or text before or after the diagram source.",
+          maxTokens: 40960,
+          temperature: 0,
+          timeoutSeconds: 180,
         });
-
-        resolve(true);
+        const finalText = text || streamedText;
+        const mermaid = extractMermaidFromAiText(finalText);
+        resolve(mermaid || finalText);
       } catch (error) {
         console.error("AI生成失败:", error);
         resolve(null);
@@ -367,7 +401,7 @@ ${diagramInfo.syntax}
   });
 }
 
-export function openSvgAiModal({ onChunk }) {
+export function openSvgAiModal({ onChunk, onStart }) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "text-modal";
@@ -400,6 +434,7 @@ export function openSvgAiModal({ onChunk }) {
       const description = input.value.trim();
       if (!description) return;
       applyButton.disabled = true;
+      onStart?.("AI 正在生成 SVG 代码...");
       close();
 
       try {
@@ -437,6 +472,18 @@ export function openSvgAiModal({ onChunk }) {
     document.body.appendChild(overlay);
     input.focus();
   });
+}
+
+export function extractMermaidFromAiText(text) {
+  const value = String(text || "").trim();
+  const fenced = value.match(/```(?:mermaid)?\s*([\s\S]*?)```/i)?.[1];
+  if (fenced !== undefined) {
+    return fenced.trim();
+  }
+  return value
+    .replace(/^```(?:mermaid)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
 }
 
 function extractSvgFromAiText(text) {

@@ -44,7 +44,7 @@ export function openVideoInsertModal() {
             <div class="image-modal__meta" data-video-meta>选择本地文件或网络地址后，可在这里确认效果。</div>
             <label class="image-modal__size-row">
               <span>尺寸比例</span><span class="image-modal__scale-control"><input data-video-scale type="number" min="10" max="300" step="5" placeholder="自动" /><span>%</span></span>
-              <small>留空为自动大小，输入 50 表示原图 50%。</small>
+              <small>留空为自动大小，输入 50 表示正文宽度的 50%。</small>
             </label>
           </aside>
         </section>

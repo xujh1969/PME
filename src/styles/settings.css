@@ -667,7 +667,7 @@
 }
 
 .drag-handle {
-  cursor: grab;
+  cursor: var(--cursor-grab);
   padding: 4px;
   user-select: none;
   display: flex;
@@ -685,7 +685,7 @@
 }
 
 .drag-handle:active {
-  cursor: grabbing;
+  cursor: var(--cursor-grabbing);
 }
 
 .block-drop-indicator {

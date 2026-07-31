@@ -175,7 +175,7 @@ async function renderBlock(node, context) {
 
   if (node.type === "mermaidDiagram") {
     const image = await renderDiagramImage(
-      () => context.renderMermaidDiagram?.(node.attrs?.code || ""),
+      () => context.renderMermaidDiagram?.(node.attrs?.code || "", { scale: node.attrs?.scale }),
       createTextSvgImage("Mermaid render failed"),
     );
     return [image];

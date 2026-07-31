@@ -19,6 +19,31 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
+    const mermaidScaleComment = line.match(/^\s*<!--\s*pme-mermaid-scale:\s*(\d+)\s*-->\s*$/i);
+    if (mermaidScaleComment) {
+      let fenceIndex = index + 1;
+      while (fenceIndex < lines.length && lines[fenceIndex].trim() === "") {
+        fenceIndex += 1;
+      }
+      if (/^```mermaid\s*$/i.test(lines[fenceIndex] || "")) {
+        const codeLines = [];
+        index = fenceIndex + 1;
+        while (index < lines.length && lines[index] !== "```") {
+          codeLines.push(lines[index]);
+          index += 1;
+        }
+        content.push({
+          type: "mermaidDiagram",
+          attrs: {
+            code: codeLines.join("\n"),
+            scale: normalizeMermaidScale(mermaidScaleComment[1]),
+          },
+        });
+        index += 1;
+        continue;
+      }
+    }
+
     if (isTableOfContentsBlock(line)) {
       content.push({ type: "tableOfContents" });
       index += 1;
@@ -354,11 +379,13 @@ function serializeNode(node, options) {
   }
 
   if (node.type === "mermaidDiagram") {
-    return [
+    const diagram = [
       "```mermaid",
       node.attrs?.code || "",
       "```",
     ].join("\n");
+    const scale = normalizeMermaidScale(node.attrs?.scale);
+    return scale === null ? diagram : `<!-- pme-mermaid-scale: ${scale} -->\n${diagram}`;
   }
 
   if (node.type === "mindMap") {
@@ -417,6 +444,8 @@ function serializeNode(node, options) {
       `src="${escapeHtmlAttribute(src)}"`,
       node.attrs.assetSrc ? `data-asset-src="${escapeHtmlAttribute(node.attrs.assetSrc)}"` : "",
       node.attrs.width ? `width="${node.attrs.width}"` : "",
+      node.attrs.scale ? `data-pme-scale="${node.attrs.scale}"` : "",
+      node.attrs.originalWidth ? `data-pme-original-width="${node.attrs.originalWidth}"` : "",
       "controls",
     ].filter(Boolean);
     return `<video ${attrs.join(" ")} />`;
@@ -486,6 +515,11 @@ function collectSvgDiagramBlock(lines, startIndex) {
 function normalizeSvgScale(scale) {
   const value = Number.parseInt(scale, 10);
   return [25, 50, 75, 100, 125, 150].includes(value) ? value : 100;
+}
+
+function normalizeMermaidScale(scale) {
+  const value = Number.parseInt(scale, 10);
+  return Number.isFinite(value) ? Math.min(250, Math.max(10, value)) : null;
 }
 
 function getLastSerializableNode(nodes) {
@@ -712,11 +746,15 @@ function parseHtmlVideo(line) {
   }
 
   const width = normalizeImageSize(attrs.width);
+  const scale = normalizeImageSize(attrs["data-pme-scale"]);
+  const originalWidth = normalizeImageSize(attrs["data-pme-original-width"]);
   return {
     src: attrs.src,
     assetSrc: attrs["data-asset-src"] || null,
-    controls: attrs.controls !== undefined,
+    controls: /\bcontrols(?:\s|\/?>|$)/i.test(match[1]),
     ...(width ? { width } : {}),
+    ...(scale ? { scale } : {}),
+    ...(originalWidth ? { originalWidth } : {}),
   };
 }
 

@@ -119,6 +119,30 @@ test("passes SVG display scale to the Word renderer", async () => {
   assert.deepEqual(calls[0].options, { scale: 75 });
 });
 
+test("passes Mermaid display scale to the Word renderer", async () => {
+  const calls = [];
+  const doc = {
+    type: "doc",
+    content: [{ type: "mermaidDiagram", attrs: { code: "graph TD\nA-->B", scale: 130 } }],
+  };
+
+  await buildWordDocumentBlob({
+    doc,
+    title: "",
+    renderMermaidDiagram: async (code, options) => {
+      calls.push({ code, options });
+      return {
+        data: new Uint8Array([137, 80, 78, 71]),
+        width: 320,
+        height: 180,
+        type: "png",
+      };
+    },
+  });
+
+  assert.deepEqual(calls[0].options, { scale: 130 });
+});
+
 test("does not export Mermaid source text when rendering fails", async () => {
   const code = "flowchart TD\nA-->B";
   const doc = {
@@ -215,22 +239,28 @@ test("exports videos as visible links instead of dropping them", async () => {
 });
 
 test("exports video poster images with a link when a poster renderer is provided", async () => {
+  const calls = [];
   const doc = {
     type: "doc",
-    content: [{ type: "video", attrs: { src: "movie.mp4", assetSrc: "assets/movie.mp4" } }],
+    content: [{ type: "video", attrs: { src: "movie.mp4", assetSrc: "assets/movie.mp4", scale: 50 } }],
   };
 
   const blob = await buildWordDocumentBlob({
     doc,
-    renderVideo: async () => ({
-      data: new Uint8Array([137, 80, 78, 71]),
-      width: 320,
-      height: 180,
-      type: "png",
-    }),
+    renderVideo: async (source, node) => {
+      calls.push({ source, node });
+      return {
+        data: new Uint8Array([137, 80, 78, 71]),
+        width: 260,
+        height: 146,
+        type: "png",
+      };
+    },
   });
   const xml = await getDocumentXml(blob);
 
+  assert.equal(calls[0].source, "assets/movie.mp4");
+  assert.equal(calls[0].node.attrs.scale, 50);
   assert.equal(xml.includes("<w:drawing>"), true);
   assert.equal(xml.includes("movie.mp4"), true);
 });

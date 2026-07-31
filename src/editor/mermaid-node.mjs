@@ -59,13 +59,9 @@ function initMermaidTheme() {
 
 function wrapMermaidCodeWithTheme(code) {
   const variables = getMermaidThemeVariables();
-  const safeVariables = { ...variables };
-  if (safeVariables.fontFamily) {
-    safeVariables.fontFamily = safeVariables.fontFamily.replace(/', '/g, ', ');
-  }
   const initConfig = {
     theme: "base",
-    themeVariables: safeVariables,
+    themeVariables: variables,
   };
   return `%%{init: ${JSON.stringify(initConfig)}}%%\n${normalizeMermaidStyleDirectives(code)}`;
 }
@@ -113,6 +109,15 @@ export async function updateMermaidTheme() {
       if (diagram && diagram.dataset.code) {
         element.textContent = "";
         await renderMermaidDiagram(element, diagram.dataset.code);
+        const scale = normalizeMermaidScale(diagram.dataset.pmeScale);
+        if (scale !== null) {
+          const viewport = diagram.querySelector(".mermaid-diagram__viewport");
+          applyMermaidZoom(element, scale / 100);
+          if (viewport) {
+            const fitZoom = getMermaidFitZoom(viewport, element);
+            fitMermaidViewportHeight(viewport, element, Math.min(scale / 100, fitZoom), scale / 100);
+          }
+        }
       }
     }
   } catch (error) {
@@ -132,6 +137,14 @@ export const MermaidDiagram = Node.create({
         parseHTML: (element) => element.getAttribute("data-code") || "",
         renderHTML: (attributes) => ({ "data-code": attributes.code }),
       },
+      scale: {
+        default: null,
+        parseHTML: (element) => normalizeMermaidScale(element.getAttribute("data-pme-scale")),
+        renderHTML: (attributes) => {
+          const scale = normalizeMermaidScale(attributes.scale);
+          return scale === null ? {} : { "data-pme-scale": scale };
+        },
+      },
     };
   },
 
@@ -145,11 +158,17 @@ export const MermaidDiagram = Node.create({
 
   addCommands() {
     return {
-      insertMermaidDiagram: (options) => ({ commands }) => (
-        commands.insertContent({ type: this.name, attrs: { code: options.code } })
+      insertMermaidDiagram: (options = {}) => ({ commands }) => (
+        commands.insertContent({
+          type: this.name,
+          attrs: { code: options.code, scale: normalizeMermaidScale(options.scale) },
+        })
       ),
       updateMermaidDiagram: (options) => ({ tr }) => {
-        tr.setNodeMarkup(options.pos, this.type, { code: options.code });
+        tr.setNodeMarkup(options.pos, this.type, {
+          code: options.code,
+          scale: normalizeMermaidScale(options.scale),
+        });
         return true;
       },
       deleteMermaidDiagram: (options) => ({ tr, editor: currentEditor }) => {
@@ -164,7 +183,7 @@ export const MermaidDiagram = Node.create({
   },
 
   addNodeView() {
-    return ({ node }) => {
+    return ({ node, getPos, editor }) => {
       const wrapper = document.createElement("div");
       const controls = document.createElement("div");
       const viewport = document.createElement("div");
@@ -172,7 +191,8 @@ export const MermaidDiagram = Node.create({
       const zoomOut = createMermaidZoomButton("-", "Zoom out");
       const zoomLevel = createMermaidZoomButton("100%", "Fit to frame");
       const zoomIn = createMermaidZoomButton("+", "Zoom in");
-      let zoom = 1;
+      let currentNode = node;
+      let zoom = (normalizeMermaidScale(node.attrs.scale) || 100) / 100;
 
       wrapper.className = "mermaid-diagram";
       wrapper.dataset.type = "mermaid-diagram";
@@ -185,9 +205,23 @@ export const MermaidDiagram = Node.create({
       viewport.appendChild(diagram);
       wrapper.appendChild(viewport);
 
-      const setZoom = (nextZoom, resetScroll = false) => {
-        zoom = Math.min(2.5, Math.max(0.1, nextZoom));
-        zoomLevel.textContent = `${Math.round(zoom * 100)}%`;
+      const persistZoom = () => {
+        const pos = getPos();
+        const scale = Math.round(zoom * 100);
+        if (!Number.isInteger(pos) || currentNode.attrs.scale === scale) {
+          return;
+        }
+        editor.view.dispatch(editor.state.tr.setNodeMarkup(pos, undefined, {
+          ...currentNode.attrs,
+          scale,
+        }));
+      };
+
+      const setZoom = (nextZoom, resetScroll = false, persist = false) => {
+        zoom = Math.round(Math.min(2.5, Math.max(0.1, nextZoom)) * 100) / 100;
+        const scale = Math.round(zoom * 100);
+        zoomLevel.textContent = `${scale}%`;
+        wrapper.dataset.pmeScale = String(scale);
         applyMermaidZoom(diagram, zoom);
         const fitZoom = getMermaidFitZoom(viewport, diagram);
         fitMermaidViewportHeight(viewport, diagram, Math.min(zoom, fitZoom), zoom);
@@ -195,20 +229,32 @@ export const MermaidDiagram = Node.create({
           viewport.scrollLeft = 0;
           viewport.scrollTop = 0;
         }
+        if (persist) {
+          persistZoom();
+        }
       };
 
-      const fitToFrame = () => {
+      const fitToFrame = (persist = false) => {
         requestAnimationFrame(() => {
-          setZoom(getMermaidFitZoom(viewport, diagram), true);
+          setZoom(getMermaidFitZoom(viewport, diagram), true, persist);
         });
       };
 
-      zoomOut.addEventListener("click", () => setZoom(zoom - 0.1));
-      zoomLevel.addEventListener("click", fitToFrame);
-      zoomIn.addEventListener("click", () => setZoom(zoom + 0.1));
+      const applyStoredZoom = () => {
+        const scale = normalizeMermaidScale(currentNode.attrs.scale);
+        if (scale === null) {
+          fitToFrame();
+          return;
+        }
+        requestAnimationFrame(() => setZoom(scale / 100, true));
+      };
+
+      zoomOut.addEventListener("click", () => setZoom(zoom - 0.1, false, true));
+      zoomLevel.addEventListener("click", () => fitToFrame(true));
+      zoomIn.addEventListener("click", () => setZoom(zoom + 0.1, false, true));
 
       bindMermaidPan(viewport, wrapper);
-      renderMermaidDiagram(diagram, node.attrs.code).then(fitToFrame);
+      renderMermaidDiagram(diagram, node.attrs.code).then(applyStoredZoom);
       return {
         dom: wrapper,
         stopEvent: (event) => Boolean(event.target.closest?.(".mermaid-diagram__controls")),
@@ -216,14 +262,26 @@ export const MermaidDiagram = Node.create({
           if (updatedNode.type.name !== this.name) {
             return false;
           }
+          const codeChanged = updatedNode.attrs.code !== currentNode.attrs.code;
+          const scaleChanged = updatedNode.attrs.scale !== currentNode.attrs.scale;
+          currentNode = updatedNode;
           wrapper.dataset.code = updatedNode.attrs.code;
-          renderMermaidDiagram(diagram, updatedNode.attrs.code).then(fitToFrame);
+          if (codeChanged) {
+            renderMermaidDiagram(diagram, updatedNode.attrs.code).then(applyStoredZoom);
+          } else if (scaleChanged) {
+            setZoom((normalizeMermaidScale(updatedNode.attrs.scale) || 100) / 100);
+          }
           return true;
         },
       };
     };
   },
 });
+
+function normalizeMermaidScale(scale) {
+  const value = Number.parseInt(scale, 10);
+  return Number.isFinite(value) ? Math.min(250, Math.max(10, value)) : null;
+}
 
 async function renderMermaidDiagram(element, code) {
   const id = `pme-mermaid-${mermaidRenderId}`;
@@ -290,14 +348,23 @@ function applyMermaidSvgThemeFallback(svg) {
     setMermaidSvgPaint(element, "stroke", variables.primaryBorderColor);
   });
 
-  svg.querySelectorAll(".flowchart-link, .messageLine0, .messageLine1, .relation, .edgePath path, .edgeLabel path").forEach((element) => {
+  svg.querySelectorAll(".flowchart-link, .relation, .edgePath path, .edgeLabel path").forEach((element) => {
     setMermaidSvgPaint(element, "fill", "none");
     setMermaidSvgPaint(element, "stroke", variables.lineColor);
+  });
+
+  svg.querySelectorAll(".messageLine0, .messageLine1").forEach((element) => {
+    setMermaidSvgPaint(element, "fill", "none");
+    setMermaidSequenceLineStroke(element, variables.lineColor);
   });
 
   svg.querySelectorAll("marker path").forEach((element) => {
     setMermaidSvgPaint(element, "fill", variables.lineColor);
     setMermaidSvgPaint(element, "stroke", variables.lineColor);
+  });
+
+  svg.querySelectorAll('marker[id$="-sequencenumber"] circle').forEach((element) => {
+    setMermaidSvgPaint(element, "fill", variables.lineColor);
   });
 
   svg.querySelectorAll("text, tspan").forEach((element) => {
@@ -316,6 +383,10 @@ function applyMermaidSvgThemeFallback(svg) {
     setMermaidSvgPaint(element, "fill", variables.primaryColor);
     setMermaidSvgPaint(element, "stroke", variables.primaryBorderColor);
   });
+
+  materializeMermaidTextStyles(svg);
+  centerMermaidActorLabels(svg);
+  materializeMermaidSequenceNumbers(svg, variables);
 }
 
 function setMermaidSvgPaint(element, property, value) {
@@ -324,6 +395,96 @@ function setMermaidSvgPaint(element, property, value) {
   }
   element.setAttribute(property, value);
   element.style.setProperty(property, value);
+}
+
+function setMermaidSequenceLineStroke(element, value) {
+  if (element.style.getPropertyValue("stroke")) {
+    return;
+  }
+  const attributeStroke = (element.getAttribute("stroke") || "").trim().toLowerCase();
+  if (attributeStroke === "none" || attributeStroke === "transparent") {
+    element.removeAttribute("stroke");
+  }
+  setMermaidSvgPaint(element, "stroke", value);
+}
+
+function materializeMermaidTextStyles(svg) {
+  const fontFamily = getMermaidThemeVariables().fontFamily;
+  svg.querySelectorAll("text").forEach((element) => {
+    for (const property of ["text-anchor", "font-family", "font-size", "font-weight"]) {
+      const value = element.style.getPropertyValue(property).trim()
+        || (property === "font-family" ? fontFamily : "");
+      if (value && !element.hasAttribute(property)) {
+        element.setAttribute(property, value);
+      }
+    }
+    const textAnchor = element.getAttribute("text-anchor");
+    if (textAnchor) {
+      element.querySelectorAll("tspan").forEach((tspan) => {
+        tspan.setAttribute("text-anchor", textAnchor);
+        tspan.style.setProperty("text-anchor", textAnchor);
+      });
+    }
+  });
+}
+
+function centerMermaidActorLabels(svg) {
+  svg.querySelectorAll("text.actor").forEach((text) => {
+    const rect = text.parentElement?.querySelector("rect.actor");
+    const rectX = Number.parseFloat(rect?.getAttribute("x") || "");
+    const rectWidth = Number.parseFloat(rect?.getAttribute("width") || "");
+    if (!Number.isFinite(rectX) || !Number.isFinite(rectWidth)) {
+      return;
+    }
+    const rectCenter = rectX + rectWidth / 2;
+    const lines = text.querySelectorAll("tspan");
+    const targets = lines.length ? Array.from(lines) : [text];
+    for (const target of targets) {
+      let textWidth = 0;
+      try {
+        textWidth = target.getComputedTextLength();
+      } catch {
+        textWidth = target.getBBox?.().width || 0;
+      }
+      if (!Number.isFinite(textWidth) || textWidth <= 0) {
+        continue;
+      }
+      target.setAttribute("x", String(rectCenter - textWidth / 2));
+      target.setAttribute("text-anchor", "start");
+      target.style.setProperty("text-anchor", "start");
+    }
+    text.setAttribute("text-anchor", "start");
+    text.style.setProperty("text-anchor", "start");
+  });
+}
+
+function materializeMermaidSequenceNumbers(svg, variables) {
+  svg.querySelectorAll('line[marker-start*="-sequencenumber"]').forEach((line) => {
+    line.removeAttribute("marker-start");
+  });
+
+  svg.querySelectorAll("text.sequenceNumber").forEach((text) => {
+    if (text.previousElementSibling?.classList.contains("pme-mermaid-sequence-number")) {
+      return;
+    }
+    const x = Number.parseFloat(text.getAttribute("x") || "");
+    const y = Number.parseFloat(text.getAttribute("y") || "");
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      return;
+    }
+    const circle = svg.ownerDocument.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.classList.add("pme-mermaid-sequence-number");
+    circle.setAttribute("cx", String(x));
+    circle.setAttribute("cy", String(y - 4));
+    circle.setAttribute("r", "6");
+    applySvgStyles(circle, {
+      fill: variables.secondaryColor,
+      stroke: variables.lineColor,
+      "stroke-width": "1",
+    });
+    text.parentNode?.insertBefore(circle, text);
+    applySvgStyles(text, { fill: variables.textColor });
+  });
 }
 
 function applyMermaidDirectiveStyles(svg, code) {

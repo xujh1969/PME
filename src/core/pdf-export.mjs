@@ -90,7 +90,7 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       border-bottom: 1px solid var(--color-hairline-strong);
     }
     
-    h1, h2, h3 {
+    h1, h2, h3, h4, h5, h6 {
       line-height: 1.2;
       color: var(--color-ink);
       font-weight: 500;
@@ -101,30 +101,22 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
     
     h1 {
       font-size: 2.5rem;
-      font-weight: 300;
       letter-spacing: -0.96px;
     }
     
     h2 {
       font-size: 1.875rem;
-      font-weight: 300;
       letter-spacing: -0.36px;
     }
     
     h3 {
       font-size: 1.5rem;
-      font-weight: 300;
       letter-spacing: -0.24px;
     }
-    
-    h4, h5, h6 {
-      line-height: 1.28;
-      color: var(--color-ink);
-      font-weight: 500;
-      font-family: var(--font-display);
-      letter-spacing: -0.32px;
-      break-after: avoid;
-    }
+
+    h4 { font-size: 1.25rem; }
+    h5 { font-size: 1.125rem; }
+    h6 { font-size: 1rem; }
     
     p {
       margin: 0.6em 0;
@@ -284,6 +276,19 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       border: 1px solid var(--color-hairline);
       border-radius: var(--radius-xl);
       break-inside: avoid;
+    }
+
+    .video-node {
+      max-width: 100%;
+      margin: 16px auto;
+    }
+
+    .video-node video,
+    .video-node img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
     }
 
     .pdf-avoid-split {

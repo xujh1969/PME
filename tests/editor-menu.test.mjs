@@ -58,6 +58,19 @@ test("shows a clear permission message when saving is denied", () => {
   assert.equal(appSource.includes("文件 > 另存为"), true);
 });
 
+test("keeps unsaved state when the Tauri save dialog is cancelled", () => {
+  const saveTextExportBlock = appSource.match(
+    /async function saveTextExport[\s\S]+?(?=\nasync function saveBlobExport)/,
+  )?.[0] || "";
+
+  assert.equal(saveTextExportBlock.includes('adapter.kind === "tauri"'), true);
+  assert.equal(saveTextExportBlock.includes("return null;"), true);
+  assert.equal(
+    saveTextExportBlock.indexOf("return null;") < saveTextExportBlock.indexOf("downloadBlob("),
+    true,
+  );
+});
+
 test("bundles the help manual through Vite instead of loading a loose runtime asset", () => {
   assert.equal(appSource.includes('import helpManualMarkdown from "./assets/PME使用说明书.md?raw";'), true);
   assert.equal(appSource.includes("const markdown = helpManualMarkdown.trim()"), true);

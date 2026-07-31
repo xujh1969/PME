@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
 const extensionsSource = readFileSync(new URL("../src/editor/editor-extensions.mjs", import.meta.url), "utf8");
 const customNodesSource = readFileSync(new URL("../src/editor/custom-nodes.mjs", import.meta.url), "utf8");
+const videoSource = readFileSync(new URL("../src/editor/video-extension.mjs", import.meta.url), "utf8");
 
 test("keeps third-party TipTap extension registration outside the app entry", () => {
   assert.equal(extensionsSource.includes("export function createEditorExtensions"), true);
@@ -25,4 +26,13 @@ test("keeps stateless image and table node extensions outside the app entry", ()
   assert.equal(customNodesSource.includes("export const AlignedTableHeader"), true);
   assert.equal(appSource.includes("ImageExtension.extend"), false);
   assert.equal(appSource.includes("TableCell.extend"), false);
+});
+
+test("video nodes expose selected-state scale controls and persist changes", () => {
+  assert.equal(videoSource.includes("addNodeView()"), true);
+  assert.equal(videoSource.includes("video-node__controls"), true);
+  assert.equal(videoSource.includes("persistScale"), true);
+  assert.equal(videoSource.includes("tr.setNodeMarkup"), true);
+  assert.equal(videoSource.includes("editor.commands.setNodeSelection(pos)"), true);
+  assert.equal(videoSource.includes("data-pme-scale"), true);
 });

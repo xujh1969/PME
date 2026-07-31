@@ -1017,8 +1017,8 @@ function renderOutline() {
 
       result += `
         <li>
-          <div class="outline-item-row">
-            ${hasChildren ? `<button class="outline-item-toggle" data-outline-group="${groupId}">▶</button>` : `<span style="width: 16px; flex-shrink: 0;"></span>`}
+          <div class="outline-item-row outline-item-row--level-${level}">
+            ${hasChildren ? `<button class="outline-item-toggle" type="button" data-outline-group="${groupId}">▶</button>` : `<button class="outline-item-toggle outline-item-toggle--placeholder" type="button" tabindex="-1" aria-hidden="true" disabled></button>`}
             <button class="outline-item outline-item--level-${level}" data-outline-index="${item.index}" title="${escapeHtml(item.text)}">
               ${escapeHtml(item.text)}
             </button>
@@ -3543,7 +3543,7 @@ function getSelectedImageElement() {
 }
 
 function getSelectedVideoElement() {
-  return document.querySelector("#tiptapEditor .ProseMirror video.ProseMirror-selectednode");
+  return document.querySelector("#tiptapEditor .ProseMirror .video-node.ProseMirror-selectednode video");
 }
 
 function handleMathClick(event) {
@@ -3769,9 +3769,7 @@ async function editMermaidNode(node, pos) {
     rows: 18,
     monospace: true,
     scale: node.attrs.scale || 100,
-    onAiGenerate: (onChunk) => {
-      openMermaidAiModal({ onChunk });
-    },
+    onAiGenerate: (onChunk, onStart) => openMermaidAiModal({ onChunk, onStart }),
   });
   if (result === null) {
     return;
@@ -3784,7 +3782,7 @@ async function editMermaidNode(node, pos) {
     return;
   }
 
-  editor.chain().focus().updateMermaidDiagram({ code, pos }).run();
+  editor.chain().focus().updateMermaidDiagram({ code, scale, pos }).run();
 }
 
 function handleSvgClick(event) {
@@ -3859,8 +3857,8 @@ async function editSvgNode(node, pos) {
     rows: 18,
     monospace: true,
     scale: node.attrs.scale || 100,
-    onAiGenerate: (onChunk) => {
-      return openSvgAiModal({ onChunk });
+    onAiGenerate: (onChunk, onStart) => {
+      return openSvgAiModal({ onChunk, onStart });
     },
   });
   if (result === null) {
@@ -4335,13 +4333,16 @@ async function renderSvgWordImage(code) {
   }));
 }
 
-async function renderMermaidWordImage(code) {
+async function renderMermaidWordImage(code, options = {}) {
   const rendered = findRenderedMermaidSvg(code) || await renderMermaidStaticSvg(code);
   const svg = normalizeMermaidSvgForWord(rendered.svg);
-  return svgToPngImage(svg, rendered.width, rendered.height).catch(() => ({
+  const scale = Math.min(250, Math.max(10, Number.parseInt(options.scale, 10) || 100)) / 100;
+  const width = Math.round(rendered.width * scale);
+  const height = Math.round(rendered.height * scale);
+  return svgToPngImage(svg, width, height).catch(() => ({
     data: new TextEncoder().encode(svg),
-    width: rendered.width,
-    height: rendered.height,
+    width,
+    height,
     type: "svg",
   }));
 }
@@ -4370,7 +4371,7 @@ function findRenderedMermaidSvg(code) {
   return null;
 }
 
-async function renderVideoWordPoster(source) {
+async function renderVideoWordPoster(source, node = {}) {
   const blob = await loadImageResource(source, {
     files: state.files,
     isTauri: isTauriRuntime(),
@@ -4382,10 +4383,9 @@ async function renderVideoWordPoster(source) {
     const video = await loadVideoElement(url);
     const sourceWidth = video.videoWidth || 640;
     const sourceHeight = video.videoHeight || 360;
-    const maxWidth = 520;
-    const scale = Math.min(1, maxWidth / sourceWidth);
-    const width = Math.round(sourceWidth * scale);
-    const height = Math.round(sourceHeight * scale);
+    const displayScale = Math.min(300, Math.max(10, Number.parseInt(node.attrs?.scale, 10) || 100));
+    const width = Math.round(Math.min(520, Math.min(sourceWidth, 520) * displayScale / 100));
+    const height = Math.round(width * sourceHeight / sourceWidth);
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
     if (!context) {
@@ -4689,6 +4689,9 @@ async function saveTextExport(defaultFileName, content) {
     const savedPath = await adapter.saveTextFileDialog(defaultFileName, content);
     if (savedPath) {
       return savedPath;
+    }
+    if (adapter.kind === "tauri") {
+      return null;
     }
   }
   downloadBlob(new Blob([content], { type: "text/markdown;charset=utf-8" }), defaultFileName);

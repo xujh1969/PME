@@ -191,9 +191,9 @@ function buildHtmlExportHtml({ title, documentHtml }) {
       margin: 1.5em 0 0.5em;
     }
 
-    h1 { font-size: 2.5rem; font-weight: 300; letter-spacing: -0.96px; }
-    h2 { font-size: 1.875rem; font-weight: 300; letter-spacing: -0.36px; }
-    h3 { font-size: 1.5rem; font-weight: 300; letter-spacing: -0.24px; }
+    h1 { font-size: 2.5rem; letter-spacing: -0.96px; }
+    h2 { font-size: 1.875rem; letter-spacing: -0.36px; }
+    h3 { font-size: 1.5rem; letter-spacing: -0.24px; }
     h4 { font-size: 1.25rem; }
     h5 { font-size: 1.125rem; }
     h6 { font-size: 1rem; }
@@ -284,6 +284,19 @@ function buildHtmlExportHtml({ title, documentHtml }) {
       max-width: 100%;
       height: auto;
       border-radius: var(--radius-sm);
+    }
+
+    .video-node {
+      max-width: 100%;
+      margin: 16px auto;
+    }
+
+    .video-node video,
+    .video-node img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
     }
 
     .mermaid-diagram {

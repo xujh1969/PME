@@ -51,3 +51,26 @@ test("uses configured font helpers in PDF export HTML", () => {
   assert.match(html, /--font-display:\s*"Inter"[\s\S]*Noto Sans SC/);
   assert.match(html, /--font-mono:\s*"JetBrains Mono"/);
 });
+
+test("keeps H4 through H6 PDF headings at least as large as body text", () => {
+  const html = buildPdfExportHtml({
+    title: "Doc",
+    documentHtml: "<h4>Four</h4><h5>Five</h5><h6>Six</h6>",
+    options: { includeTitle: false },
+  });
+
+  assert.match(html, /h4\s*\{\s*font-size:\s*1\.25rem;/);
+  assert.match(html, /h5\s*\{\s*font-size:\s*1\.125rem;/);
+  assert.match(html, /h6\s*\{\s*font-size:\s*1rem;/);
+});
+
+test("uses one default heading weight and color in PDF output", () => {
+  const html = buildPdfExportHtml({
+    title: "Doc",
+    documentHtml: "<h1>One</h1><h6>Six</h6>",
+    options: { includeTitle: false },
+  });
+
+  assert.match(html, /h1,\s*h2,\s*h3,\s*h4,\s*h5,\s*h6\s*\{[\s\S]*?color:\s*var\(--color-ink\);[\s\S]*?font-weight:\s*500;/);
+  assert.doesNotMatch(html, /h[1-6]\s*\{[^}]*font-weight:\s*300;/);
+});

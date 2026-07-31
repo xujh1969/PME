@@ -5,6 +5,7 @@
  * ============================================================ */
 
 :root {
+  color-scheme: light;
   color: var(--color-ink);
   background: var(--color-canvas);
   --color-primary: #292524;
@@ -78,12 +79,16 @@
   --font-family-code: "JetBrains Mono", "Fira Code", "Consolas", monospace;
   --font-family-editor-configured: "Inter", "SF Pro Display", "Segoe UI", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif;
   --font-family-display-configured: "Inter", "SF Pro Display", "Segoe UI", "Noto Sans SC", "Microsoft YaHei", "PingFang SC", "EB Garamond", "Times New Roman", serif;
+  --cursor-text: url("../cursors/text.svg") 12 12, text;
+  --cursor-grab: url("../cursors/hand.svg") 12 10, grab;
+  --cursor-grabbing: url("../cursors/hand.svg") 12 10, grabbing;
   font-family: var(--font-ui);
   font-size: 16px;
   letter-spacing: 0.16px;
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --color-primary: #e4e4e7;
   --color-primary-pressed: #a1a1aa;
   --color-primary-deep: #e4e4e7;

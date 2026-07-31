@@ -18,6 +18,21 @@ test("owns the Mermaid node and rendering interactions outside the app entry", (
   assert.equal(appSource.includes("function renderMermaidDiagram"), false);
 });
 
+test("stores Mermaid zoom in the node and writes control changes back", () => {
+  assert.equal(mermaidSource.includes("scale: {"), true);
+  assert.equal(mermaidSource.includes('"data-pme-scale"'), true);
+  assert.equal(mermaidSource.includes("persistZoom"), true);
+  assert.equal(mermaidSource.includes("wrapper.dataset.pmeScale"), true);
+  assert.equal(appSource.includes("updateMermaidDiagram({ code, scale, pos })"), true);
+});
+
+test("reapplies stored Mermaid zoom after theme rendering", () => {
+  const themeUpdate = mermaidSource.match(/export async function updateMermaidTheme\(\)[\s\S]+?\n\}/)?.[0] || "";
+
+  assert.equal(themeUpdate.includes("diagram.dataset.pmeScale"), true);
+  assert.equal(themeUpdate.includes("applyMermaidZoom(element"), true);
+});
+
 test("materializes Mermaid defaults before reapplying diagram-authored styles", () => {
   assert.equal(mermaidSource.includes("function applyMermaidSvgThemeFallback"), true);
   assert.equal(mermaidSource.includes("function setMermaidSvgPaint"), true);
@@ -46,4 +61,38 @@ test("materializes Mermaid defaults before reapplying diagram-authored styles", 
   assert.equal(mermaidSource.includes("element.hasAttribute(property)"), true);
   assert.equal(mermaidSource.includes('style.setProperty(property, value, "important")'), false);
   assert.equal(mermaidSource.includes("applyMermaidSvgThemeFallback(renderedSvg);"), true);
+});
+
+test("restores sequence message strokes hidden by Mermaid presentation attributes", () => {
+  assert.equal(mermaidSource.includes('querySelectorAll(".messageLine0, .messageLine1")'), true);
+  assert.equal(mermaidSource.includes("function setMermaidSequenceLineStroke"), true);
+  assert.equal(mermaidSource.includes('attributeStroke === "none"'), true);
+  assert.equal(mermaidSource.includes('element.style.getPropertyValue("stroke")'), true);
+  assert.equal(mermaidSource.includes('setMermaidSvgPaint(element, "stroke", variables.lineColor)'), true);
+});
+
+test("materializes Mermaid text alignment and sequence number markers for WebView SVGs", () => {
+  assert.equal(mermaidSource.includes("function materializeMermaidTextStyles"), true);
+  assert.equal(mermaidSource.includes("safeVariables.fontFamily.replace"), false);
+  assert.equal(mermaidSource.includes('"text-anchor"'), true);
+  assert.equal(mermaidSource.includes('"font-family"'), true);
+  assert.equal(mermaidSource.includes('"font-size"'), true);
+  assert.equal(mermaidSource.includes('"font-weight"'), true);
+  assert.equal(mermaidSource.includes('marker[id$="-sequencenumber"] circle'), true);
+  assert.equal(mermaidSource.includes("materializeMermaidTextStyles(svg);"), true);
+  assert.equal(mermaidSource.includes('element.querySelectorAll("tspan")'), true);
+  assert.equal(mermaidSource.includes('tspan.setAttribute("text-anchor", textAnchor)'), true);
+  assert.equal(mermaidSource.includes("function centerMermaidActorLabels"), true);
+  assert.equal(mermaidSource.includes('querySelectorAll("text.actor")'), true);
+  assert.equal(mermaidSource.includes("rectCenter - textWidth / 2"), true);
+  assert.equal(mermaidSource.includes("centerMermaidActorLabels(svg);"), true);
+});
+
+test("renders sequence numbers as explicit circles instead of zero-length markers", () => {
+  assert.equal(mermaidSource.includes("function materializeMermaidSequenceNumbers"), true);
+  assert.equal(mermaidSource.includes('"circle"'), true);
+  assert.equal(mermaidSource.includes('circle.setAttribute("r", "6")'), true);
+  assert.equal(mermaidSource.includes('querySelectorAll(\'line[marker-start*="-sequencenumber"]\')'), true);
+  assert.equal(mermaidSource.includes('line.removeAttribute("marker-start")'), true);
+  assert.equal(mermaidSource.includes("materializeMermaidSequenceNumbers(svg, variables);"), true);
 });

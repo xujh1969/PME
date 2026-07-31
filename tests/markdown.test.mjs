@@ -329,6 +329,22 @@ test("parses and serializes mermaid diagrams", () => {
   assert.equal(serializeMarkdown(doc), `${markdown}\n`);
 });
 
+test("parses and serializes Mermaid display scale", () => {
+  const markdown = [
+    "<!-- pme-mermaid-scale: 130 -->",
+    "```mermaid",
+    "graph TD",
+    "  A-->B",
+    "```",
+  ].join("\n");
+
+  const doc = parseMarkdown(markdown);
+
+  assert.equal(doc.content[0].type, "mermaidDiagram");
+  assert.equal(doc.content[0].attrs.scale, 130);
+  assert.equal(serializeMarkdown(doc), `${markdown}\n`);
+});
+
 test("parses and serializes inline SVG blocks", () => {
   const markdown = [
     '<svg viewBox="0 0 100 60" width="100%" role="img" xmlns="">',
@@ -497,6 +513,28 @@ test("round trips image scale metadata while exporting pixel width", () => {
     ],
   });
   assert.equal(serializeMarkdown(parseMarkdown(markdown)), `${markdown}\n\n`);
+});
+
+test("round trips video scale metadata for editor and export sizing", () => {
+  const markdown = '<video src="assets/movie.mp4" width="640" data-pme-scale="50" data-pme-original-width="1280" controls />';
+
+  assert.deepEqual(parseMarkdown(markdown), {
+    type: "doc",
+    content: [
+      {
+        type: "video",
+        attrs: {
+          src: "assets/movie.mp4",
+          assetSrc: null,
+          controls: true,
+          width: 640,
+          scale: 50,
+          originalWidth: 1280,
+        },
+      },
+    ],
+  });
+  assert.equal(serializeMarkdown(parseMarkdown(markdown)), `${markdown}\n`);
 });
 
 test("serializes asset image paths relative to the markdown file", () => {

@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  getMermaidPrintDimensions,
   getSvgPrintDimensions,
+  getVideoPrintDimensions,
   markPrintableImagesForPagination,
   prepareMindMapsForPrint,
   prepareVideosForPrint,
@@ -30,6 +32,11 @@ test("owns the PDF options modal outside the app entry", () => {
   assert.equal(modalSource.includes("data-pdf-title"), false);
   assert.equal(modalSource.includes("includeTitle"), false);
   assert.equal(appSource.includes("function openPdfExportOptionsModal"), false);
+});
+
+test("uses one default heading weight and color in HTML output", () => {
+  assert.match(htmlPackageSource, /h1,\s*h2,\s*h3,\s*h4,\s*h5,\s*h6\s*\{[\s\S]*?color:\s*var\(--color-ink\);[\s\S]*?font-weight:\s*500;/);
+  assert.doesNotMatch(htmlPackageSource, /h[1-6]\s*\{[^}]*font-weight:\s*300;/);
 });
 
 test("derives Mermaid PDF dimensions from viewBox when svg width is percentage", () => {
@@ -69,6 +76,28 @@ test("constrains tall Mermaid PDF dimensions to printable page height", () => {
     sourceHeight: 2400,
     targetWidth: 190,
     targetHeight: 760,
+  });
+});
+
+test("applies saved Mermaid scale before constraining it to the page", () => {
+  const svg = {
+    getAttribute(name) {
+      return name === "viewBox" ? "0 0 400 200" : null;
+    },
+    style: {},
+  };
+
+  assert.deepEqual(getMermaidPrintDimensions(svg, 50, 600, 760), {
+    sourceWidth: 400,
+    sourceHeight: 200,
+    targetWidth: 200,
+    targetHeight: 100,
+  });
+  assert.deepEqual(getMermaidPrintDimensions(svg, 200, 600, 760), {
+    sourceWidth: 400,
+    sourceHeight: 200,
+    targetWidth: 600,
+    targetHeight: 300,
   });
 });
 
@@ -152,8 +181,27 @@ test("prepares videos as poster images before printable HTML is returned", () =>
   assert.equal(runtimeSource.includes("await prepareVideosForPrint(clone);"), true);
   assert.equal(runtimeSource.includes("export async function prepareVideosForPrint"), true);
   assert.equal(runtimeSource.includes('root.querySelectorAll("video")'), true);
+  assert.equal(runtimeSource.includes('querySelectorAll(".video-node__controls")'), true);
   assert.equal(runtimeSource.includes("context.drawImage(video"), true);
   assert.equal(runtimeSource.includes('canvas.toDataURL("image/png")'), true);
+});
+
+test("applies saved video scale to PDF and static HTML poster dimensions", () => {
+  assert.deepEqual(getVideoPrintDimensions(1280, 720, 50, 600), {
+    width: 300,
+    height: 169,
+  });
+  assert.deepEqual(getVideoPrintDimensions(1280, 720, 150, 600), {
+    width: 600,
+    height: 338,
+  });
+  for (const source of [pdfExportSource, htmlPackageSource]) {
+    const videoRule = source.match(/\.video-node\s*\{[^}]+\}/)?.[0] || "";
+    assert.equal(videoRule.includes("margin: 16px auto"), true);
+    assert.equal(videoRule.includes("max-width: 100%"), true);
+  }
+  assert.equal(appSource.includes("async function renderVideoWordPoster(source, node = {})"), true);
+  assert.equal(appSource.includes("node.attrs?.scale"), true);
 });
 
 test("routes packaged HTML through the staticized clone without inlining package assets", () => {
