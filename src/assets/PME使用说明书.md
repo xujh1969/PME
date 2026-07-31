@@ -1,6 +1,6 @@
 # PME（Portable Markdown Editor）软件使用说明书
 
-> 版本：0.2.1  
+> 版本：0.2.2  
 
 > 适用对象：需要使用 PME 进行 Markdown 文档写作、编辑、导出与分享的用户  
 
@@ -106,11 +106,11 @@ npm run tauri:build
 
 ```
 src-tauri/target/release/pme.exe
-src-tauri/target/release/bundle/nsis/PME_0.2.1_x64-setup.exe
-src-tauri/target/release/bundle/msi/PME_0.2.1_x64_en-US.msi
+src-tauri/target/release/bundle/nsis/PME_0.2.2_x64-setup.exe
+src-tauri/target/release/bundle/msi/PME_0.2.2_x64_en-US.msi
 ```
 
-双击 `PME_0.2.1_x64-setup.exe` 即可安装，之后从开始菜单或桌面快捷方式启动 PME。
+双击 `PME_0.2.2_x64-setup.exe` 即可安装，之后从开始菜单或桌面快捷方式启动 PME。
 
 ### 2.3 启动体验
 

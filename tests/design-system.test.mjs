@@ -131,6 +131,25 @@ test("indents outline arrows together with deeper heading titles", () => {
   assert.equal(styles.includes(".outline-item--level-3 {\n  padding-left:"), false);
 });
 
+test("keeps outline title buttons from covering collapse arrows", () => {
+  const itemRule = styles.match(/\.outline-item\s*\{[^}]+\}/)?.[0] || "";
+
+  assert.equal(itemRule.includes("min-width: 0;"), true);
+  assert.equal(itemRule.includes("width: 100%;"), false);
+});
+
+test("preserves outline collapse state across outline refreshes", () => {
+  assert.equal(appSource.includes("collapsedOutlineGroups"), true);
+  assert.equal(appSource.includes("state.collapsedOutlineGroups[state.selectedPath]"), true);
+  assert.equal(appSource.includes("outline-group--collapsed"), true);
+  assert.equal(appSource.includes("collapsedGroups.add(groupId)"), true);
+  assert.equal(appSource.includes("collapsedGroups.delete(groupId)"), true);
+});
+
+test("lets collapsed outline groups override the default visible group rule", () => {
+  assert.equal(styles.includes(".tree .outline-group--collapsed {\n  display: none;"), true);
+});
+
 test("keeps Mermaid and mind map blocks extended beyond editor content column", () => {
   for (const selector of [".ProseMirror .mermaid-diagram", ".ProseMirror .mindmap-diagram"]) {
     const escapedSelector = selector.replaceAll(".", "\\.");

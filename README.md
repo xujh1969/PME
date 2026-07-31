@@ -2,7 +2,7 @@
 
 PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 TipTap v3 构建。
 
-**当前版本**: 0.2.1
+**当前版本**: 0.2.2
 
 ## 功能特性
 
@@ -133,8 +133,8 @@ npm run tauri:build
 ### 构建产物
 
 - 可执行文件：`src-tauri/target/release/pme.exe`
-- NSIS 安装包：`src-tauri/target/release/bundle/nsis/PME_0.2.1_x64-setup.exe`
-- MSI 安装包：`src-tauri/target/release/bundle/msi/PME_0.2.1_x64_en-US.msi`
+- NSIS 安装包：`src-tauri/target/release/bundle/nsis/PME_0.2.2_x64-setup.exe`
+- MSI 安装包：`src-tauri/target/release/bundle/msi/PME_0.2.2_x64_en-US.msi`
 
 ## 项目结构
 

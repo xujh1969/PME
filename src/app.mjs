@@ -296,6 +296,7 @@ const state = {
   workspaceAdapter: null,
   paths: [],
   collapsedFolders: new Set(["assets"]),
+  collapsedOutlineGroups: {},
   showSidebar: true,
   showFileTree: false,
   showOutline: true,
@@ -459,7 +460,7 @@ function renderWelcome() {
       </video>
       <section class="welcome-hero">
         <div class="welcome-hero__content">
-          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.2.1</span></p>
+          <p class="welcome-hero__kicker">Portable Markdown Editor <span class="welcome-hero__version">v0.2.2</span></p>
           <h1>PME</h1>
           <p class="welcome-hero__copy">为长文档、图表、公式和素材而生的本地 Markdown 工作台。</p>
           <div class="welcome-hero__actions">
@@ -993,6 +994,7 @@ function renderOutline() {
   if (!outline.length) {
     return "";
   }
+  const collapsedGroups = state.collapsedOutlineGroups[state.selectedPath] || new Set();
 
   function renderLevel(startIndex, parentLevel) {
     let result = "";
@@ -1009,16 +1011,17 @@ function renderOutline() {
 
       let children = "";
       let childCount = 0;
+      const isCollapsed = collapsedGroups.has(groupId);
       if (hasChildren) {
         const childResult = renderLevel(nextIndex, item.level);
-        children = `<ul id="${groupId}" class="outline-group">${childResult.html}</ul>`;
+        children = `<ul id="${groupId}" class="outline-group${isCollapsed ? " outline-group--collapsed" : ""}">${childResult.html}</ul>`;
         childCount = childResult.count;
       }
 
       result += `
         <li>
           <div class="outline-item-row outline-item-row--level-${level}">
-            ${hasChildren ? `<button class="outline-item-toggle" type="button" data-outline-group="${groupId}">▶</button>` : `<button class="outline-item-toggle outline-item-toggle--placeholder" type="button" tabindex="-1" aria-hidden="true" disabled></button>`}
+            ${hasChildren ? `<button class="outline-item-toggle" type="button" data-outline-group="${groupId}">${isCollapsed ? "▶" : "▼"}</button>` : `<button class="outline-item-toggle outline-item-toggle--placeholder" type="button" tabindex="-1" aria-hidden="true" disabled></button>`}
             <button class="outline-item outline-item--level-${level}" data-outline-index="${item.index}" title="${escapeHtml(item.text)}">
               ${escapeHtml(item.text)}
             </button>
@@ -5299,7 +5302,17 @@ function bindOutlineEvents() {
       const group = document.getElementById(groupId);
       if (group) {
         group.classList.toggle("outline-group--collapsed");
-        button.textContent = group.classList.contains("outline-group--collapsed") ? "▶" : "▼";
+        if (!state.collapsedOutlineGroups[state.selectedPath]) {
+          state.collapsedOutlineGroups[state.selectedPath] = new Set();
+        }
+        const collapsedGroups = state.collapsedOutlineGroups[state.selectedPath];
+        const isCollapsed = group.classList.contains("outline-group--collapsed");
+        if (isCollapsed) {
+          collapsedGroups.add(groupId);
+        } else {
+          collapsedGroups.delete(groupId);
+        }
+        button.textContent = isCollapsed ? "▶" : "▼";
       }
     });
   });

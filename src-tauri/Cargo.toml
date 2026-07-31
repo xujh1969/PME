@@ -1,6 +1,6 @@
 [package]
 name = "pme"
-version = "0.2.1"
+version = "0.2.2"
 description = "Portable Markdown Editor"
 authors = ["PME"]
 edition = "2021"
