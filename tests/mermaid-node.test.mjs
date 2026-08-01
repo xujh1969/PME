@@ -39,11 +39,15 @@ test("materializes Mermaid defaults before reapplying diagram-authored styles", 
   assert.equal(mermaidSource.includes("function hasMermaidSvgEmbeddedStyles"), false);
   assert.equal(mermaidSource.includes("function applyMermaidDirectiveStyles"), true);
   assert.equal(mermaidSource.includes("function parseMermaidStyleDirectives"), true);
+  assert.equal(mermaidSource.includes("function parseMermaidClassDirectives"), true);
   assert.equal(mermaidSource.includes("if (hasMermaidSvgEmbeddedStyles(svg))"), false);
   assert.equal(mermaidSource.includes('querySelectorAll(".node rect'), true);
   assert.equal(mermaidSource.includes('setMermaidSvgPaint(element, "fill", variables.primaryColor)'), true);
   assert.equal(mermaidSource.includes('setMermaidSvgPaint(element, "stroke", variables.lineColor)'), true);
   assert.equal(mermaidSource.includes("applyMermaidDirectiveStyles(renderedSvg, code);"), true);
+  assert.equal(mermaidSource.includes("parseMermaidClassDirectives(code)"), true);
+  assert.match(mermaidSource, /line\.match\([^)]*classDef/);
+  assert.match(mermaidSource, /line\.match\([^)]*class/);
   assert.equal(mermaidSource.includes('directive.styles.color || directive.styles["text-color"]'), true);
   assert.equal(mermaidSource.includes('querySelector(`g.node[data-id="${escapedId}"]`)'), true);
   assert.equal(mermaidSource.includes('svg.querySelectorAll("g.node")'), true);

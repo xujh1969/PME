@@ -78,23 +78,62 @@ function parseMermaidStyleDirectives(code) {
     if (!match) {
       continue;
     }
-    const styles = {};
-    for (const part of match[2].split(",")) {
-      const separator = part.indexOf(":");
-      if (separator <= 0) {
-        continue;
-      }
-      const property = part.slice(0, separator).trim();
-      const value = part.slice(separator + 1).trim();
-      if (property && value) {
-        styles[property] = value;
-      }
-    }
+    const styles = parseMermaidStyleProperties(match[2]);
     if (Object.keys(styles).length) {
       directives.push({ id: match[1], styles });
     }
   }
   return directives;
+}
+
+function parseMermaidClassDirectives(code) {
+  const classStyles = new Map();
+  const directives = [];
+  const normalizedCode = normalizeMermaidStyleDirectives(code);
+
+  for (const line of normalizedCode.split(/\r?\n/)) {
+    const classDefMatch = line.match(/^\s*classDef\s+([^\s]+)\s+(.+?)\s*$/);
+    if (classDefMatch) {
+      const styles = parseMermaidStyleProperties(classDefMatch[2]);
+      if (Object.keys(styles).length) {
+        classStyles.set(classDefMatch[1], styles);
+      }
+      continue;
+    }
+
+    const classMatch = line.match(/^\s*class\s+([^\s]+)\s+([^\s]+)\s*$/);
+    if (!classMatch) {
+      continue;
+    }
+    const nodeIds = classMatch[1].split(",").map((id) => id.trim()).filter(Boolean);
+    const classNames = classMatch[2].split(",").map((name) => name.trim()).filter(Boolean);
+    for (const id of nodeIds) {
+      for (const className of classNames) {
+        const styles = classStyles.get(className);
+        if (styles) {
+          directives.push({ id, styles });
+        }
+      }
+    }
+  }
+
+  return directives;
+}
+
+function parseMermaidStyleProperties(value) {
+  const styles = {};
+  for (const part of String(value || "").split(",")) {
+    const separator = part.indexOf(":");
+    if (separator <= 0) {
+      continue;
+    }
+    const property = part.slice(0, separator).trim();
+    const styleValue = part.slice(separator + 1).trim();
+    if (property && styleValue) {
+      styles[property] = styleValue;
+    }
+  }
+  return styles;
 }
 
 initMermaidTheme();
@@ -488,7 +527,10 @@ function materializeMermaidSequenceNumbers(svg, variables) {
 }
 
 function applyMermaidDirectiveStyles(svg, code) {
-  for (const directive of parseMermaidStyleDirectives(code)) {
+  for (const directive of [
+    ...parseMermaidStyleDirectives(code),
+    ...parseMermaidClassDirectives(code),
+  ]) {
     const node = findMermaidSvgNode(svg, directive.id);
     if (!node) {
       continue;
