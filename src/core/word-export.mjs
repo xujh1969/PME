@@ -264,14 +264,23 @@ function renderTextRun(node, context = {}) {
 }
 
 async function renderTable(node, context) {
+  const columnWidths = getTableColumnWidths(node);
+  const totalWidth = columnWidths?.reduce((sum, width) => sum + width, 0) || 0;
   const rows = [];
   for (const row of node.content || []) {
     const cells = [];
+    let columnIndex = 0;
     for (const cell of row.content || []) {
+      const columnSpan = Math.max(1, Number(cell.attrs?.colspan) || 1);
+      const cellWidth = columnWidths
+        ? columnWidths.slice(columnIndex, columnIndex + columnSpan).reduce((sum, width) => sum + width, 0)
+        : 0;
       cells.push(new TableCell({
         children: [new Paragraph({ children: await renderInlineChildren(cell, context) })],
         shading: cell.type === "tableHeader" ? { type: ShadingType.CLEAR, fill: "FAFAFA" } : undefined,
+        width: cellWidth ? { size: cellWidth / totalWidth * 100, type: WidthType.PERCENTAGE } : undefined,
       }));
+      columnIndex += columnSpan;
     }
     rows.push(new TableRow({ children: cells }));
   }
@@ -279,6 +288,16 @@ async function renderTable(node, context) {
     width: { size: 100, type: WidthType.PERCENTAGE },
     rows,
   });
+}
+
+function getTableColumnWidths(node) {
+  const firstRow = node.content?.[0];
+  if (!firstRow?.content?.length) return null;
+  const widths = firstRow.content.flatMap((cell) => cell.attrs?.colwidth || []);
+  const columnCount = firstRow.content.reduce((count, cell) => count + Math.max(1, Number(cell.attrs?.colspan) || 1), 0);
+  return widths.length === columnCount && widths.every((width) => Number.isFinite(width) && width > 0)
+    ? widths
+    : null;
 }
 
 async function loadDocumentImage(node, context) {

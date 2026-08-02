@@ -32,7 +32,7 @@ test("creates standalone markdown shell state", () => {
   assert.equal(session.selectedPath, "Untitled.md");
   assert.deepEqual(session.files, { "Untitled.md": "# Untitled\n\n" });
   assert.deepEqual(session.documents["Untitled.md"], { type: "doc", markdown: "# Untitled\n\n" });
-  assert.deepEqual(session.openTabs, [{ name: "Untitled.md", path: "Untitled.md", modified: true }]);
+  assert.deepEqual(session.openTabs, [{ name: "Untitled.md", path: "Untitled.md", modified: false }]);
 });
 
 test("creates opened workspace shell state with hydrated markdown documents", () => {
@@ -80,9 +80,10 @@ test("adds an untitled markdown tab to an existing shell state", () => {
   });
 
   assert.equal(state.selectedPath, "Untitled2.md");
-  assert.equal(state.files["Untitled2.md"], "# Untitled2\n\n");
+  assert.equal(state.files["Untitled2.md"], "");
+  assert.deepEqual(state.documents["Untitled2.md"], { type: "doc", markdown: "" });
   assert.deepEqual(state.paths, ["Untitled.md", "Untitled2.md"]);
-  assert.deepEqual(state.openTabs.at(-1), { name: "Untitled2.md", path: "Untitled2.md", modified: true });
+  assert.deepEqual(state.openTabs.at(-1), { name: "Untitled2.md", path: "Untitled2.md", modified: false });
 });
 
 test("adds an opened markdown file into the current workspace", async () => {
@@ -220,9 +221,9 @@ test("creates a named markdown document in the current workspace", () => {
     buildWorkspaceTree,
   });
 
-  assert.equal(created.markdown, "# Notes\n\n");
-  assert.equal(state.files["Notes.md"], "# Notes\n\n");
-  assert.deepEqual(state.documents["Notes.md"], { type: "doc", markdown: "# Notes\n\n" });
+  assert.equal(created.markdown, "");
+  assert.equal(state.files["Notes.md"], "");
+  assert.deepEqual(state.documents["Notes.md"], { type: "doc", markdown: "" });
   assert.deepEqual(state.paths, ["README.md", "Notes.md"]);
   assert.deepEqual(state.tree, [{ path: "README.md" }, { path: "Notes.md" }]);
 });

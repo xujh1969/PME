@@ -466,6 +466,26 @@
   vertical-align: top;
 }
 
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: -2px;
+  bottom: 0;
+  width: 4px;
+  background: color-mix(in srgb, var(--color-primary) 62%, transparent);
+  cursor: col-resize;
+  pointer-events: none;
+}
+
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+.ProseMirror.resize-cursor * {
+  cursor: col-resize;
+}
+
 .ProseMirror th {
   background: var(--color-surface-strong);
   font-weight: 500;

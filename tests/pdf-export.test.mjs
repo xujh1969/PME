@@ -74,3 +74,16 @@ test("uses one default heading weight and color in PDF output", () => {
   assert.match(html, /h1,\s*h2,\s*h3,\s*h4,\s*h5,\s*h6\s*\{[\s\S]*?color:\s*var\(--color-ink\);[\s\S]*?font-weight:\s*500;/);
   assert.doesNotMatch(html, /h[1-6]\s*\{[^}]*font-weight:\s*300;/);
 });
+
+test("fits static PDF tables to the printable width without scrolling", () => {
+  const html = buildPdfExportHtml({
+    title: "Doc",
+    documentHtml: '<div class="tableWrapper"><table><colgroup><col style="width: 25%"></colgroup></table></div>',
+    options: { includeTitle: false },
+  });
+
+  assert.match(html, /table\s*\{[^}]*width:\s*100%;[^}]*table-layout:\s*fixed;/s);
+  assert.match(html, /th, td\s*\{[^}]*overflow-wrap:\s*anywhere;/s);
+  assert.match(html, /\.tableWrapper\s*\{[^}]*overflow:\s*hidden;/s);
+  assert.doesNotMatch(html, /\.tableWrapper\s*\{[^}]*overflow-x:\s*auto;/s);
+});

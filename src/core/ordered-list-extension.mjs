@@ -1,4 +1,5 @@
 import ListItem from "@tiptap/extension-list-item";
+import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 
 const typeMap = {
@@ -9,7 +10,28 @@ const typeMap = {
   "alpha-upper": "A",
 };
 
+const listIndentAttribute = {
+  default: 0,
+  parseHTML: (element) => Number.parseInt(element.getAttribute("data-list-indent") || "0", 10) || 0,
+  renderHTML: (attributes) => attributes.indent
+    ? {
+      "data-list-indent": attributes.indent,
+      style: `margin-left: ${attributes.indent * 2}em`,
+    }
+    : {},
+};
+
+const CustomBulletList = BulletList.extend({
+  addAttributes() {
+    return { ...this.parent?.(), indent: listIndentAttribute };
+  },
+});
+
 const CustomOrderedList = OrderedList.extend({
+  addAttributes() {
+    return { ...this.parent?.(), indent: listIndentAttribute };
+  },
+
   addCommands() {
     return {
       toggleOrderedList:
@@ -47,4 +69,4 @@ const CustomOrderedList = OrderedList.extend({
 
 const CustomListItem = ListItem.extend({});
 
-export { CustomOrderedList, CustomListItem };
+export { CustomBulletList, CustomOrderedList, CustomListItem };

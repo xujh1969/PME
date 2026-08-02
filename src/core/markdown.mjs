@@ -19,6 +19,43 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
+    const paragraphIndentComment = line.match(/^\s*<!--\s*pme-indent:\s*([1-5])\s*-->\s*$/i);
+    if (paragraphIndentComment && lines[index + 1]?.trim()) {
+      content.push({
+        type: "paragraph",
+        attrs: { indent: Number.parseInt(paragraphIndentComment[1], 10) },
+        content: parseInline(lines[index + 1], footnotes),
+      });
+      index += 2;
+      continue;
+    }
+
+    const listIndentComment = line.match(/^\s*<!--\s*pme-list-indent:\s*([1-5])\s*-->\s*$/i);
+    if (listIndentComment && parseListItemLine(lines[index + 1] || "")) {
+      const parsedList = parseListBlock(lines, index + 1, footnotes);
+      parsedList.list.attrs = {
+        ...parsedList.list.attrs,
+        indent: Number.parseInt(listIndentComment[1], 10),
+      };
+      content.push(parsedList.list);
+      index = parsedList.nextIndex;
+      continue;
+    }
+
+    const tableWidthsComment = line.match(/^\s*<!--\s*pme-table-widths:\s*([^>]+?)\s*-->\s*$/i);
+    if (tableWidthsComment) {
+      if (isTableStart(lines, index + 1)) {
+        const columnCount = splitTableRow(lines[index + 1]).length;
+        const widths = parseTableWidths(tableWidthsComment[1], columnCount);
+        const { table, nextIndex } = parseTable(lines, index + 1, widths);
+        content.push(table);
+        index = nextIndex;
+      } else {
+        index += 1;
+      }
+      continue;
+    }
+
     const mermaidScaleComment = line.match(/^\s*<!--\s*pme-mermaid-scale:\s*(\d+)\s*-->\s*$/i);
     if (mermaidScaleComment) {
       let fenceIndex = index + 1;
@@ -270,41 +307,10 @@ export function parseMarkdown(markdown) {
       continue;
     }
 
-    if (/^-\s+/.test(line)) {
-      if (/^-\s+\[[ xX]\]\s+/.test(line)) {
-        const items = [];
-        while (index < lines.length && /^-\s+\[[ xX]\]\s+/.test(lines[index])) {
-          const match = lines[index].match(/^-\s+\[([ xX])\]\s+(.*)$/);
-          items.push({
-            type: "taskItem",
-            attrs: { checked: match[1].toLowerCase() === "x" },
-            content: [
-              {
-                type: "paragraph",
-                content: parseInline(match[2], footnotes),
-              },
-            ],
-          });
-          index += 1;
-        }
-        content.push({ type: "taskList", content: items });
-        continue;
-      }
-
-      const items = [];
-      while (index < lines.length && /^-\s+/.test(lines[index])) {
-        items.push({
-          type: "listItem",
-          content: [
-            {
-              type: "paragraph",
-              content: parseInline(lines[index].replace(/^-\s+/, ""), footnotes),
-            },
-          ],
-        });
-        index += 1;
-      }
-      content.push({ type: "bulletList", content: items });
+    if (parseListItemLine(line)) {
+      const parsedList = parseListBlock(lines, index, footnotes);
+      content.push(parsedList.list);
+      index = parsedList.nextIndex;
       continue;
     }
 
@@ -345,7 +351,9 @@ function serializeNode(node, options) {
   }
 
   if (node.type === "paragraph") {
-    return plainText(node, options);
+    const text = plainText(node, options);
+    const indent = Math.max(0, Math.min(5, Number.parseInt(node.attrs?.indent || 0, 10) || 0));
+    return indent ? `<!-- pme-indent: ${indent} -->\n${text}` : text;
   }
 
   if (node.type === "horizontalRule") {
@@ -356,14 +364,10 @@ function serializeNode(node, options) {
     return '<div data-type="table-of-contents"></div>';
   }
 
-  if (node.type === "bulletList") {
-    return node.content.map((item) => `- ${plainText(item, options)}`).join("\n");
-  }
-
-  if (node.type === "taskList") {
-    return node.content.map((item) => (
-      `- [${item.attrs?.checked ? "x" : " "}] ${plainText(item, options)}`
-    )).join("\n");
+  if (["bulletList", "orderedList", "taskList"].includes(node.type)) {
+    const list = serializeList(node, options);
+    const indent = Math.max(0, Math.min(5, Number.parseInt(node.attrs?.indent || 0, 10) || 0));
+    return indent ? `<!-- pme-list-indent: ${indent} -->\n${list}` : list;
   }
 
   if (node.type === "table") {
@@ -553,10 +557,6 @@ function toMarkdownRelativePath(assetPath, basePath) {
     : [];
   const assetParts = normalizedAssetPath.split("/").filter(Boolean);
 
-  if (assetParts.length > 0 && assetParts[0] === "assets") {
-    return normalizedAssetPath;
-  }
-
   while (
     baseDirectory.length &&
     assetParts.length &&
@@ -595,6 +595,81 @@ function isTableOfContentsBlock(line) {
   return /^<div\s+data-type=["']table-of-contents["'][^>]*>(?:目录)?<\/div>$/.test(line.trim());
 }
 
+function parseListItemLine(line) {
+  const match = line.match(/^([ \t]*)([-+*]|(\d+)[.)])\s+(?:\[([ xX])\]\s+)?(.*)$/);
+  if (!match) {
+    return null;
+  }
+
+  const indent = [...match[1]].reduce((total, character) => total + (character === "\t" ? 4 : 1), 0);
+  const checked = match[4] === undefined ? null : match[4].toLowerCase() === "x";
+  return {
+    indent,
+    type: checked !== null ? "taskList" : match[3] ? "orderedList" : "bulletList",
+    start: match[3] ? Number.parseInt(match[3], 10) : 1,
+    checked,
+    text: match[5],
+  };
+}
+
+function parseListBlock(lines, startIndex, footnotes) {
+  const first = parseListItemLine(lines[startIndex]);
+  const list = {
+    type: first.type,
+    ...(first.type === "orderedList" ? { attrs: { start: first.start, type: null } } : {}),
+    content: [],
+  };
+  let index = startIndex;
+
+  while (index < lines.length) {
+    const itemLine = parseListItemLine(lines[index]);
+    if (!itemLine || itemLine.indent !== first.indent || itemLine.type !== first.type) {
+      break;
+    }
+
+    const item = {
+      type: itemLine.type === "taskList" ? "taskItem" : "listItem",
+      ...(itemLine.type === "taskList" ? { attrs: { checked: itemLine.checked } } : {}),
+      content: [{ type: "paragraph", content: parseInline(itemLine.text, footnotes) }],
+    };
+    index += 1;
+
+    while (index < lines.length) {
+      const nestedLine = parseListItemLine(lines[index]);
+      if (!nestedLine || nestedLine.indent <= first.indent) {
+        break;
+      }
+      const nested = parseListBlock(lines, index, footnotes);
+      item.content.push(nested.list);
+      index = nested.nextIndex;
+    }
+
+    list.content.push(item);
+  }
+
+  return { list, nextIndex: index };
+}
+
+function serializeList(node, options, depth = 0) {
+  const indent = "  ".repeat(depth);
+  const start = Number.parseInt(node.attrs?.start || 1, 10) || 1;
+  const lines = [];
+
+  (node.content || []).forEach((item, index) => {
+    const paragraph = item.content?.find((child) => child.type === "paragraph");
+    const marker = node.type === "orderedList"
+      ? `${start + index}.`
+      : node.type === "taskList"
+        ? `- [${item.attrs?.checked ? "x" : " "}]`
+        : "-";
+    lines.push(`${indent}${marker} ${paragraph ? plainText(paragraph, options) : ""}`);
+    item.content?.filter((child) => ["bulletList", "orderedList", "taskList"].includes(child.type))
+      .forEach((child) => lines.push(serializeList(child, options, depth + 1)));
+  });
+
+  return lines.join("\n");
+}
+
 function isTableStart(lines, index) {
   return isTableRow(lines[index]) && isTableSeparator(lines[index + 1] || "");
 }
@@ -610,16 +685,16 @@ function isTableSeparator(line) {
   return splitTableRow(line).every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
 }
 
-function parseTable(lines, startIndex) {
+function parseTable(lines, startIndex, widths = null) {
   const headerCells = splitTableRow(lines[startIndex]);
   const alignments = splitTableRow(lines[startIndex + 1]).map(parseTableAlignment);
   const rows = [
-    tableRow(headerCells, "tableHeader", alignments),
+    tableRow(headerCells, "tableHeader", alignments, widths),
   ];
   let index = startIndex + 2;
 
   while (index < lines.length && isTableRow(lines[index])) {
-    rows.push(tableRow(splitTableRow(lines[index]), "tableCell", alignments));
+    rows.push(tableRow(splitTableRow(lines[index]), "tableCell", alignments, widths));
     index += 1;
   }
 
@@ -629,12 +704,12 @@ function parseTable(lines, startIndex) {
   };
 }
 
-function tableRow(cells, cellType, alignments = []) {
+function tableRow(cells, cellType, alignments = [], widths = null) {
   return {
     type: "tableRow",
     content: cells.map((cell, index) => ({
       type: cellType,
-      ...tableCellAttrs(alignments[index]),
+      ...tableCellAttrs(alignments[index], widths?.[index]),
       content: [
         {
           type: "paragraph",
@@ -645,8 +720,21 @@ function tableRow(cells, cellType, alignments = []) {
   };
 }
 
-function tableCellAttrs(textAlign) {
-  return textAlign ? { attrs: { textAlign } } : {};
+function tableCellAttrs(textAlign, width) {
+  const attrs = {
+    ...(textAlign ? { textAlign } : {}),
+    ...(width ? { colwidth: [width] } : {}),
+  };
+  return Object.keys(attrs).length ? { attrs } : {};
+}
+
+function parseTableWidths(value, columnCount) {
+  const parts = value.split(",").map((part) => part.trim());
+  if (parts.length !== columnCount || parts.some((part) => !/^\d+$/.test(part))) {
+    return null;
+  }
+  const widths = parts.map((part) => Number.parseInt(part, 10));
+  return widths.every((width) => width > 0) ? widths : null;
 }
 
 function parseTableAlignment(cell) {
@@ -677,11 +765,31 @@ function serializeTable(node) {
 
   const header = rows[0].content || [];
   const body = rows.slice(1);
-  return [
+  const table = [
     serializeTableRow(header),
     serializeTableRow(header.map((cell) => ({ type: "tableCell", content: textContent(tableAlignmentMarker(cell)) }))),
     ...body.map((row) => serializeTableRow(row.content || [])),
   ].join("\n");
+  const widths = getTableColumnWidths(header);
+  return widths ? `<!-- pme-table-widths: ${widths.join(",")} -->\n${table}` : table;
+}
+
+function getTableColumnWidths(row) {
+  const widths = [];
+  for (const cell of row) {
+    const colspan = Number.parseInt(cell.attrs?.colspan || 1, 10) || 1;
+    const cellWidths = cell.attrs?.colwidth;
+    if (!Array.isArray(cellWidths) || cellWidths.length !== colspan) {
+      return null;
+    }
+    for (const width of cellWidths) {
+      if (!Number.isFinite(width) || width <= 0) {
+        return null;
+      }
+      widths.push(Math.round(width));
+    }
+  }
+  return widths.length ? widths : null;
 }
 
 function tableAlignmentMarker(cell) {

@@ -90,6 +90,22 @@ test("toggles inline code for selected text", () => {
   ]);
 });
 
+test("uses the list indentation fallback for indent commands", () => {
+  const calls = [];
+  const editor = createEditorStub({ active: { listItem: true, bulletList: true } });
+  editor.commands = {
+    sinkListItem: () => false,
+    updateAttributes: (type, attrs) => {
+      calls.push([type, attrs]);
+      return true;
+    },
+  };
+
+  runEditorCommand("indent-more", { editor });
+
+  assert.deepEqual(calls, [["bulletList", { indent: 1 }]]);
+});
+
 test("inserts an SVG diagram block", () => {
   const editor = createEditorStub();
 

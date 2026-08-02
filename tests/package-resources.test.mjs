@@ -29,7 +29,7 @@ test("normalizes relative image paths against the markdown document", () => {
 
 test("builds stable package image names from sources", () => {
   assert.equal(buildPackagedImageName("https://example.com/a photo.jpeg?x=1", "image/jpeg", 2), "002-a_20photo.jpg");
-  assert.equal(buildPackagedImageName("data:image/png;base64,abc", "image/png", 3), "003-png;base64,abc.png");
+  assert.equal(buildPackagedImageName("data:image/png;base64,abc", "image/png", 3), "003-image003.png");
 });
 
 test("collects image nodes recursively", () => {

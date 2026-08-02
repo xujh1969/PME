@@ -21,6 +21,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
 import { Callout } from "./callout-extension.mjs";
 import { Video } from "./video-extension.mjs";
+import { EditorTabBehavior } from "./editor-tab.mjs";
 
 export function createEditorExtensions(options) {
   return [
@@ -31,10 +32,12 @@ export function createEditorExtensions(options) {
       link: false,
       underline: false,
       orderedList: false,
+      bulletList: false,
       listItem: false,
       paragraph: false,
     }),
     options.paragraphWithIndent,
+    options.customBulletList,
     options.customOrderedList,
     options.customListItem,
     options.delayedHeading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
@@ -61,10 +64,11 @@ export function createEditorExtensions(options) {
     }),
     TaskList,
     TaskItem.configure({ nested: true }),
-    Table.configure({ resizable: true }),
+    Table.configure({ resizable: true, cellMinWidth: 80 }),
     TableRow,
     options.alignedTableHeader,
     options.alignedTableCell,
+    EditorTabBehavior,
     Mathematics.configure({ katexOptions: { throwOnError: false } }),
     Underline,
     TextAlign.configure({ types: ["heading", "paragraph"] }),

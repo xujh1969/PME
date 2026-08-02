@@ -252,7 +252,11 @@ export function getActiveAiSettings() {
 }
 
 export function getAiActions() {
-  const defaultActions = DEFAULT_CONFIG.ai.actions.filter(a => !a.id.startsWith("custom_"));
+  const defaultActions = DEFAULT_CONFIG.ai.actions
+    .filter(a => !a.id.startsWith("custom_"))
+    .map((action) => action.id === "table"
+      ? { ...action, label: "转为表格", description: "将选中文字整理为标准表格" }
+      : action);
   const customActions = config.ai?.customActions || [];
   return JSON.parse(JSON.stringify([...defaultActions, ...customActions]));
 }

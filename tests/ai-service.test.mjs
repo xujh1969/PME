@@ -6,6 +6,8 @@ import { extractMermaidFromAiText } from "../src/ui/modals.mjs";
 const aiServiceSource = readFileSync(new URL("../src/core/ai-service.mjs", import.meta.url), "utf8");
 const modalsSource = readFileSync(new URL("../src/ui/modals.mjs", import.meta.url), "utf8");
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
+const aiModalSource = readFileSync(new URL("../src/ui/ai-modal.mjs", import.meta.url), "utf8");
+const configSource = readFileSync(new URL("../src/core/config.mjs", import.meta.url), "utf8");
 
 test("falls back to parsing non-streaming cloud AI JSON responses", () => {
   assert.equal(aiServiceSource.includes("let rawText = \"\";"), true);
@@ -23,6 +25,18 @@ test("falls back to parsing non-streaming cloud AI JSON responses", () => {
   assert.equal(aiServiceSource.includes("includeReasoningContent"), false);
   assert.equal(aiServiceSource.includes("reasoning_content"), false);
   assert.equal(aiServiceSource.includes("if (buffer.trim())"), true);
+});
+
+test("built-in AI actions return only final usable content", () => {
+  assert.equal(configSource.includes('label: "转为表格"'), true);
+  assert.equal(aiModalSource.includes("function buildDefaultActionPrompt("), true);
+  assert.equal(aiModalSource.includes("DEFAULT_FINAL_OUTPUT_INSTRUCTION"), true);
+  assert.equal(aiModalSource.includes("不要输出分析、解释、修改说明、前导语、总结、字数统计或代码围栏"), true);
+  assert.equal(aiModalSource.includes('customAction?.id.startsWith("custom_")'), true);
+  assert.equal(
+    aiModalSource.indexOf("buildDefaultActionPrompt(") < aiModalSource.indexOf('customAction?.id.startsWith("custom_")'),
+    true,
+  );
 });
 
 test("SVG AI generation returns completed SVG text to the editor", () => {

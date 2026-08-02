@@ -30,8 +30,8 @@ test("cleans up node view listeners before rerendering or destroying", () => {
 });
 
 test("preserves malformed persisted mindmap data and guards replacements", () => {
-  assert.equal(source.includes('raw: {\n        default: "",\n        parseHTML:'), true);
-  assert.equal(source.includes('error: {\n        default: "",\n        parseHTML:'), true);
+  assert.equal(/raw:\s*\{\s*default:\s*"",\s*parseHTML:/.test(source), true);
+  assert.equal(/error:\s*\{\s*default:\s*"",\s*parseHTML:/.test(source), true);
   assert.equal(source.includes('attributes.raw || serializeMindMapData(attributes.data)'), true);
   assert.equal(source.includes("editor.state.doc.nodeAt(options.pos)"), true);
 });

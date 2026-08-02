@@ -9,6 +9,17 @@ test("maps primary file shortcuts to app commands", () => {
   assert.equal(getAppShortcutCommand({ key: "w", ctrlKey: true, altKey: true }), "close-current-tab");
 });
 
+test("maps shifted copy and cut to plain-text commands", () => {
+  assert.equal(getAppShortcutCommand({ key: "c", ctrlKey: true, shiftKey: true }), "copy-plain");
+  assert.equal(getAppShortcutCommand({ key: "x", metaKey: true, shiftKey: true }), "cut-plain");
+  assert.equal(getAppShortcutCommand({
+    key: "c",
+    ctrlKey: true,
+    shiftKey: true,
+    target: { matches: (selector) => selector === ".source-editor" },
+  }), "copy-plain");
+});
+
 test("maps function-key shortcuts without requiring modifiers", () => {
   assert.equal(getAppShortcutCommand({ key: "F2" }), "rename-markdown-file");
 });
@@ -27,6 +38,7 @@ test("does not map shortcuts from modal text fields except save", () => {
 
   assert.equal(getAppShortcutCommand({ key: "n", ctrlKey: true, altKey: true, target }), null);
   assert.equal(getAppShortcutCommand({ key: "s", ctrlKey: true, target }), "save-document");
+  assert.equal(getAppShortcutCommand({ key: "c", ctrlKey: true, shiftKey: true, target }), null);
 });
 
 test("does not take browser-reserved new and close shortcuts", () => {

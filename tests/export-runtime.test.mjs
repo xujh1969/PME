@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
+  fitPrintableTableWidths,
   getMermaidPrintDimensions,
   getSvgPrintDimensions,
   getVideoPrintDimensions,
@@ -9,6 +10,26 @@ import {
   prepareMindMapsForPrint,
   prepareVideosForPrint,
 } from "../src/export/export-runtime.mjs";
+
+test("fits only oversized printable table columns without mutating fitting widths", () => {
+  const fitting = createTableWithColumnWidths([120, 180]);
+  const oversized = createTableWithColumnWidths([200, 400, 200]);
+
+  fitPrintableTableWidths(createTableRoot([fitting, oversized]), 600);
+
+  assert.deepEqual(fitting.columns.map((column) => column.style.width), ["120px", "180px"]);
+  assert.deepEqual(oversized.columns.map((column) => column.style.width), ["25%", "50%", "25%"]);
+});
+
+test("ignores printable tables without complete positive pixel widths", () => {
+  const automatic = createTableWithColumnWidths(["", ""]);
+  const invalid = createTableWithColumnWidths([200, 0, 200]);
+
+  fitPrintableTableWidths(createTableRoot([automatic, invalid]), 300);
+
+  assert.deepEqual(automatic.columns.map((column) => column.style.width), ["", ""]);
+  assert.deepEqual(invalid.columns.map((column) => column.style.width), ["200px", "0px", "200px"]);
+});
 
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
 const runtimeSource = readFileSync(new URL("../src/export/export-runtime.mjs", import.meta.url), "utf8");
@@ -297,6 +318,26 @@ function createPaginationBlock() {
   return {
     classList: new Set(),
     parentElement: null,
+  };
+}
+
+function createTableRoot(tables) {
+  return {
+    querySelectorAll(selector) {
+      return selector === "table" ? tables : [];
+    },
+  };
+}
+
+function createTableWithColumnWidths(widths) {
+  const columns = widths.map((width) => ({
+    style: { width: typeof width === "number" ? `${width}px` : width },
+  }));
+  return {
+    columns,
+    querySelectorAll(selector) {
+      return selector === "colgroup col" ? columns : [];
+    },
   };
 }
 

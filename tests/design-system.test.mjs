@@ -8,6 +8,11 @@ const styles = readdirSync(stylesDir)
   .sort()
   .map((f) => readFileSync(new URL(f, stylesDir), "utf8"))
   .join("\n");
+const readStylesheet = (name) => readFileSync(new URL(name, stylesDir), "utf8");
+const editorStyles = readStylesheet("editor.css");
+const modalStyles = readStylesheet("modals.css");
+const variablesStyles = readStylesheet("variables.css");
+const welcomeStyles = readStylesheet("welcome.css");
 const appSource = readFileSync(new URL("../src/app.mjs", import.meta.url), "utf8");
 const modalSource = readFileSync(new URL("../src/ui/modals.mjs", import.meta.url), "utf8");
 const imageInsertModalSource = readFileSync(new URL("../src/ui/image-insert-modal.mjs", import.meta.url), "utf8");
@@ -100,7 +105,7 @@ test("renders color picker swatches from bundled CSS instead of inline styles", 
 });
 
 test("prevents button labels from wrapping", () => {
-  const buttonRule = styles.match(/button\s*\{[^}]+\}/)?.[0] || "";
+  const buttonRule = variablesStyles.match(/^button\s*\{[^}]+\}/m)?.[0] || "";
 
   assert.equal(buttonRule.includes("white-space: nowrap;"), true);
 });
@@ -146,18 +151,49 @@ test("preserves outline collapse state across outline refreshes", () => {
   assert.equal(appSource.includes("collapsedGroups.delete(groupId)"), true);
 });
 
+test("guards outline collapse when no document is selected", () => {
+  const applyOutlineCollapse = appSource.match(/function applyOutlineCollapse\(level\) \{[\s\S]*?\n\}/)?.[0] || "";
+
+  assert.equal(applyOutlineCollapse.includes("function applyOutlineCollapse(level) {\n  if (!state.selectedPath) return;"), true);
+});
+
+test("refreshes only the outline after batch collapse", () => {
+  const applyOutlineCollapse = appSource.match(/function applyOutlineCollapse\(level\) \{[\s\S]*?\n\}/)?.[0] || "";
+  const refreshOutlineView = appSource.match(/function refreshOutlineView\(\) \{[\s\S]*?\n\}/)?.[0] || "";
+
+  assert.equal(applyOutlineCollapse.includes("refreshOutlineView();"), true);
+  assert.equal(applyOutlineCollapse.includes("render();"), false);
+  assert.equal(refreshOutlineView.includes('document.querySelector(".outline-section")'), true);
+  assert.equal(refreshOutlineView.includes("outline.innerHTML"), true);
+  assert.equal(refreshOutlineView.includes("render();"), false);
+});
+
 test("lets collapsed outline groups override the default visible group rule", () => {
   assert.equal(styles.includes(".tree .outline-group--collapsed {\n  display: none;"), true);
 });
 
-test("keeps Mermaid and mind map blocks extended beyond editor content column", () => {
+test("adds independent outline collapse controls to the Paragraph menu", () => {
+  const paragraphMenu = appSource.match(/\["段落", \[[\s\S]+?\]\],\r?\n    \["格式"/)?.[0] || "";
+
+  assert.equal(paragraphMenu.includes('menuSubmenu("折叠大纲"'), true);
+  [
+    "outline-collapse-1",
+    "outline-collapse-2",
+    "outline-collapse-3",
+    "outline-collapse-4",
+    "outline-collapse-5",
+    "outline-expand-all",
+  ].forEach((command) => assert.equal(paragraphMenu.includes(`menuItem("${command}"`), true));
+});
+
+test("keeps Mermaid and mind map blocks within the editor content column", () => {
   for (const selector of [".ProseMirror .mermaid-diagram", ".ProseMirror .mindmap-diagram"]) {
     const escapedSelector = selector.replaceAll(".", "\\.");
-    const rule = styles.match(new RegExp(`${escapedSelector}\\s*\\{[^}]+\\}`))?.[0] || "";
+    const rule = editorStyles.match(new RegExp(`${escapedSelector}\\s*\\{[^}]+\\}`))?.[0] || "";
 
-    assert.equal(rule.includes("width: calc(100% + 96px);"), true);
-    assert.equal(rule.includes("margin: 18px -48px;"), true);
-    assert.equal(rule.includes("overflow: visible;"), true);
+    assert.equal(rule.includes("width: 100%;"), true);
+    assert.equal(rule.includes("margin: 18px 0;"), true);
+    assert.equal(rule.includes("user-select: none;"), true);
   }
 });
 
@@ -175,18 +211,16 @@ test("preserves custom Mermaid zoom values in the editor scale selector", () => 
 
 test("keeps the image scale dialog input at a usable size", () => {
   const imageSizeModalMarkup = modalSource.match(/function openImageSizeModal[\s\S]+?function openTextInputModal/)?.[0] || "";
-  const scaleControlRule = styles.match(/\.image-size-modal \.image-modal__scale-control\s*\{[^}]+\}/)?.[0] || "";
-  const scaleInputRule = styles.match(/\.image-size-modal \[data-image-scale\]\s*\{[^}]+\}/)?.[0] || "";
-  const scaleBodyRule = styles.match(/\.image-size-modal__body\s*\{[^}]+\}/)?.[0] || "";
-  const stackedFieldRule = styles.match(/\.image-size-modal \.image-size-field--stacked\s*\{[^}]+\}/)?.[0] || "";
+  const scaleInputRule = modalStyles.match(/\.image-size-modal \[data-image-scale\]\s*\{[^}]+\}/)?.[0] || "";
+  const scaleBodyRule = modalStyles.match(/\.image-size-modal__body\s*\{[^}]+\}/)?.[0] || "";
+  const scaleLabelRule = modalStyles.match(/\.image-size-modal__body label\s*\{[^}]+\}/)?.[0] || "";
 
   assert.equal(imageSizeModalMarkup.includes('class="image-size-modal__body"'), true);
-  assert.equal(scaleBodyRule.includes("display: grid;"), true);
-  assert.equal(stackedFieldRule.includes("align-items: start;"), true);
-  assert.equal(scaleControlRule.includes("width: 180px;"), true);
-  assert.equal(scaleControlRule.includes("grid-template-columns: minmax(96px, 1fr) auto;"), true);
-  assert.equal(scaleInputRule.includes("width: 120px;"), true);
-  assert.equal(scaleInputRule.includes("min-height: 36px;"), true);
+  assert.equal(scaleBodyRule.includes("display: flex;"), true);
+  assert.equal(scaleBodyRule.includes("align-items: center;"), true);
+  assert.equal(scaleLabelRule.includes("display: flex;"), true);
+  assert.equal(scaleInputRule.includes("width: 100px;"), true);
+  assert.equal(scaleInputRule.includes("min-height: 32px;"), true);
 });
 
 test("inserts paragraphs around selected block nodes instead of raw cursor offsets", () => {
@@ -197,9 +231,11 @@ test("inserts paragraphs around selected block nodes instead of raw cursor offse
 });
 
 test("renders a visual hero welcome page with markdown file actions", () => {
-  assert.equal(styles.includes("url(\"./assets/pme-hero.png\")"), true);
-  assert.equal(styles.includes(".welcome-hero__actions"), true);
-  assert.equal(styles.includes(".hero-button--primary"), true);
+  assert.equal(welcomeStyles.includes(".welcome__video"), true);
+  assert.equal(welcomeStyles.includes(".welcome-hero__actions"), true);
+  assert.equal(welcomeStyles.includes(".hero-button--primary"), true);
+  assert.equal(appSource.includes('<video class="welcome__video"'), true);
+  assert.equal(appSource.includes('<source src="/assets/hero.mp4"'), true);
   assert.equal(appSource.includes('data-action="open-markdown-file"'), true);
   assert.equal(appSource.includes('data-action="open-folder"'), false);
   assert.equal(appSource.includes("createStandaloneMarkdownDocument"), true);
@@ -213,7 +249,7 @@ test("starts new markdown files without requiring a project directory", () => {
 });
 
 test("keeps recent file menu inside the welcome viewport", () => {
-  const recentPanelRule = styles.match(/\.recent-menu__panel\s*\{[^}]+\}/)?.[0] || "";
+  const recentPanelRule = welcomeStyles.match(/\.recent-menu__panel\s*\{[^}]+\}/)?.[0] || "";
 
   assert.equal(recentPanelRule.includes("bottom: calc(100% + 10px);"), true);
   assert.equal(recentPanelRule.includes("max-height: min(320px, calc(100dvh - 160px));"), true);
@@ -239,6 +275,42 @@ test("uses a Typora-like contextual toolbar for table editing", () => {
   assert.equal(appSource.includes("globalThis.Node.ELEMENT_NODE"), true);
   assert.equal(styles.includes(".table-bubble__main"), true);
   assert.equal(styles.includes(".table-bubble.is-menu-open .table-bubble__menu"), true);
+});
+
+test("exposes one button for each heading level in the top Text group", () => {
+  const textGroupMarker = appSource.match(/<div class="tool-group">\r?\n\s*<span>文本<\/span>/);
+  const textGroupStart = textGroupMarker?.index ?? -1;
+  const alignGroupMarker = appSource.match(/<div class="tool-group">\r?\n\s*<span>对齐<\/span>/g)?.[0];
+  const alignGroupStart = alignGroupMarker ? appSource.indexOf(alignGroupMarker, textGroupStart) : -1;
+  const textGroup = appSource.slice(textGroupStart, alignGroupStart);
+
+  assert.equal(textGroupStart >= 0, true);
+  assert.equal(alignGroupStart > textGroupStart, true);
+  for (let level = 1; level <= 6; level += 1) {
+    const command = `toolButton("heading-${level}"`;
+    assert.equal(textGroup.split(command).length - 1, 1);
+  }
+
+  const headingSixIndex = textGroup.indexOf('toolButton("heading-6"');
+  const paragraphIndex = textGroup.indexOf('toolButton("paragraph"');
+  const collapseIndex = textGroup.indexOf('data-command="heading-collapse"');
+
+  assert.equal(paragraphIndex >= 0, true);
+  assert.equal(collapseIndex >= 0, true);
+  assert.equal(paragraphIndex > headingSixIndex, true);
+  assert.equal(collapseIndex > headingSixIndex, true);
+});
+
+test("exposes block formatting controls in the floating toolbar", () => {
+  const bubbleMenuStart = appSource.indexOf("function renderBubbleMenu()");
+  const bubbleMenuEnd = appSource.indexOf("function updateTableBubbleToolbar", bubbleMenuStart);
+  const bubbleMenu = appSource.slice(bubbleMenuStart, bubbleMenuEnd);
+
+  assert.equal(bubbleMenu.includes('toolButton("bullet-list", "List"'), true);
+  assert.equal(bubbleMenu.includes('toolButton("ordered-list", "ListOrdered"'), true);
+  assert.equal(bubbleMenu.includes('toolButton("task-list", "ListChecks"'), true);
+  assert.equal(bubbleMenu.includes('toolButton("blockquote", "Quote"'), true);
+  assert.equal(bubbleMenu.includes('class="bubble-menu__separator"'), true);
 });
 
 test("expands the app menus with Typora-inspired usable commands", () => {
@@ -280,6 +352,16 @@ test("supports menu-driven view toggles and editor zoom", () => {
   assert.equal(proseMirrorRule.includes("font-size: calc("), false);
   assert.equal(sourceEditorRule.includes("zoom: var(--editor-zoom);"), true);
   assert.equal(sourceEditorRule.includes("font: calc("), false);
+});
+
+test("shows an editor-scoped table column resize handle", () => {
+  const handleRule = editorStyles.match(/\.ProseMirror \.column-resize-handle\s*\{[^}]+\}/)?.[0] || "";
+  const cursorRule = editorStyles.match(/\.ProseMirror\.resize-cursor\s*\{[^}]+\}/)?.[0] || "";
+
+  assert.equal(handleRule.includes("position: absolute;"), true);
+  assert.equal(handleRule.includes("cursor: col-resize;"), true);
+  assert.equal(handleRule.includes("width: 4px;"), true);
+  assert.equal(cursorRule.includes("cursor: col-resize;"), true);
 });
 
 test("applies selected editor fonts with English first and code isolated", () => {
@@ -329,14 +411,45 @@ test("matches native cursor contrast to the active app theme", () => {
 test("uses synchronous clipboardData for editor copy events", () => {
   const copyHandler = appSource.match(/async function handleCopy\(event\)[\s\S]+?async function handleEditorClick/)?.[0] || "";
   const selectionSerializer = appSource.match(/function serializeEditorSelection\(selection, state\)[\s\S]+?async function handleEditorClick/)?.[0] || "";
+  const cutHandler = appSource.match(/async function handleCut\(event\)[\s\S]+?function handlePasteShortcut/)?.[0] || "";
+  const menuCutHandler = appSource.match(/async function cutEditorSelectionAsMarkdown\(\)[\s\S]+?async function pasteMarkdown/)?.[0] || "";
 
   assert.equal(copyHandler.includes("event.clipboardData"), true);
   assert.equal(copyHandler.includes('event.clipboardData.setData("text/plain", markdown);'), true);
   assert.equal(copyHandler.includes("event.preventDefault();"), true);
   assert.equal(copyHandler.includes("navigator.clipboard.writeText(markdown);"), true);
   assert.equal(copyHandler.includes("serializeEditorSelection(selection, editor.state)"), true);
+  assert.equal(copyHandler.includes("getNativeEditorSelectionRange()"), true);
+  assert.equal(
+    copyHandler.indexOf("getNativeEditorSelectionRange()") < copyHandler.indexOf("selection.empty"),
+    true,
+  );
   assert.equal(selectionSerializer.includes("parent?.type?.inlineContent"), true);
   assert.equal(selectionSerializer.includes("type: parent.type.name"), true);
+  assert.equal(selectionSerializer.includes("function getNativeEditorSelectedText()"), true);
+  assert.equal(selectionSerializer.includes("selection.anchorNode"), true);
+  assert.equal(selectionSerializer.includes("selection.focusNode"), true);
+  assert.equal(selectionSerializer.includes("function getNativeEditorSelectionRange()"), true);
+  assert.equal(selectionSerializer.includes("editor.view.posAtDOM"), true);
+  assert.equal(selectionSerializer.includes("function deleteEditorSelectionRange(range)"), true);
+  assert.equal(cutHandler.includes("getNativeEditorSelectionRange()"), true);
+  assert.equal(cutHandler.includes('event.clipboardData.setData("text/plain", markdown);'), true);
+  assert.equal(cutHandler.includes("deleteEditorSelectionRange(nativeSelection);"), true);
+  assert.equal(
+    cutHandler.indexOf("getNativeEditorSelectionRange()") < cutHandler.indexOf("selection.empty"),
+    true,
+  );
+  assert.equal(menuCutHandler.includes("serializeEditorSelection(selection, editor.state)"), true);
+  assert.equal(menuCutHandler.includes("deleteEditorSelectionRange(nativeSelection);"), true);
+});
+
+test("exposes explicit plain-text copy and cut commands", () => {
+  assert.equal(appSource.includes('menuItem("copy-plain", "无格式复制", "Ctrl+Shift+C")'), true);
+  assert.equal(appSource.includes('menuItem("cut-plain", "无格式剪切", "Ctrl+Shift+X")'), true);
+  assert.equal(appSource.includes('command === "copy-plain"'), true);
+  assert.equal(appSource.includes('command === "cut-plain"'), true);
+  assert.equal(appSource.includes("copyEditorSelectionAsPlainText()"), true);
+  assert.equal(appSource.includes("cutEditorSelectionAsPlainText()"), true);
 });
 
 test("preserves document scroll position across tab switches and saves", () => {

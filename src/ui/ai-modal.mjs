@@ -32,6 +32,29 @@ const DOC_TEMPLATES = [
 ];
 
 const DEFAULT_ACTION_IDS = ["polish", "shorten", "expand", "formalize", "casualize", "translate", "summary", "continue", "template", "table"];
+const DEFAULT_FINAL_OUTPUT_INSTRUCTION = "只输出可直接使用的最终结果。不要输出分析、解释、修改说明、前导语、总结、字数统计或代码围栏。";
+
+function buildDefaultActionPrompt(action, text, options) {
+  if (["polish", "shorten", "expand", "formalize", "casualize"].includes(action)) {
+    return buildPolishPrompt(text, action);
+  }
+  if (action === "translate") {
+    return buildTranslatePrompt(text, options.targetLang);
+  }
+  if (action === "summary") {
+    return buildSummaryPrompt(text, options.summaryLength);
+  }
+  if (action === "continue") {
+    return buildContinuePrompt(text, options.continueLength);
+  }
+  if (action === "template") {
+    return buildTemplatePrompt(options.selectedTemplate, text);
+  }
+  if (action === "table") {
+    return buildTablePrompt(text, "convert");
+  }
+  return "";
+}
 
 export function openAiModal({ title = "AI 助手", selectedText = "", editor = null } = {}) {
   return new Promise((resolve) => {
@@ -323,26 +346,28 @@ export function openAiModal({ title = "AI 助手", selectedText = "", editor = n
         let prompt;
         const customAction = aiActions.find(a => a.id === currentAction);
         
+        const defaultPrompt = buildDefaultActionPrompt(currentAction, text, {
+          targetLang,
+          summaryLength,
+          continueLength,
+          selectedTemplate,
+        });
+
         if (currentAction === "custom") {
           prompt = text ? `${text}\n\n用户指令：${command}` : command;
-        } else if (customAction && customAction.prompt) {
+        } else if (defaultPrompt) {
+          prompt = defaultPrompt;
+        } else if (customAction?.id.startsWith("custom_") && customAction.prompt) {
           prompt = customAction.prompt.replace(/\{\{text\}\}/g, text);
-        } else if (currentAction === "translate") {
-          prompt = buildTranslatePrompt(text, targetLang);
-        } else if (currentAction === "summary") {
-          prompt = buildSummaryPrompt(text, summaryLength);
-        } else if (currentAction === "continue") {
-          prompt = buildContinuePrompt(text, continueLength);
-        } else if (currentAction === "template") {
-          prompt = buildTemplatePrompt(selectedTemplate, text);
-        } else if (currentAction === "table") {
-          prompt = buildTablePrompt(text, "convert");
         } else {
           prompt = buildPolishPrompt(text, currentAction);
         }
         
         if (command && currentAction !== "custom") {
           prompt += `\n\n额外要求：${command}`;
+        }
+        if (DEFAULT_ACTION_IDS.includes(currentAction)) {
+          prompt += `\n\n${DEFAULT_FINAL_OUTPUT_INSTRUCTION}`;
         }
         
         await generateText(prompt, (chunk) => {

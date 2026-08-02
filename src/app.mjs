@@ -5,7 +5,7 @@ import { NodeSelection, TextSelection } from "@tiptap/pm/state";
 import helpManualMarkdown from "./assets/PME使用说明书.md?raw";
 import { Footnote } from "./core/footnote-extension.mjs";
 import { TableOfContents } from "./core/toc-extension.mjs";
-import { CustomOrderedList, CustomListItem } from "./core/ordered-list-extension.mjs";
+import { CustomBulletList, CustomOrderedList, CustomListItem } from "./core/ordered-list-extension.mjs";
 import "katex/dist/katex.min.css";
 import { common, createLowlight } from "lowlight";
 import {
@@ -25,6 +25,9 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Heading4,
+  Heading5,
+  Heading6,
   Image as ImageIcon,
   Italic,
   Link,
@@ -74,7 +77,7 @@ import { isTauriRuntime } from "./core/tauri-workspace.mjs";
 import { createWorkspaceAdapter } from "./core/workspace-adapter.mjs";
 import { hydrateImagePreviews, parseMarkdown, serializeMarkdown } from "./core/markdown.mjs";
 import { parseMarkdownHeadingShortcut } from "./core/markdown-shortcuts.mjs";
-import { extractOutline } from "./core/outline.mjs";
+import { collapseOutlineAtLevel, extractOutline } from "./core/outline.mjs";
 import { findTextMatches, isIgnoredSearchElementName } from "./core/search.mjs";
 import { getAppShortcutCommand } from "./core/shortcuts.mjs";
 import {
@@ -131,6 +134,8 @@ import { insertParagraphAroundSelection } from "./editor/paragraph-actions.mjs";
 import { runEditorCommand as runEditorCommandWithContext } from "./editor/editor-command-runner.mjs";
 import { getClipboardHtmlImageUrl, getImageIntrinsicWidth, getVideoIntrinsicWidth } from "./editor/image-input.mjs";
 import { createEditorExtensions } from "./editor/editor-extensions.mjs";
+import { clipboardContentToFragments, clipboardFragmentsToDocument } from "./editor/clipboard-table.mjs";
+import { updateSourceTextForTab } from "./editor/editor-tab.mjs";
 import { headingCollapsePlugin } from "./editor/heading-collapse.mjs";
 import { AlignedTableCell, AlignedTableHeader, AssetImage, ParagraphWithIndent } from "./editor/custom-nodes.mjs";
 import { MermaidDiagram, renderMermaidStaticSvg } from "./editor/mermaid-node.mjs";
@@ -210,6 +215,9 @@ const lucideIcons = {
   Heading1,
   Heading2,
   Heading3,
+  Heading4,
+  Heading5,
+  Heading6,
   Image: ImageIcon,
   Italic,
   Link,
@@ -555,6 +563,9 @@ function renderShell() {
           ${toolButton("heading-1", "Heading1", "一级标题")}
           ${toolButton("heading-2", "Heading2", "二级标题")}
           ${toolButton("heading-3", "Heading3", "三级标题")}
+          ${toolButton("heading-4", "Heading4", "四级标题")}
+          ${toolButton("heading-5", "Heading5", "五级标题")}
+          ${toolButton("heading-6", "Heading6", "六级标题")}
           ${toolButton("paragraph", "Pilcrow", "正文")}
           <button class="icon-button" data-command="heading-collapse" title="折叠标题" aria-label="折叠标题">
             <svg viewBox="0 0 1024 1024" width="18" height="18" fill="currentColor" aria-hidden="true">
@@ -715,6 +726,8 @@ function renderAppMenu() {
       menuSeparator(),
       menuItem("cut", "剪切", "Ctrl+X"),
       menuItem("copy", "复制", "Ctrl+C"),
+      menuItem("cut-plain", "无格式剪切", "Ctrl+Shift+X"),
+      menuItem("copy-plain", "无格式复制", "Ctrl+Shift+C"),
       menuItem("paste", "粘贴", "Ctrl+V"),
       menuItem("paste-plain", "粘贴纯文本", "Ctrl+Shift+V"),
       menuSeparator(),
@@ -766,6 +779,14 @@ function renderAppMenu() {
       menuSubmenu("缩进", [
         menuItem("indent-more", "增加缩进", "Ctrl+]"),
         menuItem("indent-less", "减少缩进", "Ctrl+["),
+      ]),
+      menuSubmenu("折叠大纲", [
+        menuItem("outline-collapse-1", "H1"),
+        menuItem("outline-collapse-2", "H2"),
+        menuItem("outline-collapse-3", "H3"),
+        menuItem("outline-collapse-4", "H4"),
+        menuItem("outline-collapse-5", "H5"),
+        menuItem("outline-expand-all", "全部展开"),
       ]),
       menuSeparator(),
       menuItem("insert-paragraph-above", "在上方插入段落"),
@@ -1145,6 +1166,7 @@ function bindEvents() {
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleEditorClick, { capture: true });
   document.querySelector(".editor")?.addEventListener("scroll", () => updateTableBubbleToolbar());
   document.querySelector(".source-editor")?.addEventListener("input", handleSourceInput);
+  document.querySelector(".source-editor")?.addEventListener("keydown", handleSourceTab);
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleMathClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleMermaidClick, { capture: true });
   document.querySelector("#tiptapEditor")?.addEventListener("click", handleSvgClick, { capture: true });
@@ -1310,6 +1332,7 @@ async function runMenuCommand(command) {
       selectCurrentDocument,
       render,
       setEditorZoom,
+      applyOutlineCollapse,
       openMessageModal,
       runEditorCommand,
       openSettingsModal,
@@ -1368,6 +1391,16 @@ async function runClipboardMenuCommand(command) {
     return;
   }
 
+  if (command === "copy-plain") {
+    await copyEditorSelectionAsPlainText();
+    return;
+  }
+
+  if (command === "cut-plain") {
+    await cutEditorSelectionAsPlainText();
+    return;
+  }
+
   if (command === "paste") {
     await pasteMarkdown();
     return;
@@ -1399,7 +1432,10 @@ async function copyEditorSelectionAsMarkdown() {
 
   if (!editor) return;
 
-  const { selection } = editor.state;
+  const nativeSelection = getNativeEditorSelectionRange();
+  const selection = nativeSelection
+    ? TextSelection.create(editor.state.doc, nativeSelection.from, nativeSelection.to)
+    : editor.state.selection;
   if (selection.empty) return;
 
   const markdown = serializeEditorSelection(selection, editor.state);
@@ -1423,12 +1459,71 @@ async function cutEditorSelectionAsMarkdown() {
 
   if (!editor) return;
 
-  const { selection } = editor.state;
+  const nativeSelection = getNativeEditorSelectionRange();
+  const selection = nativeSelection
+    ? TextSelection.create(editor.state.doc, nativeSelection.from, nativeSelection.to)
+    : editor.state.selection;
   if (selection.empty) return;
 
   const markdown = serializeEditorSelection(selection, editor.state);
   await navigator.clipboard.writeText(markdown);
-  editor.chain().focus().deleteSelection().run();
+  if (nativeSelection) {
+    deleteEditorSelectionRange(nativeSelection);
+  } else {
+    editor.chain().focus().deleteSelection().run();
+  }
+}
+
+async function copyEditorSelectionAsPlainText() {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    const selectedText = sourceEditor.value.substring(sourceEditor.selectionStart, sourceEditor.selectionEnd);
+    if (selectedText) {
+      await navigator.clipboard.writeText(stripMarkdownFormatting(selectedText));
+    }
+    return;
+  }
+
+  if (!editor) return;
+
+  const nativeSelection = getNativeEditorSelectionRange();
+  const selection = editor.state.selection;
+  const plainText = nativeSelection?.text
+    || (!selection.empty ? editor.state.doc.textBetween(selection.from, selection.to, "\n") : "");
+  if (plainText) {
+    await navigator.clipboard.writeText(plainText);
+  }
+}
+
+async function cutEditorSelectionAsPlainText() {
+  const sourceEditor = document.querySelector(".source-editor");
+  if (sourceEditor) {
+    const start = sourceEditor.selectionStart;
+    const end = sourceEditor.selectionEnd;
+    const selectedText = sourceEditor.value.substring(start, end);
+    if (selectedText) {
+      await navigator.clipboard.writeText(stripMarkdownFormatting(selectedText));
+      sourceEditor.value = sourceEditor.value.substring(0, start) + sourceEditor.value.substring(end);
+      sourceEditor.setSelectionRange(start, start);
+      handleSourceInput({ target: sourceEditor });
+    }
+    return;
+  }
+
+  if (!editor) return;
+
+  const nativeSelection = getNativeEditorSelectionRange();
+  const selection = editor.state.selection;
+  const plainText = nativeSelection?.text
+    || (!selection.empty ? editor.state.doc.textBetween(selection.from, selection.to, "\n") : "");
+  if (!plainText) return;
+
+  await navigator.clipboard.writeText(plainText);
+  if (nativeSelection) {
+    deleteEditorSelectionRange(nativeSelection);
+  } else {
+    editor.chain().focus().deleteSelection().run();
+  }
 }
 
 async function pasteMarkdown() {
@@ -1596,6 +1691,23 @@ function handleSourceInput(event) {
   refreshEditorMetadata();
   refreshOutlineView();
   updateFindState(state.searchQuery, true);
+}
+
+function handleSourceTab(event) {
+  if (event.key !== "Tab" || event.ctrlKey || event.metaKey || event.altKey) {
+    return;
+  }
+
+  event.preventDefault();
+  const result = updateSourceTextForTab(
+    event.target.value,
+    event.target.selectionStart,
+    event.target.selectionEnd,
+    event.shiftKey,
+  );
+  event.target.value = result.value;
+  event.target.setSelectionRange(result.selectionStart, result.selectionEnd);
+  handleSourceInput(event);
 }
 
 function getSourceText(path) {
@@ -2799,6 +2911,17 @@ function getCurrentOutline() {
   return extractOutline(getCurrentDocument());
 }
 
+function applyOutlineCollapse(level) {
+  if (!state.selectedPath) return;
+
+  state.collapsedOutlineGroups[state.selectedPath] = collapseOutlineAtLevel(
+    getCurrentOutline(),
+    state.collapsedOutlineGroups[state.selectedPath] || new Set(),
+    level,
+  );
+  refreshOutlineView();
+}
+
 function getDocumentText() {
   if (!state.selectedPath) {
     return "";
@@ -2917,6 +3040,7 @@ function mountEditor() {
     element,
     extensions: createEditorExtensions({
       paragraphWithIndent: ParagraphWithIndent,
+      customBulletList: CustomBulletList,
       customOrderedList: CustomOrderedList,
       customListItem: CustomListItem,
       delayedHeading: DelayedHeading,
@@ -3038,6 +3162,11 @@ function renderBubbleMenu() {
     toolButton("highlight-color", "Highlighter", "高亮"),
     '<span class="bubble-menu__separator"></span>',
     toolButton("link", "Link", "链接"),
+    '<span class="bubble-menu__separator"></span>',
+    toolButton("bullet-list", "List", "无序列表"),
+    toolButton("ordered-list", "ListOrdered", "有序列表"),
+    toolButton("task-list", "ListChecks", "任务列表"),
+    toolButton("blockquote", "Quote", "引用"),
     '<span class="bubble-menu__separator"></span>',
     '<button class="icon-button ai-magic-button" data-action="open-ai-assistant" title="AI 助手" aria-label="AI 助手">',
     icon("Wand2"),
@@ -5029,6 +5158,27 @@ async function handlePaste(event) {
   }
 
   const text = event.clipboardData?.getData("text/plain");
+  const isStructuredTextTarget = !editor.isActive("table")
+    && !editor.isActive("codeBlock")
+    && !editor.isActive("mermaidDiagram")
+    && !editor.isActive("svgDiagram")
+    && !editor.isActive("blockMath");
+  const clipboardFragments = !pastePlainTextMode && isStructuredTextTarget
+    ? clipboardContentToFragments({
+      html: event.clipboardData?.getData("text/html") || "",
+      text: text || "",
+    })
+    : [];
+  const clipboardDocument = clipboardFragmentsToDocument(clipboardFragments, parseMarkdown);
+  if (clipboardDocument.length) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    pastePlainTextMode = false;
+    editor.chain().focus().insertContent(clipboardDocument).run();
+    return;
+  }
+
   if (text) {
     event.preventDefault();
     event.stopPropagation();
@@ -5069,7 +5219,10 @@ async function handleCopy(event) {
 
   if (!editor) return;
 
-  const { selection } = editor.state;
+  const nativeSelection = getNativeEditorSelectionRange();
+  const selection = nativeSelection
+    ? TextSelection.create(editor.state.doc, nativeSelection.from, nativeSelection.to)
+    : editor.state.selection;
   if (selection.empty) return;
 
   const markdown = serializeEditorSelection(selection, editor.state);
@@ -5106,6 +5259,53 @@ function serializeEditorSelection(selection, state) {
   }
 
   return serializeMarkdown(json);
+}
+
+function getNativeEditorSelectedText() {
+  const editorElement = document.querySelector("#tiptapEditor");
+  const selection = window.getSelection?.();
+  if (!editorElement || !selection || selection.isCollapsed) {
+    return "";
+  }
+
+  const anchorNode = selection.anchorNode;
+  const focusNode = selection.focusNode;
+  if (!anchorNode || !focusNode) {
+    return "";
+  }
+
+  if (!editorElement.contains(anchorNode) || !editorElement.contains(focusNode)) {
+    return "";
+  }
+
+  return selection.toString();
+}
+
+function getNativeEditorSelectionRange() {
+  const selection = window.getSelection?.();
+  const text = getNativeEditorSelectedText();
+  const anchorNode = selection?.anchorNode;
+  const focusNode = selection?.focusNode;
+  if (!text || !anchorNode || !focusNode) {
+    return null;
+  }
+
+  try {
+    const anchor = editor.view.posAtDOM(anchorNode, selection.anchorOffset);
+    const focus = editor.view.posAtDOM(focusNode, selection.focusOffset);
+    const from = Math.min(anchor, focus);
+    const to = Math.max(anchor, focus);
+    return from < to ? { text, from, to } : null;
+  } catch {
+    return null;
+  }
+}
+
+function deleteEditorSelectionRange(range) {
+  const textSelection = TextSelection.create(editor.state.doc, range.from, range.to);
+  const transaction = editor.state.tr.setSelection(textSelection).deleteSelection();
+  editor.view.dispatch(transaction.scrollIntoView());
+  editor.view.focus();
 }
 
 async function handleEditorClick(event) {
@@ -5148,15 +5348,24 @@ async function handleCut(event) {
 
   if (!editor) return;
 
-  const { selection } = editor.state;
+  const nativeSelection = getNativeEditorSelectionRange();
+  const selection = nativeSelection
+    ? TextSelection.create(editor.state.doc, nativeSelection.from, nativeSelection.to)
+    : editor.state.selection;
   if (selection.empty) return;
 
   event.preventDefault();
-  const slice = editor.state.doc.slice(selection.from, selection.to);
-  const json = slice.toJSON();
-  const markdown = serializeMarkdown(json);
-  await navigator.clipboard.writeText(markdown);
-  editor.chain().focus().deleteSelection().run();
+  const markdown = serializeEditorSelection(selection, editor.state);
+  if (event.clipboardData) {
+    event.clipboardData.setData("text/plain", markdown);
+  } else {
+    await navigator.clipboard.writeText(markdown);
+  }
+  if (nativeSelection) {
+    deleteEditorSelectionRange(nativeSelection);
+  } else {
+    editor.chain().focus().deleteSelection().run();
+  }
 }
 
 function handlePasteShortcut(event) {

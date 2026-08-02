@@ -30,6 +30,7 @@ function createContext(overrides = {}) {
     selectCurrentDocument: () => calls.push("select-all"),
     render: () => calls.push("render"),
     setEditorZoom: (zoom) => calls.push(`zoom:${zoom.toFixed(1)}`),
+    applyOutlineCollapse: (level) => calls.push(`outline:${level}`),
     runEditorCommand: (command) => calls.push(`editor:${command}`),
     document: {
       execCommand: (command) => {
@@ -121,11 +122,13 @@ test("returns async save and open command work so callers can await errors", asy
 test("dispatches clipboard and selection commands", () => {
   const context = createContext();
 
-  ["cut", "copy", "paste", "select-all"].forEach((command) => runAppCommand(command, context));
+  ["cut", "copy", "cut-plain", "copy-plain", "paste", "select-all"].forEach((command) => runAppCommand(command, context));
 
   assert.deepEqual(context.calls, [
     "clipboard:cut",
     "clipboard:copy",
+    "clipboard:cut-plain",
+    "clipboard:copy-plain",
     "clipboard:paste",
     "select-all",
   ]);
@@ -178,6 +181,28 @@ test("toggles view state and renders", () => {
   assert.equal(context.state.showFileTree, true);
   assert.equal(context.state.showStatusbar, false);
   assert.deepEqual(context.calls, ["render", "render", "render", "render"]);
+});
+
+test("dispatches outline collapse commands without using editor commands", () => {
+  const context = createContext();
+
+  [
+    "outline-collapse-1",
+    "outline-collapse-2",
+    "outline-collapse-3",
+    "outline-collapse-4",
+    "outline-collapse-5",
+    "outline-expand-all",
+  ].forEach((command) => runAppCommand(command, context));
+
+  assert.deepEqual(context.calls, [
+    "outline:1",
+    "outline:2",
+    "outline:3",
+    "outline:4",
+    "outline:5",
+    "outline:null",
+  ]);
 });
 
 test("dispatches zoom search about and unknown editor commands", () => {

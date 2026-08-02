@@ -13,7 +13,7 @@ test("parses headings and paragraphs into the document model", () => {
     content: [
       {
         type: "heading",
-        attrs: { level: 1 },
+        attrs: { level: 1, collapsed: false },
         content: [{ type: "text", text: "Title" }],
       },
       {
@@ -58,7 +58,7 @@ test("parses bullet lists, blockquotes, code blocks, and images", () => {
       },
       {
         type: "blockquote",
-        content: [{ type: "text", text: "Note" }],
+        content: [{ type: "paragraph", content: [{ type: "text", text: "Note" }] }],
       },
       {
         type: "codeBlock",
@@ -327,6 +327,117 @@ test("parses and serializes mermaid diagrams", () => {
 
   assert.deepEqual(parseMarkdown(markdown), doc);
   assert.equal(serializeMarkdown(doc), `${markdown}\n`);
+});
+
+test("round trips persisted table column widths", () => {
+  const document = {
+    type: "doc",
+    content: [{
+      type: "table",
+      content: [
+        {
+          type: "tableRow",
+          content: [
+            { type: "tableHeader", attrs: { colwidth: [180] }, content: [{ type: "paragraph", content: [{ type: "text", text: "Name" }] }] },
+            { type: "tableHeader", attrs: { colwidth: [320] }, content: [{ type: "paragraph", content: [{ type: "text", text: "Description" }] }] },
+          ],
+        },
+        {
+          type: "tableRow",
+          content: [
+            { type: "tableCell", attrs: { colwidth: [180] }, content: [{ type: "paragraph", content: [{ type: "text", text: "A" }] }] },
+            { type: "tableCell", attrs: { colwidth: [320] }, content: [{ type: "paragraph", content: [{ type: "text", text: "Text" }] }] },
+          ],
+        },
+      ],
+    }],
+  };
+
+  const markdown = serializeMarkdown(document);
+
+  assert.equal(markdown, [
+    "<!-- pme-table-widths: 180,320 -->",
+    "| Name | Description |",
+    "| ---- | ---- |",
+    "| A | Text |",
+    "",
+  ].join("\n"));
+  assert.deepEqual(parseMarkdown(markdown), document);
+});
+
+test("ignores invalid or mismatched table width metadata", () => {
+  for (const metadata of ["180,nope", "180,320,140"]) {
+    const document = parseMarkdown([
+      `<!-- pme-table-widths: ${metadata} -->`,
+      "| Name | Description |",
+      "| ---- | ---- |",
+      "| A | Text |",
+    ].join("\n"));
+
+    assert.equal(document.content.length, 1);
+    assert.equal(document.content[0].type, "table");
+    assert.equal(document.content[0].content[0].content[0].attrs, undefined);
+  }
+});
+
+test("round trips visual paragraph indentation", () => {
+  const document = {
+    type: "doc",
+    content: [
+      {
+        type: "paragraph",
+        attrs: { indent: 2 },
+        content: [{ type: "text", text: "Indented text" }],
+      },
+      {
+        type: "paragraph",
+        content: [{ type: "text", text: "Regular text" }],
+      },
+    ],
+  };
+
+  const markdown = serializeMarkdown(document);
+
+  assert.equal(markdown, "<!-- pme-indent: 2 -->\nIndented text\n\nRegular text\n");
+  assert.deepEqual(parseMarkdown(markdown), document);
+});
+
+test("parses and serializes nested bullet and ordered lists", () => {
+  const markdown = [
+    "- Parent",
+    "  - Child",
+    "",
+    "1. First",
+    "  1. Nested",
+    "2. Second",
+  ].join("\n");
+
+  const document = parseMarkdown(markdown);
+
+  assert.equal(document.content[0].type, "bulletList");
+  assert.equal(document.content[0].content[0].content[1].type, "bulletList");
+  assert.equal(document.content[1].type, "orderedList");
+  assert.equal(document.content[1].content[0].content[1].type, "orderedList");
+  assert.equal(serializeMarkdown(document), `${markdown}\n`);
+});
+
+test("round trips whole-list indentation", () => {
+  const document = {
+    type: "doc",
+    content: [{
+      type: "bulletList",
+      attrs: { indent: 2 },
+      content: [{
+        type: "listItem",
+        content: [{ type: "paragraph", content: [{ type: "text", text: "Only item" }] }],
+      }],
+    }],
+  };
+
+  const markdown = serializeMarkdown(document);
+
+  assert.equal(markdown, "<!-- pme-list-indent: 2 -->\n- Only item\n");
+  assert.deepEqual(parseMarkdown(markdown), document);
 });
 
 test("parses and serializes Mermaid display scale", () => {

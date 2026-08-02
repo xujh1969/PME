@@ -325,6 +325,8 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
       line-height: 1.5;
       vertical-align: top;
       font-family: var(--font-editor);
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     
     th {
@@ -334,7 +336,8 @@ export function buildPdfExportHtml({ title, documentHtml, options }) {
     }
     
     .tableWrapper {
-      overflow-x: auto;
+      max-width: 100%;
+      overflow: hidden;
     }
     
     .mermaid-diagram {

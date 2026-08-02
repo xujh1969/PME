@@ -3,6 +3,7 @@ export function getAppShortcutCommand(event) {
   const code = event.code?.toLowerCase();
   const primary = Boolean(event.ctrlKey || event.metaKey);
   const fromTextInput = isTextInputTarget(event.target);
+  const fromSourceEditor = Boolean(event.target?.matches?.(".source-editor"));
 
   if (primary && key === "s" && event.shiftKey) {
     return "save-as-document";
@@ -21,6 +22,12 @@ export function getAppShortcutCommand(event) {
   }
   if (primary && key === "/") {
     return "source-view";
+  }
+  if (primary && event.shiftKey && key === "c" && (!fromTextInput || fromSourceEditor)) {
+    return "copy-plain";
+  }
+  if (primary && event.shiftKey && key === "x" && (!fromTextInput || fromSourceEditor)) {
+    return "cut-plain";
   }
   if (fromTextInput) {
     return null;
@@ -69,9 +76,6 @@ export function getAppShortcutCommand(event) {
   }
   if (primary && key === "u") {
     return "underline";
-  }
-  if (primary && event.shiftKey && key === "c") {
-    return "text-color";
   }
   if (primary && event.shiftKey && key === "h") {
     return "highlight-color";

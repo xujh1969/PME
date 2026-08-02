@@ -1,4 +1,5 @@
 import { TextSelection } from "@tiptap/pm/state";
+import { handleVisualTab } from "./editor-tab.mjs";
 
 export function runEditorCommand(command, context) {
   if (command === "source-view") {
@@ -36,13 +37,13 @@ export function runEditorCommand(command, context) {
     chain.setTextAlign("justify").run();
   } else if (command === "indent-more") {
     if (editor.isActive("listItem")) {
-      chain.sinkListItem("listItem").run();
+      handleVisualTab(editor, 1);
     } else {
       chain.updateAttributes("paragraph", { indent: Math.min(5, (editor.getAttributes("paragraph").indent || 0) + 1) }).run();
     }
   } else if (command === "indent-less") {
     if (editor.isActive("listItem")) {
-      chain.liftListItem("listItem").run();
+      handleVisualTab(editor, -1);
     } else {
       chain.updateAttributes("paragraph", { indent: Math.max(0, (editor.getAttributes("paragraph").indent || 0) - 1) }).run();
     }

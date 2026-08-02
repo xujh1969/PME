@@ -22,7 +22,7 @@ test("claims local Markdown link clicks before the editor marks content modified
   assert.equal(appSource.includes("event.stopPropagation();"), true);
   assert.equal(appSource.includes("event.stopImmediatePropagation?.();"), true);
   assert.equal(appSource.includes('addEventListener("click", handleDocumentLinkClick, { capture: true })'), true);
-  assert.equal(appSource.includes('addEventListener("pointerdown", handleDocumentLinkPress, { capture: true })'), true);
+  assert.equal(appSource.includes('addEventListener("mousedown", handleDocumentLinkPress, { capture: true })'), true);
   assert.equal(appSource.includes('addEventListener("mousedown", handleDocumentLinkPress, { capture: true })'), true);
   assert.match(appSource, /function claimDocumentLinkPressEvent\(event\)\s*\{\s*event\.preventDefault\(\);/);
   assert.equal(appSource.includes("documentLinkPressTabState"), true);

@@ -53,3 +53,24 @@ test("keeps original remote URLs when HTML package downloads fail", async () => 
   assert.equal(html.includes("blob:image-preview"), false);
   assert.equal(html.includes("blob:video-preview"), false);
 });
+
+test("preserves fixed table column widths with horizontal overflow", async () => {
+  const tableHtml = '<div class="tableWrapper"><table><colgroup><col style="width: 240px"><col style="width: 480px"></colgroup></table></div>';
+  const result = await buildHtmlPackage({
+    doc: { type: "doc", content: [] },
+    documentHtml: tableHtml,
+    documentTitle: "Wide table",
+    imageNodes: [],
+    videoNodes: [],
+    htmlName: "document.html",
+    rootSourcePath: "C:/docs/document.md",
+    loadImageResource: async () => new Blob(),
+  });
+
+  const entries = unzipSync(new Uint8Array(await result.blob.arrayBuffer()));
+  const html = strFromU8(entries["document.html"]);
+  assert.equal(html.includes('style="width: 240px"'), true);
+  assert.equal(html.includes('style="width: 480px"'), true);
+  assert.match(html, /\.tableWrapper\s*\{[^}]*overflow-x:\s*auto;/s);
+  assert.match(html, /table\s*\{[^}]*width:\s*max-content;/s);
+});

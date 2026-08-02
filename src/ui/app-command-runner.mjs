@@ -26,7 +26,7 @@ export function runAppCommand(command, context) {
     return context.openPdfExportModal();
   } else if (command === "close-current-tab") {
     return context.closeDocumentTab(state.selectedPath);
-  } else if (command === "cut" || command === "copy" || command === "paste" || command === "paste-plain") {
+  } else if (["cut", "copy", "cut-plain", "copy-plain", "paste", "paste-plain"].includes(command)) {
     context.runClipboardMenuCommand(command);
   } else if (command === "select-all") {
     context.selectCurrentDocument();
@@ -48,6 +48,13 @@ export function runAppCommand(command, context) {
   } else if (command === "toggle-statusbar") {
     state.showStatusbar = !state.showStatusbar;
     context.render();
+  } else if (command === "outline-expand-all") {
+    context.applyOutlineCollapse(null);
+  } else if (command.startsWith("outline-collapse-")) {
+    const level = Number.parseInt(command.slice("outline-collapse-".length), 10);
+    if (level >= 1 && level <= 5) {
+      context.applyOutlineCollapse(level);
+    }
   } else if (command === "zoom-reset") {
     context.setEditorZoom(1);
   } else if (command === "zoom-in") {

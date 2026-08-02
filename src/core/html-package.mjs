@@ -252,10 +252,16 @@ function buildHtmlExportHtml({ title, documentHtml }) {
     }
 
     table {
-      width: 100%;
+      width: max-content;
+      min-width: 100%;
       border-collapse: collapse;
       margin: 1em 0;
       font-size: 0.875rem;
+    }
+
+    .tableWrapper {
+      max-width: 100%;
+      overflow-x: auto;
     }
 
     th, td {

@@ -116,8 +116,40 @@ export async function getPrintableDocumentHtml(doc, { inlineImages = true } = {}
   if (doc) {
     renderTableOfContentsForPrint(clone, doc);
   }
+  if (inlineImages) {
+    fitPrintableTableWidths(clone, 600);
+  }
   markPrintableImagesForPagination(clone);
   return clone.innerHTML;
+}
+
+export function fitPrintableTableWidths(root, availableWidth) {
+  if (!Number.isFinite(availableWidth) || availableWidth <= 0) return;
+
+  root.querySelectorAll("table").forEach((table) => {
+    const columns = [...table.querySelectorAll("colgroup col")];
+    if (!columns.length) return;
+
+    const widths = columns.map((column) => parsePixelWidth(column.style.width));
+    if (widths.some((width) => width === null)) return;
+
+    const totalWidth = widths.reduce((sum, width) => sum + width, 0);
+    if (totalWidth <= availableWidth) return;
+
+    columns.forEach((column, index) => {
+      column.style.width = `${formatPercentage((widths[index] / totalWidth) * 100)}%`;
+    });
+  });
+}
+
+function parsePixelWidth(value) {
+  const match = String(value).trim().match(/^(\d+(?:\.\d+)?)px$/i);
+  const width = match ? Number(match[1]) : 0;
+  return Number.isFinite(width) && width > 0 ? width : null;
+}
+
+function formatPercentage(value) {
+  return Number(value.toFixed(4));
 }
 
 function prepareSvgDiagramsForPrint(root) {

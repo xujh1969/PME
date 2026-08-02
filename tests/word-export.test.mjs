@@ -32,6 +32,30 @@ test("builds a docx file with native document content", async () => {
   assert.equal(blob.size > 1000, true);
 });
 
+test("maps saved table column widths proportionally to the Word page", async () => {
+  const cell = (text, width) => ({
+    type: "tableCell",
+    attrs: { colwidth: [width] },
+    content: [{ type: "paragraph", content: [{ type: "text", text }] }],
+  });
+  const doc = {
+    type: "doc",
+    content: [{
+      type: "table",
+      content: [{
+        type: "tableRow",
+        content: [cell("A", 200), cell("B", 400), cell("C", 200)],
+      }],
+    }],
+  };
+
+  const xml = await getDocumentXml(await buildWordDocumentBlob({ doc, title: "" }));
+  const cellWidths = [...xml.matchAll(/<w:tcW w:type="pct" w:w="([^"]+)"\/>/g)]
+    .map((match) => match[1]);
+
+  assert.deepEqual(cellWidths, ["25%", "50%", "25%"]);
+});
+
 test("uses configured fonts for Word text and code", async () => {
   const doc = parseMarkdown([
     "中文内容 English text `code`",
