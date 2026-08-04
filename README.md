@@ -6,6 +6,8 @@ PME 是一个本地优先的 Markdown 可视化编辑器，基于 Tauri 2 和 Ti
 
 ## 功能特性
 
+下载地址：<https://github.com/xujh1969/PME/releases/tag/v0.2.2>
+
 ### 核心编辑功能
 
 - **所见即所得编辑**：基于 TipTap / ProseMirror 实现流畅的富文本编辑体验
