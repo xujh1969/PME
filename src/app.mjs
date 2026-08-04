@@ -971,9 +971,26 @@ function renderSidebar() {
       ${renderTree(state.tree)}
     </section>` : ""}
     ${state.showOutline ? `<section class="outline-section">
-      <div class="tree__title">OUTLINE</div>
+      ${renderOutlineHeader()}
       ${renderOutline()}
     </section>` : ""}
+  `;
+}
+
+function renderOutlineHeader() {
+  const buttons = [1, 2, 3, 4, 5, 6].map((level) => `
+    <button class="outline-collapse-button" type="button" data-outline-collapse-level="${level === 6 ? "all" : level}" title="${level === 6 ? "全部展开" : `折叠到 H${level}`}" aria-label="${level === 6 ? "全部展开" : `折叠到 H${level}`}">
+      ${level}
+    </button>
+  `).join("");
+
+  return `
+    <div class="outline-header">
+      <div class="tree__title">OUTLINE</div>
+      <div class="outline-collapse-toolbar" aria-label="折叠大纲">
+        ${buttons}
+      </div>
+    </div>
   `;
 }
 
@@ -5461,7 +5478,7 @@ function refreshOutlineView() {
     return;
   }
 
-  outline.innerHTML = '<div class="tree__title">OUTLINE</div>' + renderOutline();
+  outline.innerHTML = renderOutlineHeader() + renderOutline();
   bindOutlineEvents();
 }
 
@@ -5498,6 +5515,14 @@ function toggleFolder(path) {
 }
 
 function bindOutlineEvents() {
+  document.querySelectorAll("[data-outline-collapse-level]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const level = button.dataset.outlineCollapseLevel;
+      applyOutlineCollapse(level === "all" ? null : Number(level));
+    });
+  });
+
   document.querySelectorAll("[data-outline-index]").forEach((button) => {
     button.addEventListener("click", () => {
       navigateToOutlineItem(Number(button.dataset.outlineIndex));

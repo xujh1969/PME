@@ -365,6 +365,42 @@ test("round trips persisted table column widths", () => {
   assert.deepEqual(parseMarkdown(markdown), document);
 });
 
+test("round trips partially resized table column widths", () => {
+  const document = {
+    type: "doc",
+    content: [{
+      type: "table",
+      content: [
+        {
+          type: "tableRow",
+          content: [
+            { type: "tableHeader", attrs: { colwidth: [180] }, content: [{ type: "paragraph", content: [{ type: "text", text: "Name" }] }] },
+            { type: "tableHeader", content: [{ type: "paragraph", content: [{ type: "text", text: "Description" }] }] },
+          ],
+        },
+        {
+          type: "tableRow",
+          content: [
+            { type: "tableCell", attrs: { colwidth: [180] }, content: [{ type: "paragraph", content: [{ type: "text", text: "A" }] }] },
+            { type: "tableCell", content: [{ type: "paragraph", content: [{ type: "text", text: "Text" }] }] },
+          ],
+        },
+      ],
+    }],
+  };
+
+  const markdown = serializeMarkdown(document);
+
+  assert.equal(markdown, [
+    "<!-- pme-table-widths: 180,0 -->",
+    "| Name | Description |",
+    "| ---- | ---- |",
+    "| A | Text |",
+    "",
+  ].join("\n"));
+  assert.deepEqual(parseMarkdown(markdown), document);
+});
+
 test("ignores invalid or mismatched table width metadata", () => {
   for (const metadata of ["180,nope", "180,320,140"]) {
     const document = parseMarkdown([

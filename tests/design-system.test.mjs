@@ -154,7 +154,7 @@ test("preserves outline collapse state across outline refreshes", () => {
 test("guards outline collapse when no document is selected", () => {
   const applyOutlineCollapse = appSource.match(/function applyOutlineCollapse\(level\) \{[\s\S]*?\n\}/)?.[0] || "";
 
-  assert.equal(applyOutlineCollapse.includes("function applyOutlineCollapse(level) {\n  if (!state.selectedPath) return;"), true);
+  assert.equal(/function applyOutlineCollapse\(level\) \{\r?\n  if \(!state\.selectedPath\) return;/.test(applyOutlineCollapse), true);
 });
 
 test("refreshes only the outline after batch collapse", () => {
@@ -165,11 +165,25 @@ test("refreshes only the outline after batch collapse", () => {
   assert.equal(applyOutlineCollapse.includes("render();"), false);
   assert.equal(refreshOutlineView.includes('document.querySelector(".outline-section")'), true);
   assert.equal(refreshOutlineView.includes("outline.innerHTML"), true);
+  assert.equal(refreshOutlineView.includes("renderOutlineHeader()"), true);
   assert.equal(refreshOutlineView.includes("render();"), false);
 });
 
 test("lets collapsed outline groups override the default visible group rule", () => {
   assert.equal(styles.includes(".tree .outline-group--collapsed {\n  display: none;"), true);
+});
+
+test("adds numbered outline collapse buttons beside the outline title", () => {
+  const renderOutlineHeader = appSource.match(/function renderOutlineHeader\(\) \{[\s\S]*?\n\}/)?.[0] || "";
+
+  assert.equal(renderOutlineHeader.includes("outline-header"), true);
+  assert.equal(renderOutlineHeader.includes("outline-collapse-toolbar"), true);
+  assert.equal(renderOutlineHeader.includes("data-outline-collapse-level"), true);
+  assert.equal(renderOutlineHeader.includes('level === 6 ? "all" : level'), true);
+  assert.equal(renderOutlineHeader.includes("[1, 2, 3, 4, 5, 6]"), true);
+  assert.equal(appSource.includes('applyOutlineCollapse(level === "all" ? null : Number(level));'), true);
+  assert.equal(styles.includes(".outline-header {\n  display: flex;"), true);
+  assert.equal(styles.includes("border-radius: 50%;"), true);
 });
 
 test("adds independent outline collapse controls to the Paragraph menu", () => {

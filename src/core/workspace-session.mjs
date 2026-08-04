@@ -119,10 +119,14 @@ export async function addMarkdownFileSession(
 }
 
 export function canSaveMarkdownPathDirectly(path, adapter) {
-  if (!path || !adapter?.canPersist || isLocalAbsolutePath(path)) {
+  if (!path || !adapter?.canPersist || isLocalAbsolutePath(path) || isUntitledMarkdownPath(path)) {
     return false;
   }
   return Boolean(adapter.getWorkspaceInfo?.()?.rootPath);
+}
+
+function isUntitledMarkdownPath(path) {
+  return /^Untitled(?:\d+)?\.md$/i.test(path);
 }
 
 export function adoptSavedMarkdownSession(

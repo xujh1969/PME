@@ -168,7 +168,19 @@ test("selects existing tab instead of duplicating an opened markdown file", asyn
 
 test("only saves directly when a persisted workspace root exists", () => {
   assert.equal(canSaveMarkdownPathDirectly("Untitled.md", { canPersist: true }), false);
+  assert.equal(canSaveMarkdownPathDirectly("Untitled2.md", {
+    canPersist: true,
+    getWorkspaceInfo: () => ({ rootPath: "C:/Users/AYOU/Desktop" }),
+  }), false);
+  assert.equal(canSaveMarkdownPathDirectly("Untitled3.md", {
+    canPersist: true,
+    getWorkspaceInfo: () => ({ rootPath: "C:/Users/AYOU/Desktop" }),
+  }), false);
   assert.equal(canSaveMarkdownPathDirectly("Untitled.md", {
+    canPersist: true,
+    getWorkspaceInfo: () => ({ rootPath: "C:/Users/AYOU/Desktop" }),
+  }), false);
+  assert.equal(canSaveMarkdownPathDirectly("Notes.md", {
     canPersist: true,
     getWorkspaceInfo: () => ({ rootPath: "C:/Users/AYOU/Desktop" }),
   }), true);

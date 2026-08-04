@@ -734,7 +734,7 @@ function parseTableWidths(value, columnCount) {
     return null;
   }
   const widths = parts.map((part) => Number.parseInt(part, 10));
-  return widths.every((width) => width > 0) ? widths : null;
+  return widths.some((width) => width > 0) ? widths : null;
 }
 
 function parseTableAlignment(cell) {
@@ -776,20 +776,26 @@ function serializeTable(node) {
 
 function getTableColumnWidths(row) {
   const widths = [];
+  let hasExplicitWidth = false;
   for (const cell of row) {
     const colspan = Number.parseInt(cell.attrs?.colspan || 1, 10) || 1;
     const cellWidths = cell.attrs?.colwidth;
+    if (cellWidths == null) {
+      widths.push(...Array(colspan).fill(0));
+      continue;
+    }
     if (!Array.isArray(cellWidths) || cellWidths.length !== colspan) {
       return null;
     }
     for (const width of cellWidths) {
-      if (!Number.isFinite(width) || width <= 0) {
+      if (!Number.isFinite(width) || width < 0) {
         return null;
       }
+      hasExplicitWidth = hasExplicitWidth || width > 0;
       widths.push(Math.round(width));
     }
   }
-  return widths.length ? widths : null;
+  return hasExplicitWidth ? widths : null;
 }
 
 function tableAlignmentMarker(cell) {
